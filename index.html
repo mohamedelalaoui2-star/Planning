@@ -1,1 +1,84 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111318">
+<title>VIGENTRA — Gestion sécurité privée</title>
+<style>
+:root{--bg:#101116;--panel:#1b1d25;--panel2:#242631;--red:#c92732;--text:#f7f7f8;--muted:#b6b8c2;--line:#343641}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{padding:22px 18px 16px;background:#15161c;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:2}
+.brand{display:flex;align-items:center;gap:12px}.logo{background:var(--red);width:48px;height:48px;border-radius:14px;display:grid;place-items:center;font-size:25px;font-weight:800}
+h1{font-size:22px;margin:0}header p{margin:4px 0 0;color:var(--muted);font-size:13px}
+main{padding:18px;max-width:760px;margin:auto;padding-bottom:100px}.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}.stat-label{color:var(--muted);font-size:13px}.stat-num{font-size:30px;font-weight:750;margin-top:7px}.section-title{font-size:18px;font-weight:750;margin:22px 0 12px}
+nav{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px 7px calc(8px + env(safe-area-inset-bottom));background:#17181f;border-top:1px solid var(--line);z-index:3}
+nav button{background:transparent;border:0;color:var(--muted);font-size:12px;padding:9px 2px;border-radius:12px}nav button.active{background:#352024;color:#fff}nav span{display:block;font-size:20px;margin-bottom:4px}
+button,.primary{cursor:pointer} .primary{background:var(--red);color:white;border:0;border-radius:11px;padding:12px 14px;font-size:15px;font-weight:700;width:100%;margin-top:8px}
+input,select{width:100%;background:#111218;color:white;border:1px solid #444653;border-radius:10px;padding:12px;font-size:16px;margin:5px 0 10px}
+label{display:block;font-size:13px;color:var(--muted);margin-top:8px}.item{background:var(--panel2);border-radius:12px;padding:12px;margin:8px 0;display:flex;justify-content:space-between;gap:10px;align-items:center}.item small{display:block;color:var(--muted);margin-top:4px}.pill{font-size:11px;color:#ffd8da;background:#51242a;padding:5px 8px;border-radius:20px}
+.notice{font-size:12px;color:var(--muted);line-height:1.5;margin-top:14px}.empty{color:var(--muted);font-size:14px;padding:12px 0}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="brand"><div class="logo">T</div><div><h1>VIGENTRA</h1><p>Sécurité privée · Gestion des équipes</p></div></div></header>
+<main>
+<section id="home">
+<div class="stats">
+<div class="card"><div class="stat-label">👮 Agents</div><div class="stat-num" id="agentCount">0</div></div>
+<div class="card"><div class="stat-label">🏢 Sites clients</div><div class="stat-num" id="siteCount">0</div></div>
+<div class="card"><div class="stat-label">📅 Vacations</div><div class="stat-num" id="shiftCount">0</div></div>
+<div class="card"><div class="stat-label">🕒 Heures planifiées</div><div class="stat-num" id="hoursCount">0 h</div></div>
+</div>
+<div class="section-title">Bienvenue dans ton espace</div>
+<div class="card"><strong>Ton outil de gestion</strong><p class="notice">Ajoute des agents, crée des sites clients, puis prépare les vacations. Pour l'instant, les données sont enregistrées uniquement sur cet appareil.</p></div>
+<button class="primary" onclick="showTab('agents')">+ Ajouter mon premier agent</button>
+</section>
+<section id="agents" class="hidden">
+<div class="section-title">👮 Mes agents</div>
+<div class="card"><label>Nom et prénom</label><input id="agentName" placeholder="Ex. Karim Benali"><label>Qualification</label><select id="agentQual"><option>APS</option><option>SSIAP 1</option><option>SSIAP 2</option><option>SSIAP 3</option><option>SST</option><option>APS + SST</option><option>Autre</option></select><button class="primary" onclick="addAgent()">Enregistrer l’agent</button></div>
+<div id="agentList"></div>
+</section>
+<section id="sites" class="hidden">
+<div class="section-title">🏢 Mes sites clients</div>
+<div class="card"><label>Nom du site</label><input id="siteName" placeholder="Ex. Résidence Les Oliviers"><label>Adresse (facultatif)</label><input id="siteAddress" placeholder="Rue, ville"><button class="primary" onclick="addSite()">Enregistrer le site</button></div>
+<div id="siteList"></div>
+</section>
+<section id="planning" class="hidden">
+<div class="section-title">📅 Planning des vacations</div>
+<div class="card"><label>Agent</label><select id="shiftAgent"></select><label>Site client</label><select id="shiftSite"></select><label>Date</label><input type="date" id="shiftDate"><label>Heure de début</label><input type="time" id="shiftStart" value="08:00"><label>Heure de fin</label><input type="time" id="shiftEnd" value="16:00"><button class="primary" onclick="addShift()">Ajouter la vacation</button><p class="notice">Exemple uniquement : vérifie toujours les horaires et les temps de pause avant de valider un planning réel.</p></div>
+<div id="shiftList"></div>
+</section>
+</main>
+<nav>
+<button class="active" data-tab="home" onclick="showTab('home')"><span>⌂</span>Accueil</button>
+<button data-tab="agents" onclick="showTab('agents')"><span>♙</span>Agents</button>
+<button data-tab="sites" onclick="showTab('sites')"><span>▦</span>Sites</button>
+<button data-tab="planning" onclick="showTab('planning')"><span>▣</span>Planning</button>
+</nav>
+<script>
+const load=(k)=>{try{return JSON.parse(localStorage.getItem('tea_'+k)||'[]')}catch(e){return[]}};
+const save=(k,v)=>localStorage.setItem('tea_'+k,JSON.stringify(v));
+let agents=load('agents'),sites=load('sites'),shifts=load('shifts');
+function showTab(tab){['home','agents','sites','planning'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==tab));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));render()}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function addAgent(){let name=document.getElementById('agentName').value.trim();if(!name)return alert('Écris le nom de l’agent.');agents.push({id:Date.now(),name,qual:document.getElementById('agentQual').value});save('agents',agents);document.getElementById('agentName').value='';render();alert('Agent enregistré sur cet appareil.')}
+function addSite(){let name=document.getElementById('siteName').value.trim();if(!name)return alert('Écris le nom du site.');sites.push({id:Date.now(),name,address:document.getElementById('siteAddress').value.trim()});save('sites',sites);document.getElementById('siteName').value='';document.getElementById('siteAddress').value='';render();alert('Site enregistré sur cet appareil.')}
+function addShift(){if(!agents.length||!sites.length)return alert('Ajoute d’abord au moins un agent et un site.');let aid=+document.getElementById('shiftAgent').value,sid=+document.getElementById('shiftSite').value,date=document.getElementById('shiftDate').value,start=document.getElementById('shiftStart').value,end=document.getElementById('shiftEnd').value;if(!date||!start||!end)return alert('Complète la date et les heures.');let [sh,sm]=start.split(':').map(Number),[eh,em]=end.split(':').map(Number),mins=eh*60+em-(sh*60+sm);if(mins<=0)mins+=1440;shifts.push({id:Date.now(),aid,sid,date,start,end,hours:mins/60});save('shifts',shifts);render();alert('Vacation ajoutée au planning de cet appareil.')}
+function removeItem(type,id){if(!confirm('Supprimer cet élément ?'))return;if(type==='agents'){agents=agents.filter(x=>x.id!==id);save('agents',agents)}if(type==='sites'){sites=sites.filter(x=>x.id!==id);save('sites',sites)}if(type==='shifts'){shifts=shifts.filter(x=>x.id!==id);save('shifts',shifts)}render()}
+function render(){document.getElementById('agentCount').textContent=agents.length;document.getElementById('siteCount').textContent=sites.length;document.getElementById('shiftCount').textContent=shifts.length;document.getElementById('hoursCount').textContent=shifts.reduce((s,x)=>s+x.hours,0)+' h';
+document.getElementById('agentList').innerHTML=agents.length?agents.map(a=>`<div class="item"><div><strong>${esc(a.name)}</strong><small>${esc(a.qual)}</small></div><button onclick="removeItem('agents',${a.id})">✕</button></div>`).join(''):'<div class="empty">Aucun agent pour le moment.</div>';
+document.getElementById('siteList').innerHTML=sites.length?sites.map(s=>`<div class="item"><div><strong>${esc(s.name)}</strong><small>${esc(s.address||'Adresse non renseignée')}</small></div><button onclick="removeItem('sites',${s.id})">✕</button></div>`).join(''):'<div class="empty">Aucun site pour le moment.</div>';
+const as=document.getElementById('shiftAgent'),ss=document.getElementById('shiftSite');let oldA=as.value,oldS=ss.value;as.innerHTML=agents.map(a=>`<option value="${a.id}">${esc(a.name)} — ${esc(a.qual)}</option>`).join('');ss.innerHTML=sites.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');if(agents.some(a=>String(a.id)===oldA))as.value=oldA;if(sites.some(s=>String(s.id)===oldS))ss.value=oldS;
+document.getElementById('shiftList').innerHTML=shifts.length?shifts.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(x=>{let a=agents.find(y=>y.id===x.aid),s=sites.find(y=>y.id===x.sid);return `<div class="item"><div><strong>${esc(x.date)} · ${esc(x.start)}–${esc(x.end)}</strong><small>${esc(a?a.name:'Agent supprimé')} · ${esc(s?s.name:'Site supprimé')} · ${x.hours} h</small></div><button onclick="removeItem('shifts',${x.id})">✕</button></div>`}).join(''):'<div class="empty">Aucune vacation créée.</div>'}
+document.getElementById('shiftDate').value=new Date().toISOString().slice(0,10);render();
+</script>
 
+<div style="position:fixed;bottom:10px;left:10px;right:10px;z-index:9999;
+background:#17233c;color:#fff;padding:10px 14px;border-radius:12px;
+font:13px -apple-system,BlinkMacSystemFont,sans-serif;text-align:center;
+box-shadow:0 4px 18px rgba(0,0,0,.18)">
+  VIGENTRA · DÉMO LOCALE — données enregistrées sur cet appareil uniquement
+</div>
+</body></html>
