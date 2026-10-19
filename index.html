@@ -1340,5 +1340,28 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 }
 </script>
+<script>
+/* Secours de connexion : capte le bouton même si les gestionnaires principaux n'ont pas démarré */
+(function(){
+  document.addEventListener('click', function(event){
+    const button = event.target && event.target.closest ? event.target.closest('#loginBtn') : null;
+    if (!button) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const box = document.getElementById('authMsg');
+    const email = document.getElementById('email')?.value.trim();
+    const password = document.getElementById('password')?.value;
+    const show = function(text){
+      if(box){box.textContent=text;box.classList.remove('hidden');}
+    };
+    if (!email || !password) { show('Saisis ton adresse e-mail et ton mot de passe.'); return; }
+    if (typeof signIn === 'function') {
+      signIn('login');
+      return;
+    }
+    show('Le script principal de VIGENTRA ne s’est pas lancé. Recharge la page dans Safari. Si cela continue, le code doit être réparé avant de réessayer.');
+  }, true);
+})();
+</script>
 </body>
 </html>
