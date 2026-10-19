@@ -341,6 +341,25 @@ main{padding-bottom:calc(190px + env(safe-area-inset-bottom))}
  nav#nav{gap:3px}
  nav#nav button{flex-basis:64px;width:64px;min-width:64px;max-width:64px;font-size:10px}
 }
+
+/* Planning opérationnel */
+.planning-tools{border-color:#304a70;background:linear-gradient(145deg,#172945,#101b2e)}
+.planning-tools-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.planning-tools-head strong{font-size:17px}
+.planning-tag{font-size:10px;letter-spacing:.13em;font-weight:800;color:#ff9aa7;background:rgba(237,51,75,.12);border:1px solid rgba(237,51,75,.25);padding:6px 9px;border-radius:999px}
+.planning-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.planning-summary>div{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 13px;border-radius:13px;background:rgba(5,13,28,.42);border:1px solid rgba(94,125,173,.2)}
+.planning-summary span{font-size:12px;color:#a5b5cf}
+.planning-summary strong{font-size:19px;color:#f5f7ff}
+.planning-shift{align-items:center;gap:12px;padding:14px;margin:10px 0}
+.planning-shift-time{display:flex;flex-direction:column;gap:4px;min-width:95px;padding-right:12px;border-right:1px solid #344966}
+.planning-shift-time strong{font-size:14px;white-space:nowrap}
+.planning-shift-date{font-size:11px;color:#a9bad4}
+.planning-shift-time small{font-size:11px;color:#8fa4c4}
+.planning-shift-details{flex:1;min-width:0}
+.planning-shift-details strong{display:block;overflow-wrap:anywhere}
+.planning-shift-details small{display:block;margin-top:5px}
+@media(max-width:520px){.planning-shift{gap:9px;padding:11px}.planning-shift-time{min-width:82px;padding-right:8px}.planning-shift-time strong{font-size:12px}.planning-shift-details strong{font-size:13px}}
 </style>
 </head>
 <body>
@@ -449,6 +468,16 @@ main{padding-bottom:calc(190px + env(safe-area-inset-bottom))}
         </div>
         <button class="primary" id="addShiftBtn">Ajouter la vacation</button>
         <p class="notice">Vérifie les horaires et les temps de pause avant de valider un planning réel.</p>
+      </div>
+      <div class="card planning-tools">
+        <div class="planning-tools-head"><strong>Vue du planning</strong><span class="planning-tag">GESTION</span></div>
+        <p class="notice">Filtre les vacations par période pour retrouver rapidement les équipes planifiées.</p>
+        <div class="grid">
+          <div><label>Du</label><input id="planningFilterFrom" type="date"></div>
+          <div><label>Au</label><input id="planningFilterTo" type="date"></div>
+        </div>
+        <button class="secondary" id="planningFilterReset" type="button">Afficher toutes les vacations</button>
+        <div id="planningSummary" class="planning-summary" aria-live="polite"></div>
       </div>
       <div id="shiftList"></div>
     </section>
@@ -692,22 +721,28 @@ function render() {
     `<option value="${esc(s.id)}">${esc(siteNameOf(s))}</option>`
   ).join('');
 
-  $('shiftList').innerHTML = shifts.length
-    ? shifts.map(x => {
+  const filterFrom = $('planningFilterFrom')?.value || '';
+  const filterTo = $('planningFilterTo')?.value || '';
+  const filteredShifts = shifts.filter(x =>
+    (!filterFrom || String(x.date_vacation || '') >= filterFrom) &&
+    (!filterTo || String(x.date_vacation || '') <= filterTo)
+  ).sort((a,b) => String(a.date_vacation || '').localeCompare(String(b.date_vacation || '')) || String(a.heure_debut || '').localeCompare(String(b.heure_debut || '')));
+  const filteredHours = filteredShifts.reduce((sum,x) => sum + durationHours(x.heure_debut,x.heure_fin),0);
+  const summary = $('planningSummary');
+  if (summary) summary.innerHTML = '<div><span>Vacations</span><strong>' + filteredShifts.length + '</strong></div><div><span>Heures</span><strong>' + (Math.round(filteredHours*100)/100) + ' h</strong></div>';
+  $('shiftList').innerHTML = filteredShifts.length
+    ? filteredShifts.map(x => {
         const a = agents.find(y => String(y.id) === String(x.agent_id));
         const s = sites.find(y => String(y.id) === String(x.site_id));
-
         return `
-          <div class="item">
-            <div>
-              <strong>${esc(x.date_vacation)} · ${esc(String(x.heure_debut || '').slice(0,5))}–${esc(String(x.heure_fin || '').slice(0,5))}</strong>
-              <small>${esc(a ? agentNameOf(a) : 'Agent')} · ${esc(s ? siteNameOf(s) : 'Site')} · ${durationHours(x.heure_debut, x.heure_fin)} h</small>
-            </div>
-            <button onclick="deleteRow('planning','${esc(x.id)}')">✕</button>
+          <div class="item planning-shift">
+            <div class="planning-shift-time"><span class="planning-shift-date">${esc(x.date_vacation)}</span><strong>${esc(String(x.heure_debut || '').slice(0,5))}–${esc(String(x.heure_fin || '').slice(0,5))}</strong><small>${durationHours(x.heure_debut, x.heure_fin)} h</small></div>
+            <div class="planning-shift-details"><strong>${esc(a ? agentNameOf(a) : 'Agent')}</strong><small>${esc(s ? siteNameOf(s) : 'Site')}</small></div>
+            <button aria-label="Supprimer cette vacation" onclick="deleteRow('planning','${esc(x.id)}')">✕</button>
           </div>
         `;
       }).join('')
-    : '<div class="empty">Aucune vacation planifiée.</div>';
+    : '<div class="empty">Aucune vacation pour cette période. Modifie les dates ou ajoute une vacation.</div>';
 }
 
 function timeToMinutes(value) {
@@ -869,6 +904,14 @@ $('pdfAgentBtn').onclick=()=>{
  w.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Planning agent</title><style>body{font:14px Arial,sans-serif;color:#182033;padding:28px}h1{margin-bottom:4px}p{color:#566}table{border-collapse:collapse;width:100%;margin-top:24px}th,td{border:1px solid #ccd2dc;padding:10px;text-align:left}th{background:#edf1f7}.total{margin-top:20px;font-weight:bold}</style></head><body><h1>VIGENTRA — Planning agent</h1><p><strong>Agent :</strong> '+esc(agentNameOf(agent))+'<br><strong>Période :</strong> '+esc(from||'Toutes dates')+' au '+esc(to||'Toutes dates')+'<br><strong>Édité le :</strong> '+new Date().toLocaleDateString('fr-FR')+'</p><table><thead><tr><th>Date</th><th>Horaires</th><th>Site</th><th>Durée</th></tr></thead><tbody>'+(rows||'<tr><td colspan="4">Aucune vacation sur cette période.</td></tr>')+'</tbody></table><p class="total">Nombre de vacations : '+list.length+' · Total planifié : '+list.reduce((sum,s)=>sum+durationHours(s.heure_debut,s.heure_fin),0)+' h</p><p>Document interne — à vérifier avant diffusion.</p><script>window.onload=function(){window.print()}<\/script></body></html>');
  w.document.close();
 };
+
+$('planningFilterFrom').addEventListener('change', render);
+$('planningFilterTo').addEventListener('change', render);
+$('planningFilterReset').addEventListener('click', () => {
+  $('planningFilterFrom').value = '';
+  $('planningFilterTo').value = '';
+  render();
+});
 
 $('addShiftBtn').onclick = async () => {
   const agent_id = $('shiftAgent').value;
