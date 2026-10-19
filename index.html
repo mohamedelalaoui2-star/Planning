@@ -429,6 +429,27 @@ main{padding-bottom:calc(190px + env(safe-area-inset-bottom))}
  .hero-footer{font-size:7px;letter-spacing:.07em}
  .live-pill{font-size:8px;padding:6px}
 }
+
+.week-view-card{margin-top:18px;padding:16px!important;border:1px solid #293d59!important;background:linear-gradient(145deg,#14233b,#101a2c)!important;border-radius:18px!important}
+.week-view-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.week-view-head>div:first-child{display:grid;gap:5px}.week-view-head strong{font-size:14px;color:var(--text,#f3f6ff)}
+.week-controls{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.week-controls button{border:1px solid #344b6c;background:#192b45;color:#e8f0ff;border-radius:9px;min-width:32px;min-height:32px;padding:4px 8px;font-weight:700}
+.week-controls #weekToday{font-size:10px}
+.week-range{font-size:11px;color:#91a7c8;margin-bottom:10px;font-weight:700}
+.week-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.week-day{min-width:0;padding:7px 4px;border-radius:10px;background:#0d1829;border:1px solid #263a56;min-height:90px}
+.week-day.is-today{border-color:#e9445d;background:#1a2034;box-shadow:inset 0 2px 0 #e9445d}
+.week-day-head{display:flex;flex-direction:column;align-items:center;gap:3px;color:#91a6c5;font-size:9px;text-transform:capitalize}
+.week-day-head strong{font-size:16px;color:#f3f6ff}
+.week-day-count{text-align:center;font-size:8px;color:#92a7c7;margin:7px 0}
+.week-day-events{display:grid;gap:5px}
+.week-event{border-left:2px solid #ef4058;border-radius:3px;background:#1b2b43;padding:4px 3px;overflow:hidden}
+.week-event b,.week-event span,.week-event small{display:block;overflow-wrap:anywhere}
+.week-event b{font-size:9px;color:#ff9aa7}.week-event span{font-size:8px;color:#f0f4fc;margin-top:2px}.week-event small{font-size:7px;color:#9db1d0;margin-top:2px}
+.week-empty{display:block;text-align:center;color:#526783;font-size:11px;padding-top:4px}
+.week-day-hours{font-size:8px;text-align:center;color:#8db9ff;margin-top:7px;font-weight:700}
+@media(max-width:480px){.week-view-card{padding:11px!important}.week-view-head{align-items:flex-start;flex-direction:column}.week-controls{width:100%;justify-content:flex-end}.week-day{padding:6px 2px;min-height:76px}.week-day-head{font-size:8px}.week-day-head strong{font-size:14px}.week-day-count{font-size:7px}.week-event{padding:3px 2px}.week-event b{font-size:8px}.week-event span{font-size:7px}.week-event small{font-size:6px}}
 </style>
 </head>
 <body>
@@ -565,6 +586,10 @@ main{padding-bottom:calc(190px + env(safe-area-inset-bottom))}
         <button class="primary" id="planningPrintBtn" type="button">Exporter la vue en PDF / Imprimer</button>
         <div id="planningSummary" class="planning-summary" aria-live="polite"></div>
         <div id="planningAudit" class="planning-audit" aria-live="polite"></div>
+      </div>
+      <div class="card week-view-card">
+        <div class="week-view-head"><div><span class="section-kicker">APERÇU HEBDOMADAIRE</span><strong>La semaine en un coup d’œil</strong></div><div class="week-controls"><button type="button" id="weekPrev" aria-label="Semaine précédente">‹</button><button type="button" id="weekToday">Aujourd’hui</button><button type="button" id="weekNext" aria-label="Semaine suivante">›</button></div></div>
+        <div id="weekView" class="week-view" aria-live="polite"></div>
       </div>
       <div id="shiftList"></div>
     </section>
@@ -865,6 +890,7 @@ function render() {
   const filteredHours = filteredShifts.reduce((sum,x) => sum + durationHours(x.heure_debut,x.heure_fin),0);
   const summary = $('planningSummary');
   if (summary) summary.innerHTML = '<div><span>Vacations</span><strong>' + filteredShifts.length + '</strong></div><div><span>Heures</span><strong>' + (Math.round(filteredHours*100)/100) + ' h</strong></div>';
+  renderWeekView(filteredShifts);
   $('shiftList').innerHTML = filteredShifts.length
     ? filteredShifts.map(x => {
         const a = agents.find(y => String(y.id) === String(x.agent_id));
@@ -880,6 +906,41 @@ function render() {
     : '<div class="empty">Aucune vacation pour cette période. Modifie les dates ou ajoute une vacation.</div>';
 }
 
+
+let weekOffset = 0;
+function renderWeekView(filteredShifts) {
+  const target = $('weekView');
+  if (!target) return;
+  const now = new Date();
+  const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const mondayOffset = (base.getDay() + 6) % 7;
+  base.setDate(base.getDate() - mondayOffset + weekOffset * 7);
+  const days = Array.from({length:7}, (_,i) => {
+    const d = new Date(base); d.setDate(base.getDate()+i);
+    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const list = filteredShifts.filter(s => String(s.date_vacation || '').slice(0,10) === key);
+    return {d,key,list};
+  });
+  const fmt = d => d.toLocaleDateString('fr-FR',{weekday:'short'}).replace('.','');
+  const range = days[0].d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' – '+days[6].d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+  const heading = target.closest('.week-view-card')?.querySelector('.week-range');
+  if (heading) heading.textContent = range;
+  target.innerHTML = '<div class="week-range">'+range+'</div><div class="week-days">'+days.map(day=>{
+    const today = day.key === (new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0')+'-'+String(new Date().getDate()).padStart(2,'0'));
+    const total = day.list.reduce((sum,s)=>sum+durationHours(s.heure_debut,s.heure_fin),0);
+    return '<div class="week-day '+(today?'is-today':'')+'"><div class="week-day-head"><span>'+fmt(day.d)+'</span><strong>'+day.d.getDate()+'</strong></div><div class="week-day-count">'+day.list.length+' vac.</div><div class="week-day-events">'+(day.list.length?day.list.map(s=>{
+      const a=agents.find(x=>String(x.id)===String(s.agent_id)); const site=sites.find(x=>String(x.id)===String(s.site_id));
+      return '<div class="week-event"><b>'+esc(String(s.heure_debut||'').slice(0,5))+'</b><span>'+esc(a?agentNameOf(a):'Agent')+'</span><small>'+esc(site?siteNameOf(site):'Site')+'</small></div>';
+    }).join(''):'<span class="week-empty">—</span>')+'</div>'+(day.list.length?'<div class="week-day-hours">'+Math.round(total*100)/100+' h</div>':'')+'</div>';
+  }).join('')+'</div>';
+}
+function moveWeek(amount) {
+  weekOffset += amount;
+  renderPlanning();
+}
+$('weekPrev')?.addEventListener('click',()=>moveWeek(-1));
+$('weekNext')?.addEventListener('click',()=>moveWeek(1));
+$('weekToday')?.addEventListener('click',()=>{weekOffset=0;renderPlanning();});
 function timeToMinutes(value) {
   if (!value) return 0;
   const [h, m] = String(value).slice(0,5).split(':').map(Number);
