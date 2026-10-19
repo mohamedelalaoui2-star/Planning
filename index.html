@@ -311,6 +311,36 @@ main{padding-bottom:calc(115px + env(safe-area-inset-bottom))}
  nav button{font-size:10px;padding-left:5px;padding-right:5px}
  nav button span{font-size:19px}
 }
+
+/* iPhone navigation overflow and bottom safe-area fix */
+html,body{width:100%;max-width:100%;overflow-x:hidden}
+main,header,#workspace{width:100%;max-width:100%;min-width:0}
+nav#nav{
+ width:100%;max-width:100%;left:0;right:0;margin:0;
+ display:flex;flex-wrap:nowrap;justify-content:flex-start;
+ overflow-x:auto;overflow-y:hidden;white-space:nowrap;
+ -webkit-overflow-scrolling:touch;scrollbar-width:none;
+ padding:8px 8px calc(12px + env(safe-area-inset-bottom));
+}
+nav#nav::-webkit-scrollbar{display:none}
+nav#nav button{
+ flex:0 0 66px;width:66px;min-width:66px;max-width:66px;
+ min-height:60px;white-space:normal;overflow-wrap:anywhere;
+}
+main{padding-bottom:calc(190px + env(safe-area-inset-bottom))}
+@media(min-width:700px){
+ nav#nav{width:min(calc(100% - 48px),1100px);left:auto;right:auto;margin:0 auto;justify-content:center;overflow-x:auto}
+ nav#nav button{flex:0 0 78px;width:78px;min-width:78px;max-width:110px}
+ main{padding-bottom:150px}
+}
+@media(max-width:520px){
+ header{overflow-wrap:anywhere}
+ #workspace>.card:first-child{min-width:0}
+ #workspace>.card:first-child strong{word-break:break-word}
+ main{padding-left:13px;padding-right:13px;padding-bottom:calc(205px + env(safe-area-inset-bottom))}
+ nav#nav{gap:3px}
+ nav#nav button{flex-basis:64px;width:64px;min-width:64px;max-width:64px;font-size:10px}
+}
 </style>
 </head>
 <body>
