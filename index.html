@@ -69,6 +69,26 @@ nav span{font-size:19px;margin:0}
 .stats{gap:9px}
 .stat-num{font-size:clamp(24px,7vw,30px)}
 @media(min-width:700px){main{padding-left:22px;padding-right:22px}nav{justify-content:center}nav button{flex-basis:82px}}
+/* Mise en page ordinateur */
+@media(min-width:900px){
+ body{font-size:15px}
+ header{padding:18px 28px;display:flex;align-items:center}
+ header>*{max-width:1180px}
+ main{max-width:1180px;padding:26px 28px 120px}
+ .grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+ .stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+ .card{padding:20px;border-radius:18px}
+ .section-title{font-size:21px;margin-top:26px}
+ nav{left:50%;right:auto;transform:translateX(-50%);width:min(100% - 48px,1000px);border:1px solid var(--line);border-bottom:0;border-radius:18px 18px 0 0;padding:8px 12px}
+ nav button{flex:1 1 0;min-width:70px;max-width:120px;font-size:12px}
+ nav span{font-size:20px}
+ input,select,textarea{max-width:100%}
+ .item{gap:16px}
+}
+@media(min-width:1400px){
+ main{max-width:1320px}
+ .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
 </style>
 </head>
