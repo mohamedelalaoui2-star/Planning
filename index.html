@@ -1336,6 +1336,50 @@ db.auth.onAuthStateChange((event, session) => {
 })();
 </script>
 <script>
+/* Démarrage autonome du formulaire de connexion */
+(function(){
+  function show(text){
+    var box=document.getElementById('authMsg');
+    if(box){box.textContent=text;box.classList.remove('hidden');}
+  }
+  window.addEventListener('error',function(e){
+    if(e && (e.message || e.filename)){
+      show('Erreur JavaScript au démarrage : '+(e.message||'script indisponible')+(e.lineno?' (ligne '+e.lineno+')':''));
+    }
+  });
+  window.vigentraLoginFallback = async function(){
+    var email=(document.getElementById('email')||{}).value||'';
+    var password=(document.getElementById('password')||{}).value||'';
+    var button=document.getElementById('loginBtn');
+    if(!email.trim()||!password){show('Saisis ton adresse e-mail et ton mot de passe.');return;}
+    if(button){button.disabled=true;button.textContent='Connexion en cours…';}
+    try{
+      var client=window.supabase && window.supabase.createClient
+        ? window.supabase.createClient('https://pqpoxbsudbydsppqoxon.supabase.co','sb_publishable_H-zHZU7v1uIwLec4CkDWow_5ZtK9gPf')
+        : null;
+      if(!client){show('Le module Supabase ne se charge pas. Vérifie la connexion Internet et ouvre le site dans Safari.');return;}
+      var result=await client.auth.signInWithPassword({email:email.trim(),password:password});
+      if(result.error){show('Connexion refusée par Supabase : '+result.error.message);return;}
+      show('Connexion réussie. Recharge VIGENTRA pour ouvrir ton espace.');
+      setTimeout(function(){window.location.reload();},1200);
+    }catch(err){
+      show('Erreur pendant la connexion : '+(err&&err.message?err.message:'erreur réseau inconnue'));
+    }finally{
+      if(button){button.disabled=false;button.textContent='Se connecter';}
+    }
+  };
+  window.addEventListener('DOMContentLoaded',function(){
+    var button=document.getElementById('loginBtn');
+    if(button) button.addEventListener('click',function(e){
+      if(typeof window.signIn!=='function' || !button.onclick){
+        e.preventDefault();
+        window.vigentraLoginFallback();
+      }
+    },true);
+  });
+})();
+</script>
+<script>
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 }
