@@ -161,6 +161,23 @@ nav span{filter:saturate(.9)}
  .section-title{font-size:19px}
 }
 
+
+/* Finition mobile : boutons de suppression et listes plus cohérents */
+.item{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.item>div{min-width:0;flex:1}
+.item button:not(.primary):not(.secondary){
+  flex:0 0 42px;width:42px;min-width:42px;height:42px;padding:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid rgba(255,105,120,.35);border-radius:12px;
+  background:rgba(201,39,58,.14);color:#ff9aa6;font-size:20px;
+  box-shadow:none;line-height:1;
+}
+.item button:not(.primary):not(.secondary):active{background:rgba(201,39,58,.28)}
+#agentList,#siteList,#planningList,.list{display:grid;gap:12px}
+@media(max-width:520px){
+  .item{padding:14px;gap:10px}
+  .item button:not(.primary):not(.secondary){flex-basis:40px;width:40px;min-width:40px;height:40px}
+}
 </style>
 </head>
 <body>
