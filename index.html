@@ -560,8 +560,8 @@ $('makeQrBtn').onclick=()=>{
 $('invoiceCreateBtn').onclick=async()=>{
  const client_nom=$('invoiceClient').value.trim(),description=$('invoiceDescription').value.trim(),type_facturation=$('invoiceType').value,quantite=Number($('invoiceQty').value),prix_unitaire_ht=Number($('invoicePrice').value),taux_tva=Number($('invoiceVat').value);
  if(!client_nom||!description)return msg('appMsg','Renseigne le client et la description.');
- if(!(quantite>0)||prix_unitaire_ht<0||taux_tva<0||taux_tva>100)return msg('appMsg','Vérifie quantité, prix et TVA.');
- const total_ht=Math.round(quantite*prix_unitaire_ht*100)/100,total_tva=Math.round(quantite*prix_unitaire_ht*taux_tva)/10000,total_ttc=Math.round((total_ht+total_tva)*100)/100;
+ if(!$('invoiceQty').value||!$('invoicePrice').value||!$('invoiceVat').value||!Number.isFinite(quantite)||!Number.isFinite(prix_unitaire_ht)||!Number.isFinite(taux_tva)||!(quantite>0)||prix_unitaire_ht<0||taux_tva<0||taux_tva>100)return msg('appMsg','Vérifie quantité, prix et TVA.');
+ const total_ht=Math.round(quantite*prix_unitaire_ht*100)/100,total_tva=Math.round(total_ht*taux_tva)/100,total_ttc=Math.round((total_ht+total_tva)*100)/100;
  const numero='VIG-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-6);
  const {error}=await db.from('factures').insert({user_id:currentUser.id,numero,client_nom,description,type_facturation,quantite,prix_unitaire_ht,taux_tva,total_ht,total_tva,total_ttc,statut:'brouillon'});
  if(error)return msg('appMsg','Facture impossible : '+error.message);
