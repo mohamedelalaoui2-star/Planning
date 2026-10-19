@@ -1,0 +1,20 @@
+{
+  "name": "VIGENTRA — Gestion sécurité privée",
+  "short_name": "VIGENTRA",
+  "description": "Gestion mobile des équipes de sécurité privée",
+  "lang": "fr-FR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#101116",
+  "theme_color": "#111318",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
