@@ -367,6 +367,10 @@ main{padding-bottom:calc(190px + env(safe-area-inset-bottom))}
 .planning-ok{background:rgba(58,166,121,.09);border:1px solid rgba(58,166,121,.28);color:#b9f3d6}
 .planning-warning strong,.planning-ok strong{font-size:13px}
 .planning-warning small,.planning-ok small{font-size:12px;line-height:1.5;color:#b6c5db;overflow-wrap:anywhere}
+
+.planning-tools .grid{margin-top:10px}
+.planning-tools select{width:100%;min-width:0}
+.planning-tools #planningFilterReset{width:100%;margin-top:12px}
 </style>
 </head>
 <body>
@@ -483,7 +487,11 @@ main{padding-bottom:calc(190px + env(safe-area-inset-bottom))}
           <div><label>Du</label><input id="planningFilterFrom" type="date"></div>
           <div><label>Au</label><input id="planningFilterTo" type="date"></div>
         </div>
-        <button class="secondary" id="planningFilterReset" type="button">Afficher toutes les vacations</button>
+        <div class="grid">
+          <div><label>Agent</label><select id="planningFilterAgent"><option value="">Tous les agents</option></select></div>
+          <div><label>Site</label><select id="planningFilterSite"><option value="">Tous les sites</option></select></div>
+        </div>
+        <button class="secondary" id="planningFilterReset" type="button">Réinitialiser les filtres</button>
         <div id="planningSummary" class="planning-summary" aria-live="polite"></div>
         <div id="planningAudit" class="planning-audit" aria-live="polite"></div>
       </div>
@@ -761,11 +769,27 @@ function render() {
     if (!warnings.length) warnings.push('<div class="planning-ok"><strong>✓ Aucun chevauchement détecté</strong><small>Les affectations d’agents et de sites ont été vérifiées parmi les vacations enregistrées.</small></div>');
     auditBox.innerHTML=warnings.join('');
   }
+  const agentFilter = $('planningFilterAgent');
+  const siteFilter = $('planningFilterSite');
+  if (agentFilter) {
+    const selected = agentFilter.value;
+    agentFilter.innerHTML = '<option value="">Tous les agents</option>' + agents.map(a => '<option value="' + esc(a.id) + '">' + esc(agentNameOf(a)) + '</option>').join('');
+    agentFilter.value = selected;
+  }
+  if (siteFilter) {
+    const selected = siteFilter.value;
+    siteFilter.innerHTML = '<option value="">Tous les sites</option>' + sites.map(s => '<option value="' + esc(s.id) + '">' + esc(siteNameOf(s)) + '</option>').join('');
+    siteFilter.value = selected;
+  }
   const filterFrom = $('planningFilterFrom')?.value || '';
   const filterTo = $('planningFilterTo')?.value || '';
+  const filterAgent = agentFilter?.value || '';
+  const filterSite = siteFilter?.value || '';
   const filteredShifts = shifts.filter(x =>
     (!filterFrom || String(x.date_vacation || '') >= filterFrom) &&
-    (!filterTo || String(x.date_vacation || '') <= filterTo)
+    (!filterTo || String(x.date_vacation || '') <= filterTo) &&
+    (!filterAgent || String(x.agent_id) === filterAgent) &&
+    (!filterSite || String(x.site_id) === filterSite)
   ).sort((a,b) => String(a.date_vacation || '').localeCompare(String(b.date_vacation || '')) || String(a.heure_debut || '').localeCompare(String(b.heure_debut || '')));
   const filteredHours = filteredShifts.reduce((sum,x) => sum + durationHours(x.heure_debut,x.heure_fin),0);
   const summary = $('planningSummary');
@@ -947,9 +971,13 @@ $('pdfAgentBtn').onclick=()=>{
 
 $('planningFilterFrom').addEventListener('change', render);
 $('planningFilterTo').addEventListener('change', render);
+$('planningFilterAgent').addEventListener('change', render);
+$('planningFilterSite').addEventListener('change', render);
 $('planningFilterReset').addEventListener('click', () => {
   $('planningFilterFrom').value = '';
   $('planningFilterTo').value = '';
+  $('planningFilterAgent').value = '';
+  $('planningFilterSite').value = '';
   render();
 });
 
