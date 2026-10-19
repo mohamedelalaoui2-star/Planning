@@ -371,7 +371,7 @@ main{padding-bottom:calc(190px + env(safe-area-inset-bottom))}
 .planning-tools .grid{margin-top:10px}
 .planning-tools select{width:100%;min-width:0}
 .planning-tools #planningFilterReset{width:100%;margin-top:12px}
-</style>
+#planningPrintBtn{width:100%;margin-top:10px}.planning-tools #planningFilterReset{margin-bottom:2px}</style>
 </head>
 <body>
 
@@ -492,6 +492,7 @@ main{padding-bottom:calc(190px + env(safe-area-inset-bottom))}
           <div><label>Site</label><select id="planningFilterSite"><option value="">Tous les sites</option></select></div>
         </div>
         <button class="secondary" id="planningFilterReset" type="button">Réinitialiser les filtres</button>
+        <button class="primary" id="planningPrintBtn" type="button">Exporter la vue en PDF / Imprimer</button>
         <div id="planningSummary" class="planning-summary" aria-live="polite"></div>
         <div id="planningAudit" class="planning-audit" aria-live="polite"></div>
       </div>
@@ -968,6 +969,25 @@ $('pdfAgentBtn').onclick=()=>{
  w.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Planning agent</title><style>body{font:14px Arial,sans-serif;color:#182033;padding:28px}h1{margin-bottom:4px}p{color:#566}table{border-collapse:collapse;width:100%;margin-top:24px}th,td{border:1px solid #ccd2dc;padding:10px;text-align:left}th{background:#edf1f7}.total{margin-top:20px;font-weight:bold}</style></head><body><h1>VIGENTRA — Planning agent</h1><p><strong>Agent :</strong> '+esc(agentNameOf(agent))+'<br><strong>Période :</strong> '+esc(from||'Toutes dates')+' au '+esc(to||'Toutes dates')+'<br><strong>Édité le :</strong> '+new Date().toLocaleDateString('fr-FR')+'</p><table><thead><tr><th>Date</th><th>Horaires</th><th>Site</th><th>Durée</th></tr></thead><tbody>'+(rows||'<tr><td colspan="4">Aucune vacation sur cette période.</td></tr>')+'</tbody></table><p class="total">Nombre de vacations : '+list.length+' · Total planifié : '+list.reduce((sum,s)=>sum+durationHours(s.heure_debut,s.heure_fin),0)+' h</p><p>Document interne — à vérifier avant diffusion.</p><script>window.onload=function(){window.print()}<\/script></body></html>');
  w.document.close();
 };
+
+$('planningPrintBtn').addEventListener('click', () => {
+  const from=$('planningFilterFrom').value, to=$('planningFilterTo').value;
+  if(from&&to&&from>to)return msg('appMsg','La date de début doit précéder la date de fin.');
+  const agentId=$('planningFilterAgent').value, siteId=$('planningFilterSite').value;
+  const list=shifts.filter(s=>
+    (!from||String(s.date_vacation||'')>=from)&&(!to||String(s.date_vacation||'')<=to)&&
+    (!agentId||String(s.agent_id)===agentId)&&(!siteId||String(s.site_id)===siteId)
+  ).sort((a,b)=>String(a.date_vacation||'').localeCompare(String(b.date_vacation||''))||String(a.heure_debut||'').localeCompare(String(b.heure_debut||'')));
+  const rows=list.map(s=>{
+    const agent=agents.find(a=>String(a.id)===String(s.agent_id));
+    const site=sites.find(x=>String(x.id)===String(s.site_id));
+    return '<tr><td>'+esc(s.date_vacation||'')+'</td><td>'+esc(String(s.heure_debut||'').slice(0,5))+' – '+esc(String(s.heure_fin||'').slice(0,5))+'</td><td>'+esc(agent?agentNameOf(agent):'Agent non trouvé')+'</td><td>'+esc(site?siteNameOf(site):'Site non trouvé')+'</td><td>'+durationHours(s.heure_debut,s.heure_fin)+' h</td></tr>';
+  }).join('');
+  const w=window.open('','_blank');
+  if(!w)return msg('appMsg','Autorise les fenêtres surgissantes pour exporter le planning.');
+  w.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>VIGENTRA — Planning</title><style>body{font:13px Arial,sans-serif;color:#172033;padding:25px}h1{margin:0 0 6px;color:#142744}p{color:#566477}table{border-collapse:collapse;width:100%;margin-top:22px}th,td{border:1px solid #cbd4e1;padding:9px;text-align:left}th{background:#eaf0f8}.total{margin-top:18px;font-weight:bold}@media print{body{padding:0}}</style></head><body><h1>VIGENTRA — Planning des vacations</h1><p><strong>Période :</strong> '+esc(from||'Toutes dates')+' au '+esc(to||'Toutes dates')+'<br><strong>Agent :</strong> '+esc(agents.find(a=>String(a.id)===agentId)?agentNameOf(agents.find(a=>String(a.id)===agentId)):'Tous les agents')+'<br><strong>Site :</strong> '+esc(sites.find(s=>String(s.id)===siteId)?siteNameOf(sites.find(s=>String(s.id)===siteId)):'Tous les sites')+'<br><strong>Édité le :</strong> '+new Date().toLocaleDateString('fr-FR')+'</p><table><thead><tr><th>Date</th><th>Horaires</th><th>Agent</th><th>Site</th><th>Durée</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5">Aucune vacation sur cette période.</td></tr>')+'</tbody></table><p class="total">Vacations : '+list.length+' · Total planifié : '+list.reduce((sum,s)=>sum+durationHours(s.heure_debut,s.heure_fin),0)+' h</p><script>window.onload=function(){window.print()}<\/script></body></html>');
+  w.document.close();
+});
 
 $('planningFilterFrom').addEventListener('change', render);
 $('planningFilterTo').addEventListener('change', render);
