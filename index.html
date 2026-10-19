@@ -972,15 +972,14 @@ $('addShiftBtn').onclick = async () => {
     return msg('appMsg', 'Les heures de début et de fin ne peuvent pas être identiques.');
   }
 
-  // Refuse les vacations qui se chevauchent pour le même agent.
-  const startMin = timeToMinutes(heure_debut);
-  const endMin = timeToMinutes(heure_fin) + (timeToMinutes(heure_fin) <= startMin ? 1440 : 0);
+  // Refuse les chevauchements, y compris lorsqu'une vacation passe minuit.
+  const newStart = Date.parse(date_vacation + 'T00:00:00Z') / 60000 + timeToMinutes(heure_debut);
+  const newEnd = newStart + durationHours(heure_debut, heure_fin) * 60;
   const overlaps = shifts.some(x => {
-    if (String(x.agent_id) !== String(agent_id) || x.date_vacation !== date_vacation) return false;
-    const oldStart = timeToMinutes(x.heure_debut);
-    const oldEndRaw = timeToMinutes(x.heure_fin);
-    const oldEnd = oldEndRaw <= oldStart ? oldEndRaw + 1440 : oldEndRaw;
-    return startMin < oldEnd && oldStart < endMin;
+    if (String(x.agent_id) !== String(agent_id) || !x.date_vacation) return false;
+    const oldStart = Date.parse(String(x.date_vacation) + 'T00:00:00Z') / 60000 + timeToMinutes(x.heure_debut);
+    const oldEnd = oldStart + durationHours(x.heure_debut, x.heure_fin) * 60;
+    return newStart < oldEnd && oldStart < newEnd;
   });
   if (overlaps) {
     return msg('appMsg', 'Attention : cet agent a déjà une vacation qui chevauche cet horaire le même jour.');
