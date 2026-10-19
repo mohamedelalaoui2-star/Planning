@@ -12,7 +12,7 @@
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="./icon.svg">
 <title>VIGENTRA — Gestion sécurité privée</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2'"></script>
 <style>
 :root{--bg:#101116;--panel:#1b1d25;--panel2:#242631;--red:#c92732;--text:#f7f7f8;--muted:#b6b8c2;--line:#343641}
 *{box-sizing:border-box}
@@ -658,10 +658,29 @@ main{padding-bottom:calc(190px + env(safe-area-inset-bottom))}
 const SUPABASE_URL = 'https://pqpoxbsudbydsppqoxon.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_H-zHZU7v1uIwLec4CkDWow_5ZtK9gPf';
 
-const db = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
+let db = null;
+try {
+  if (window.supabase && typeof window.supabase.createClient === 'function') {
+    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  } else {
+    window.addEventListener('load', () => {
+      const el = document.getElementById('authMsg');
+      if (el) {
+        el.textContent = 'VIGENTRA ne parvient pas à charger le module de connexion. Vérifie Internet, puis recharge la page.';
+        el.classList.remove('hidden');
+      }
+    });
+  }
+} catch (initError) {
+  console.error('VIGENTRA Supabase init error:', initError);
+  window.addEventListener('load', () => {
+    const el = document.getElementById('authMsg');
+    if (el) {
+      el.textContent = 'Erreur de démarrage de la connexion : ' + (initError.message || 'module indisponible');
+      el.classList.remove('hidden');
+    }
+  });
+}
 
 const $ = id => document.getElementById(id);
 
@@ -702,6 +721,10 @@ function showTab(tab) {
 
 async function signIn(mode) {
   clearMsg('authMsg');
+  if (!db) {
+    msg('authMsg', 'Le module de connexion Supabase ne s’est pas chargé. Vérifie Internet et recharge la page.');
+    return;
+  }
   const email = $('email').value.trim();
   const password = $('password').value;
   const button = mode === 'login' ? $('loginBtn') : $('signupBtn');
