@@ -702,35 +702,45 @@ function showTab(tab) {
 
 async function signIn(mode) {
   clearMsg('authMsg');
-
   const email = $('email').value.trim();
   const password = $('password').value;
+  const button = mode === 'login' ? $('loginBtn') : $('signupBtn');
+  const originalLabel = button.textContent;
 
   if (!email || !password) {
-    return msg('authMsg', 'Saisis ton e-mail et ton mot de passe.');
+    msg('authMsg', 'Saisis ton e-mail et ton mot de passe.');
+    return;
   }
 
-  let result;
+  button.disabled = true;
+  button.textContent = mode === 'login' ? 'Connexion en cours…' : 'Création en cours…';
 
-  if (mode === 'login') {
-    result = await db.auth.signInWithPassword({email, password});
-  } else {
-    result = await db.auth.signUp({email, password});
-  }
+  try {
+    const result = mode === 'login'
+      ? await db.auth.signInWithPassword({email, password})
+      : await db.auth.signUp({email, password});
 
-  if (result.error) {
-    return msg('authMsg', result.error.message);
-  }
+    if (result.error) {
+      msg('authMsg', 'Connexion impossible : ' + result.error.message);
+      return;
+    }
 
-  if (mode === 'signup' && !result.data.session) {
-    return msg(
-      'authMsg',
-      'Compte créé. Vérifie tes e-mails pour confirmer ton adresse, puis connecte-toi.'
-    );
-  }
+    if (mode === 'signup' && !result.data.session) {
+      msg('authMsg', 'Compte créé. Vérifie tes e-mails pour confirmer ton adresse, puis connecte-toi.');
+      return;
+    }
 
-  if (result.data.user) {
-    await openWorkspace(result.data.user);
+    if (result.data.user) {
+      await openWorkspace(result.data.user);
+    } else {
+      msg('authMsg', 'Aucune session reçue. Vérifie ta connexion Internet puis réessaie.');
+    }
+  } catch (error) {
+    console.error('VIGENTRA auth error:', error);
+    msg('authMsg', 'La connexion a échoué ou le serveur ne répond pas. Vérifie Internet puis réessaie. Détail : ' + (error?.message || 'erreur réseau'));
+  } finally {
+    button.disabled = false;
+    button.textContent = originalLabel;
   }
 }
 
@@ -1171,6 +1181,12 @@ nav span{filter:saturate(.85)}
  nav button{flex-basis:72px}
 }
 @media(prefers-reduced-motion:reduce){section:not(.hidden){animation:none}}
+
+
+/* Auth feedback and loading state */
+#authMsg{display:block;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:14px;padding:12px 14px;border-radius:12px;line-height:1.5}
+#authMsg.hidden{display:none}
+#auth button:disabled{opacity:.72;cursor:wait;filter:saturate(.75)}
 
 </style></head><body><h1>VIGENTRA — Planning des vacations</h1><p><strong>Période :</strong> '+esc(from||'Toutes dates')+' au '+esc(to||'Toutes dates')+'<br><strong>Agent :</strong> '+esc(agents.find(a=>String(a.id)===agentId)?agentNameOf(agents.find(a=>String(a.id)===agentId)):'Tous les agents')+'<br><strong>Site :</strong> '+esc(sites.find(s=>String(s.id)===siteId)?siteNameOf(sites.find(s=>String(s.id)===siteId)):'Tous les sites')+'<br><strong>Édité le :</strong> '+new Date().toLocaleDateString('fr-FR')+'</p><table><thead><tr><th>Date</th><th>Horaires</th><th>Agent</th><th>Site</th><th>Durée</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5">Aucune vacation sur cette période.</td></tr>')+'</tbody></table><p class="total">Vacations : '+list.length+' · Total planifié : '+list.reduce((sum,s)=>sum+durationHours(s.heure_debut,s.heure_fin),0)+' h</p><script>window.onload=function(){window.print()}<\/script></body></html>');
   w.document.close();
