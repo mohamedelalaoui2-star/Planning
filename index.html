@@ -90,6 +90,7 @@ nav span{font-size:19px;margin:0}
  .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+\n:root{--blue:#477cff;--gold:#e6bd68;--shadow:0 14px 34px rgba(0,0,0,.18)}\nheader{background:linear-gradient(135deg,#171922,#11141e 65%,#20283b);box-shadow:0 8px 24px rgba(0,0,0,.18)}\n.card{box-shadow:var(--shadow);background:linear-gradient(145deg,rgba(31,34,45,.98),rgba(24,26,35,.98))}\n.logo{background:linear-gradient(135deg,#e43b48,#9d1828);box-shadow:0 7px 18px rgba(201,39,50,.25)}\n.primary{background:linear-gradient(135deg,#e43b48,#b91f2b);box-shadow:0 5px 14px rgba(201,39,50,.16)}\n.secondary{background:linear-gradient(135deg,#303747,#252a36);border:1px solid #454b5c}\n.item{border:1px solid rgba(255,255,255,.045)}
 </style>
 </head>
 <body>
@@ -184,6 +185,7 @@ nav span{font-size:19px;margin:0}
 
     <section id="planning" class="hidden">
       <div class="section-title">📅 Planning des vacations</div>
+      <div class="card"><strong>Exporter le planning d’un agent en PDF</strong><label>Agent à exporter</label><select id="pdfAgent"></select><div class="grid"><div><label>Du</label><input id="pdfFrom" type="date"></div><div><label>Au</label><input id="pdfTo" type="date"></div></div><button class="secondary" id="pdfAgentBtn">Préparer le PDF / Imprimer</button><p class="notice">Sur iPhone, utilise le menu de partage puis Imprimer ou Enregistrer dans Fichiers en PDF.</p></div>
       <div class="card">
         <label>Agent</label>
         <select id="shiftAgent"></select>
@@ -525,6 +527,7 @@ async function loadExtraData(){
 }
 function renderExtra(){
  const ao=agents.map(a=>'<option value="'+esc(a.id)+'">'+esc(agentNameOf(a))+'</option>').join(''),so=sites.map(s=>'<option value="'+esc(s.id)+'">'+esc(siteNameOf(s))+'</option>').join('');
+ $('pdfAgent').innerHTML=ao;
  ['qualAgent','logAgent','passageAgent'].forEach(id=>$(id).innerHTML=ao);$('logSite').innerHTML='<option value="">Aucun site</option>'+so;$('roundSite').innerHTML=so;$('passagePoint').innerHTML=roundPoints.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.nom)+'</option>').join('');
  $('clockAgent').innerHTML=ao;$('clockSite').innerHTML=so;$('qrSite').innerHTML=so;$('clockShift').innerHTML='<option value="">Sans vacation liée</option>'+shifts.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.date_vacation)+' '+esc(String(x.heure_debut).slice(0,5))+'-'+esc(String(x.heure_fin).slice(0,5))+'</option>').join('');
  $('clockList').innerHTML=pointages.length?pointages.map(p=>'<div class="item"><div><strong>'+esc(p.type==='debut'?'Prise de poste':'Fin de poste')+' · '+esc(new Date(p.pointage_at).toLocaleString('fr-FR'))+'</strong></div></div>').join(''):'<div class="empty">Aucun pointage.</div>';
@@ -587,11 +590,34 @@ function answerAssistant(question){
 }
 $('assistantAskBtn').onclick=()=>answerAssistant($('assistantQuestion').value);
 $('assistantAuditBtn').onclick=()=>{
- const issues=[];if(!agents.length)issues.push('Aucun agent');if(!sites.length)issues.push('Aucun site');if(!shifts.length)issues.push('Aucune vacation');if(!pointages.length)issues.push('Aucun pointage');
- const by={};shifts.forEach(x=>(by[String(x.agent_id)] ||= []).push(x));let n=0;
- Object.values(by).forEach(list=>{list.sort((a,b)=>String(a.date_vacation).localeCompare(String(b.date_vacation))||String(a.heure_debut).localeCompare(String(b.heure_debut)));for(let j=1;j<list.length;j++)if(list[j].date_vacation===list[j-1].date_vacation&&String(list[j].heure_debut)<String(list[j-1].heure_fin))n++;});
- if(n)issues.push(n+' chevauchement(s) potentiel(s)');
- msg('assistantAnswer',issues.length?'À vérifier : '+issues.join(' ; '):'Aucun problème simple détecté. Vérifie aussi les repos, qualifications et pointages.');
+ const issues=[];
+ if(!agents.length)issues.push('Aucun agent enregistré');
+ if(!sites.length)issues.push('Aucun site client');
+ if(!shifts.length)issues.push('Aucune vacation planifiée');
+ const dt=(d,t)=>new Date(d+'T'+String(t).slice(0,5)+':00');
+ let overlaps=0;
+ const groups={};shifts.forEach(s=>(groups[String(s.agent_id)] ||= []).push(s));
+ Object.values(groups).forEach(list=>{const spans=list.map(s=>{const start=dt(s.date_vacation,s.heure_debut),end=dt(s.date_vacation,s.heure_fin);if(end<=start)end.setDate(end.getDate()+1);return {start,end};});for(let i=0;i<spans.length;i++)for(let j=i+1;j<spans.length;j++)if(spans[i].start<spans[j].end&&spans[j].start<spans[i].end)overlaps++;});
+ if(overlaps)issues.push(overlaps+' chevauchement(s) de vacations à vérifier');
+ const today=new Date();today.setHours(0,0,0,0);const limit=new Date(today);limit.setDate(limit.getDate()+60);
+ const expired=qualifications.filter(q=>q.date_expiration&&new Date(q.date_expiration+'T00:00:00')<today);
+ const expiring=qualifications.filter(q=>q.date_expiration&&new Date(q.date_expiration+'T00:00:00')>=today&&new Date(q.date_expiration+'T00:00:00')<=limit);
+ if(expired.length)issues.push(expired.length+' qualification(s) expirée(s)');
+ if(expiring.length)issues.push(expiring.length+' qualification(s) expirant dans les 60 jours');
+ const wrong=factures.filter(f=>{const ht=Math.round(Number(f.quantite)*Number(f.prix_unitaire_ht)*100)/100,tva=Math.round(ht*Number(f.taux_tva))/100,ttc=Math.round((ht+tva)*100)/100;return Math.abs(ht-Number(f.total_ht))>.02||Math.abs(tva-Number(f.total_tva))>.02||Math.abs(ttc-Number(f.total_ttc))>.02;});
+ if(wrong.length)issues.push(wrong.length+' facture(s) dont les totaux sont à contrôler');
+ const report=issues.length?'RAPPORT DE CONTRÔLE VIGENTRA\n\n'+issues.map((s,i)=>(i+1)+'. '+s).join('\n')+'\n\nCe contrôle est automatique : vérifie les résultats avant toute décision.':'Contrôle terminé : aucun écart simple détecté dans les données chargées. Vérifie également les obligations légales, les repos et les justificatifs.';
+ msg('assistantAnswer',report);
+};
+$('pdfAgentBtn').onclick=()=>{
+ const id=$('pdfAgent').value;if(!id)return msg('appMsg','Ajoute ou sélectionne un agent.');
+ const agent=agents.find(a=>String(a.id)===String(id)),from=$('pdfFrom').value,to=$('pdfTo').value;
+ if(from&&to&&from>to)return msg('appMsg','La date de début doit précéder la date de fin.');
+ const list=shifts.filter(s=>String(s.agent_id)===String(id)&&(!from||s.date_vacation>=from)&&(!to||s.date_vacation<=to)).sort((a,b)=>String(a.date_vacation).localeCompare(String(b.date_vacation))||String(a.heure_debut).localeCompare(String(b.heure_debut)));
+ const rows=list.map(s=>{const site=sites.find(x=>String(x.id)===String(s.site_id));return '<tr><td>'+esc(s.date_vacation)+'</td><td>'+esc(String(s.heure_debut).slice(0,5))+' – '+esc(String(s.heure_fin).slice(0,5))+'</td><td>'+esc(site?siteNameOf(site):'Site')+'</td><td>'+durationHours(s.heure_debut,s.heure_fin)+' h</td></tr>';}).join('');
+ const w=window.open('','_blank');if(!w)return msg('appMsg','Autorise les fenêtres surgissantes pour préparer le PDF.');
+ w.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Planning agent</title><style>body{font:14px Arial,sans-serif;color:#182033;padding:28px}h1{margin-bottom:4px}p{color:#566}table{border-collapse:collapse;width:100%;margin-top:24px}th,td{border:1px solid #ccd2dc;padding:10px;text-align:left}th{background:#edf1f7}.total{margin-top:20px;font-weight:bold}</style></head><body><h1>VIGENTRA — Planning agent</h1><p><strong>Agent :</strong> '+esc(agentNameOf(agent))+'<br><strong>Période :</strong> '+esc(from||'Toutes dates')+' au '+esc(to||'Toutes dates')+'<br><strong>Édité le :</strong> '+new Date().toLocaleDateString('fr-FR')+'</p><table><thead><tr><th>Date</th><th>Horaires</th><th>Site</th><th>Durée</th></tr></thead><tbody>'+(rows||'<tr><td colspan="4">Aucune vacation sur cette période.</td></tr>')+'</tbody></table><p class="total">Nombre de vacations : '+list.length+' · Total planifié : '+list.reduce((sum,s)=>sum+durationHours(s.heure_debut,s.heure_fin),0)+' h</p><p>Document interne — à vérifier avant diffusion.</p><script>window.onload=function(){window.print()}<\/script></body></html>');
+ w.document.close();
 };
 
 $('addShiftBtn').onclick = async () => {
