@@ -21,8 +21,8 @@ main{padding:18px;max-width:760px;margin:auto;padding-bottom:100px}
 .stat-label{color:var(--muted);font-size:13px}
 .stat-num{font-size:30px;font-weight:750;margin-top:7px}
 .section-title{font-size:18px;font-weight:750;margin:22px 0 12px}
-nav{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px 7px calc(8px + env(safe-area-inset-bottom));background:#17181f;border-top:1px solid var(--line);z-index:3}
-nav button{background:transparent;border:0;color:var(--muted);font-size:12px;padding:9px 2px;border-radius:12px}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;gap:4px;overflow-x:auto;padding:8px 7px calc(8px + env(safe-area-inset-bottom));background:#17181f;border-top:1px solid var(--line);z-index:3}
+nav button{flex:0 0 76px;background:transparent;border:0;color:var(--muted);font-size:11px;padding:9px 2px;border-radius:12px}
 nav button.active{background:#352024;color:#fff}
 nav span{display:block;font-size:20px;margin-bottom:4px}
 button{cursor:pointer}
@@ -95,7 +95,7 @@ label{display:block;font-size:13px;color:var(--muted);margin-top:8px}
         <strong>VIGENTRA connecté</strong>
         <p class="notice">Les listes sont chargées depuis Supabase pour le compte connecté.</p>
       </div>
-      <button class="primary" onclick="showTab('agents')">+ Ajouter mon premier agent</button>
+      <button class="primary" onclick="showTab('agents')">+ Ajouter mon premier agent</button><div id="dashMore" class="card"></div>
     </section>
 
     <section id="agents" class="hidden">
@@ -176,6 +176,10 @@ label{display:block;font-size:13px;color:var(--muted);margin-top:8px}
         <p class="notice">Vérifie les mentions obligatoires et le taux de TVA avant émission.</p>
       </div><div id="invoiceList"></div>
     </section>
+    <section id="qualifications" class="hidden"><div class="section-title">🎓 Qualifications</div><div class="card"><label>Agent</label><select id="qualAgent"></select><label>Qualification</label><select id="qualType"><option>Carte professionnelle CNAPS</option><option>APS</option><option>SSIAP 1</option><option>SSIAP 2</option><option>SSIAP 3</option><option>SST</option><option>H0B0</option><option>Autre</option></select><label>Numéro</label><input id="qualNumber"><label>Expiration</label><input id="qualExpiry" type="date"><button class="primary" id="qualAddBtn">Enregistrer</button></div><div id="qualAlerts"></div><div id="qualList"></div></section>
+    <section id="maincourante" class="hidden"><div class="section-title">📝 Main courante</div><div class="card"><label>Type</label><select id="logType"><option value="information">Information</option><option value="incident">Incident</option><option value="consigne">Consigne</option><option value="anomalie">Anomalie</option></select><label>Priorité</label><select id="logPriority"><option>normale</option><option>basse</option><option>haute</option><option>urgente</option></select><label>Agent</label><select id="logAgent"></select><label>Site</label><select id="logSite"></select><label>Titre</label><input id="logTitle"><label>Compte rendu</label><textarea id="logDescription" rows="4"></textarea><button class="primary" id="logAddBtn">Enregistrer l'entrée</button></div><div id="logList"></div></section>
+    <section id="rondes" class="hidden"><div class="section-title">🚶 Rondes</div><div class="card"><label>Site</label><select id="roundSite"></select><label>Point de contrôle</label><input id="roundName" placeholder="Entrée principale"><label>Code / repère</label><input id="roundCode"><button class="primary" id="roundAddBtn">Créer le point</button></div><div class="card"><label>Point</label><select id="passagePoint"></select><label>Agent</label><select id="passageAgent"></select><label>Observation</label><input id="passageNote"><button class="primary" id="passageAddBtn">Enregistrer passage</button></div><div id="roundList"></div><div id="passageList"></div><p class="notice">L'horodatage ne prouve pas à lui seul la présence physique.</p></section>
+    <section id="notifications" class="hidden"><div class="section-title">🔔 Alertes</div><div class="card"><label>Titre</label><input id="noticeTitle"><label>Message</label><textarea id="noticeMessage" rows="3"></textarea><label>Niveau</label><select id="noticeLevel"><option value="info">Information</option><option value="attention">Attention</option><option value="urgent">Urgent</option></select><button class="primary" id="noticeAddBtn">Créer l'alerte</button><button class="secondary" id="noticeRefreshBtn">Vérifier les expirations</button></div><div id="noticeList"></div><p class="notice">Alertes internes à l'application, sans notification push en arrière-plan.</p></section>
     <section id="assistant" class="hidden">
       <div class="section-title">✦ Assistance VIGENTRA</div>
       <div class="card"><p class="notice">Aide automatisée gratuite, sans clé API externe.</p>
@@ -195,7 +199,11 @@ label{display:block;font-size:13px;color:var(--muted);margin-top:8px}
   <button data-tab="planning" onclick="showTab('planning')"><span>▣</span>Planning</button>
   <button data-tab="pointage" onclick="showTab('pointage')"><span>◷</span>Pointage</button>
   <button data-tab="factures" onclick="showTab('factures')"><span>€</span>Factures</button>
-  <button data-tab="assistant" onclick="showTab('assistant')"><span>✦</span>Aide IA</button>
+  <button data-tab="qualifications" onclick="showTab('qualifications')"><span>🎓</span>Qualifs</button>
+  <button data-tab="maincourante" onclick="showTab('maincourante')"><span>📝</span>Main courante</button>
+  <button data-tab="rondes" onclick="showTab('rondes')"><span>🚶</span>Rondes</button>
+  <button data-tab="notifications" onclick="showTab('notifications')"><span>🔔</span>Alertes</button>
+  <button data-tab="assistant" onclick="showTab('assistant')"><span>✦</span>Aide</button>
 </nav>
 
 <script>
@@ -238,7 +246,7 @@ function esc(v) {
 }
 
 function showTab(tab) {
-  ['home','agents','sites','planning','pointage','factures','assistant'].forEach(id => {
+  ['home','agents','sites','planning','pointage','factures','qualifications','maincourante','rondes','notifications','assistant'].forEach(id => {
     $(id).classList.toggle('hidden', id !== tab);
   });
 
@@ -456,19 +464,25 @@ $('addSiteBtn').onclick = async () => {
 };
 
 
-let pointages=[], factures=[];
+let pointages=[],factures=[],qualifications=[],logs=[],roundPoints=[],roundPassages=[],notifications=[];
 async function loadExtraData(){
- const [c,i]=await Promise.all([db.from('pointages').select('*').order('pointage_at',{ascending:false}),db.from('factures').select('*').order('date_facture',{ascending:false})]);
- if(c.error||i.error){msg('appMsg','Erreur : '+[c.error,i.error].filter(Boolean).map(e=>e.message).join(' / '));return;}
- pointages=c.data||[];factures=i.data||[];renderExtra();
+ const r=await Promise.all([db.from('pointages').select('*').order('pointage_at',{ascending:false}),db.from('factures').select('*').order('date_facture',{ascending:false}),db.from('qualifications').select('*').order('date_expiration',{ascending:true}),db.from('main_courante').select('*').order('created_at',{ascending:false}),db.from('ronde_points').select('*').order('created_at',{ascending:false}),db.from('ronde_passages').select('*').order('passage_at',{ascending:false}),db.from('notifications').select('*').order('created_at',{ascending:false})]);
+ const err=r.map((x,i)=>x.error?['pointages','factures','qualifications','main courante','rondes','passages','notifications'][i]+': '+x.error.message:null).filter(Boolean);if(err.length)msg('appMsg','Certaines données non chargées : '+err.join(' / '));
+ [pointages,factures,qualifications,logs,roundPoints,roundPassages,notifications]=r.map(x=>x.data||[]);renderExtra();
 }
 function renderExtra(){
- const ao=agents.map(a=>'<option value="'+esc(a.id)+'">'+esc(agentNameOf(a))+'</option>').join('');
- const so=sites.map(x=>'<option value="'+esc(x.id)+'">'+esc(siteNameOf(x))+'</option>').join('');
- $('clockAgent').innerHTML=ao;$('clockSite').innerHTML=so;$('qrSite').innerHTML=so;
- $('clockShift').innerHTML='<option value="">Sans vacation liée</option>'+shifts.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.date_vacation)+' '+esc(String(x.heure_debut).slice(0,5))+'-'+esc(String(x.heure_fin).slice(0,5))+'</option>').join('');
- $('clockList').innerHTML=pointages.length?pointages.map(p=>{const a=agents.find(x=>String(x.id)===String(p.agent_id)),site=sites.find(x=>String(x.id)===String(p.site_id));return '<div class="item"><div><strong>'+esc(p.type==='debut'?'Prise de poste':'Fin de poste')+' · '+esc(new Date(p.pointage_at).toLocaleString('fr-FR'))+'</strong><small>'+esc(a?agentNameOf(a):'Agent')+' · '+esc(site?siteNameOf(site):'Site')+' · '+esc(p.methode)+'</small></div></div>';}).join(''):'<div class="empty">Aucun pointage.</div>';
+ const ao=agents.map(a=>'<option value="'+esc(a.id)+'">'+esc(agentNameOf(a))+'</option>').join(''),so=sites.map(s=>'<option value="'+esc(s.id)+'">'+esc(siteNameOf(s))+'</option>').join('');
+ ['qualAgent','logAgent','passageAgent'].forEach(id=>$(id).innerHTML=ao);$('logSite').innerHTML='<option value="">Aucun site</option>'+so;$('roundSite').innerHTML=so;$('passagePoint').innerHTML=roundPoints.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.nom)+'</option>').join('');
+ $('clockAgent').innerHTML=ao;$('clockSite').innerHTML=so;$('qrSite').innerHTML=so;$('clockShift').innerHTML='<option value="">Sans vacation liée</option>'+shifts.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.date_vacation)+' '+esc(String(x.heure_debut).slice(0,5))+'-'+esc(String(x.heure_fin).slice(0,5))+'</option>').join('');
+ $('clockList').innerHTML=pointages.length?pointages.map(p=>'<div class="item"><div><strong>'+esc(p.type==='debut'?'Prise de poste':'Fin de poste')+' · '+esc(new Date(p.pointage_at).toLocaleString('fr-FR'))+'</strong></div></div>').join(''):'<div class="empty">Aucun pointage.</div>';
  $('invoiceList').innerHTML=factures.length?factures.map(f=>'<div class="item"><div><strong>'+esc(f.numero)+' · '+esc(f.client_nom)+'</strong><small>'+esc(f.description)+' · '+Number(f.total_ttc).toFixed(2)+' € TTC · '+esc(f.statut)+'</small></div><button onclick="markInvoicePaid('+Number(f.id)+')">Payée</button></div>').join(''):'<div class="empty">Aucune facture.</div>';
+ $('qualList').innerHTML=qualifications.map(q=>'<div class="item"><div><strong>'+esc(q.type)+'</strong><small>Agent '+esc(q.agent_id)+' · expiration '+esc(q.date_expiration||'non renseignée')+'</small></div><button onclick="deleteExtraRow(\'qualifications\','+Number(q.id)+')">✕</button></div>').join('')||'<div class="empty">Aucune qualification.</div>';
+ const now=new Date();now.setHours(0,0,0,0);const limit=new Date(now);limit.setDate(limit.getDate()+60);const due=qualifications.filter(q=>q.date_expiration&&new Date(q.date_expiration+'T00:00:00')<=limit);$('qualAlerts').innerHTML=due.map(q=>'<div class="msg">'+esc(q.type)+' · '+esc(q.date_expiration)+(new Date(q.date_expiration+'T00:00:00')<now?' — EXPIRÉE':'')+'</div>').join('')||'<div class="msg">Aucune échéance dans les 60 jours parmi les dates renseignées.</div>';
+ $('logList').innerHTML=logs.map(x=>'<div class="item"><div><strong>'+esc(x.titre)+' · '+esc(x.priorite)+'</strong><small>'+esc(x.type)+' · '+esc(new Date(x.created_at).toLocaleString('fr-FR'))+' · '+esc(x.statut)+'</small><p>'+esc(x.description)+'</p></div><button onclick="closeLog('+Number(x.id)+')">Clore</button></div>').join('')||'<div class="empty">Aucune entrée.</div>';
+ $('roundList').innerHTML=roundPoints.map(p=>'<div class="item"><div><strong>'+esc(p.nom)+'</strong><small>'+esc(p.code||'Point de contrôle')+'</small></div><button onclick="deleteExtraRow(\'ronde_points\','+Number(p.id)+')">✕</button></div>').join('')||'<div class="empty">Aucun point de contrôle.</div>';
+ $('passageList').innerHTML=roundPassages.slice(0,25).map(p=>'<div class="item"><div><strong>'+esc(roundPoints.find(x=>String(x.id)===String(p.point_id))?.nom||'Point')+'</strong><small>'+esc(new Date(p.passage_at).toLocaleString('fr-FR'))+' · '+esc(p.note||'Passage enregistré')+'</small></div></div>').join('')||'<div class="empty">Aucun passage.</div>';
+ $('noticeList').innerHTML=notifications.map(n=>'<div class="item"><div><strong>'+esc(n.titre)+' · '+esc(n.niveau)+'</strong><small>'+esc(new Date(n.created_at).toLocaleString('fr-FR'))+(n.lu?' · Lu':' · Non lu')+'</small><p>'+esc(n.message)+'</p></div><button onclick="markNotificationRead('+Number(n.id)+')">Lu</button></div>').join('')||'<div class="empty">Aucune alerte.</div>';
+ $('dashMore').innerHTML='<strong>Vue du dirigeant</strong><p class="notice">'+logs.length+' entrée(s) main courante · '+qualifications.length+' qualification(s) · '+roundPassages.length+' passage(s) de ronde</p><p class="notice">'+factures.filter(f=>!['payee','annulee'].includes(f.statut)).length+' facture(s) à suivre · '+notifications.filter(n=>!n.lu).length+' alerte(s) non lue(s)</p>';
 }
 async function saveClock(type,method){
  if(!currentUser)return;
@@ -498,6 +512,15 @@ $('invoiceCreateBtn').onclick=async()=>{
  $('invoiceClient').value='';$('invoiceDescription').value='';msg('appMsg','Brouillon de facture créé.');await loadExtraData();
 };
 async function markInvoicePaid(id){const {error}=await db.from('factures').update({statut:'payee'}).eq('id',id).eq('user_id',currentUser.id);if(error)return msg('appMsg',error.message);await loadExtraData();}
+async function deleteExtraRow(table,id){if(!confirm('Supprimer cet élément ?'))return;const {error}=await db.from(table).delete().eq('id',id).eq('user_id',currentUser.id);if(error)return msg('appMsg',error.message);await loadExtraData();}
+async function closeLog(id){const {error}=await db.from('main_courante').update({statut:'clos'}).eq('id',id).eq('user_id',currentUser.id);if(error)return msg('appMsg',error.message);await loadExtraData();}
+async function markNotificationRead(id){const {error}=await db.from('notifications').update({lu:true}).eq('id',id).eq('user_id',currentUser.id);if(error)return msg('appMsg',error.message);await loadExtraData();}
+$('qualAddBtn').onclick=async()=>{const agent_id=$('qualAgent').value,type=$('qualType').value,date_expiration=$('qualExpiry').value||null,numero=$('qualNumber').value.trim()||null;if(!agent_id)return msg('appMsg','Ajoute un agent.');const {error}=await db.from('qualifications').insert({user_id:currentUser.id,agent_id,type,date_expiration,numero});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Qualification enregistrée.');};
+$('logAddBtn').onclick=async()=>{const titre=$('logTitle').value.trim(),description=$('logDescription').value.trim();if(!titre||!description)return msg('appMsg','Renseigne le titre et le compte rendu.');const {error}=await db.from('main_courante').insert({user_id:currentUser.id,type:$('logType').value,priorite:$('logPriority').value,agent_id:$('logAgent').value||null,site_id:$('logSite').value||null,titre,description});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Entrée enregistrée.');};
+$('roundAddBtn').onclick=async()=>{const site_id=$('roundSite').value,nom=$('roundName').value.trim(),code=$('roundCode').value.trim()||null;if(!site_id||!nom)return msg('appMsg','Choisis un site et un nom de point.');const {error}=await db.from('ronde_points').insert({user_id:currentUser.id,site_id,nom,code});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Point créé.');};
+$('passageAddBtn').onclick=async()=>{const point_id=$('passagePoint').value,agent_id=$('passageAgent').value||null,note=$('passageNote').value.trim()||null;if(!point_id)return msg('appMsg','Crée un point de contrôle.');const {error}=await db.from('ronde_passages').insert({user_id:currentUser.id,point_id,agent_id,note});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Passage enregistré.');};
+$('noticeAddBtn').onclick=async()=>{const titre=$('noticeTitle').value.trim(),message=$('noticeMessage').value.trim(),niveau=$('noticeLevel').value;if(!titre||!message)return msg('appMsg','Renseigne le titre et le message.');const {error}=await db.from('notifications').insert({user_id:currentUser.id,titre,message,niveau});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Alerte créée.');};
+$('noticeRefreshBtn').onclick=async()=>{await loadExtraData();const now=new Date();now.setHours(0,0,0,0);const limit=new Date(now);limit.setDate(limit.getDate()+60);const due=qualifications.filter(q=>q.date_expiration&&new Date(q.date_expiration+'T00:00:00')<=limit);let count=0;for(const q of due){const {error}=await db.from('notifications').insert({user_id:currentUser.id,titre:'Échéance qualification',message:q.type+' expire le '+q.date_expiration,niveau:new Date(q.date_expiration+'T00:00:00')<now?'urgent':'attention'});if(!error)count++;}await loadExtraData();msg('appMsg',count+' alerte(s) créée(s).');};
 function answerAssistant(question){
  const q=question.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');let answer;
  if(!q.trim())answer='Écris une question.';
