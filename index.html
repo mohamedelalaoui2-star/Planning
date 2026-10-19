@@ -98,6 +98,69 @@ header{background:linear-gradient(135deg,#171922,#11141e 65%,#20283b);box-shadow
 .primary{background:linear-gradient(135deg,#e43b48,#b91f2b);box-shadow:0 5px 14px rgba(201,39,50,.16)}
 .secondary{background:linear-gradient(135deg,#303747,#252a36);border:1px solid #454b5c}
 .item{border:1px solid rgba(255,255,255,.045)}
+
+/* VIGENTRA PRO UI — redesign visuel */
+:root{
+ --bg:#0b1020;--panel:#121a2b;--panel2:#18243a;--red:#ef4444;--blue:#4f8cff;--gold:#e6bd68;
+ --text:#f4f7ff;--muted:#9aa8c2;--line:#273650;--shadow:0 16px 38px rgba(0,0,0,.24)
+}
+html{background:var(--bg)}
+body{background:radial-gradient(ellipse at 15% -10%,rgba(48,91,170,.23),transparent 40%),var(--bg);color:var(--text);letter-spacing:.01em}
+header{background:rgba(12,18,33,.94);border-bottom:1px solid #26334b;box-shadow:0 8px 28px rgba(0,0,0,.18);backdrop-filter:blur(20px)}
+.brand{gap:14px}
+.logo{background:linear-gradient(145deg,#ff5361,#c91d38);border:1px solid rgba(255,255,255,.16);box-shadow:0 8px 24px rgba(239,68,68,.25);border-radius:15px}
+h1{font-size:23px;letter-spacing:.12em;font-weight:850}
+header p{color:#9eacc5;font-size:12px;letter-spacing:.04em}
+main{max-width:1220px}
+section#auth{max-width:520px;margin:44px auto;border:1px solid #2c3d5b;background:linear-gradient(145deg,rgba(23,34,56,.98),rgba(15,23,39,.98));box-shadow:0 24px 70px rgba(0,0,0,.34);padding:26px}
+#auth h2{font-size:25px;letter-spacing:-.03em;margin:0 0 10px}
+.notice{color:#a8b5cc;line-height:1.65}
+.card{background:linear-gradient(145deg,rgba(22,32,52,.97),rgba(16,25,42,.98));border:1px solid #2a3a56;box-shadow:var(--shadow);border-radius:18px;padding:20px}
+.section-title{font-size:20px;font-weight:800;letter-spacing:-.025em;color:#f4f7ff;margin:26px 0 14px}
+.stats{gap:14px}
+.stats .card{position:relative;overflow:hidden;min-height:116px;padding:20px}
+.stats .card:after{content:"";position:absolute;right:-20px;top:-30px;width:95px;height:95px;border-radius:50%;background:rgba(79,140,255,.09)}
+.stat-label{color:#a8b5cc;font-weight:650}
+.stat-num{font-size:34px;letter-spacing:-.05em}
+label{color:#aab7cf;font-weight:650;font-size:12px;letter-spacing:.035em;text-transform:uppercase}
+input,select,textarea{background:#0b1324;border:1px solid #314361;color:#f4f7ff;border-radius:11px;transition:border-color .15s,box-shadow .15s}
+input::placeholder,textarea::placeholder{color:#657692}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#5d91ff;box-shadow:0 0 0 3px rgba(79,140,255,.15)}
+button{font-weight:700;transition:transform .15s,filter .15s,border-color .15s}
+button:active{transform:scale(.985)}
+.primary{background:linear-gradient(135deg,#f04452,#c9263a);box-shadow:0 7px 18px rgba(239,68,68,.18);border:1px solid rgba(255,255,255,.1)}
+.primary:hover,.secondary:hover{filter:brightness(1.1)}
+.secondary{background:linear-gradient(135deg,#233653,#1a2941);border:1px solid #354b6c;color:#e7efff}
+.item{background:linear-gradient(135deg,#19263d,#141f33);border:1px solid #293b58;border-radius:13px;padding:15px}
+.item strong{font-size:14px;color:#f4f7ff}
+.item small{color:#9eacc5;line-height:1.55}
+.msg{background:#13223a;border:1px solid #2d4770;color:#dce8ff;border-radius:12px;line-height:1.6}
+.empty{color:#91a0bb;padding:18px 8px}
+#workspace>.card:first-child{border-color:#304568;background:linear-gradient(115deg,#172b49,#121b2e 72%);margin-bottom:24px}
+#workspace>.card:first-child strong{font-size:16px}
+nav{background:rgba(10,16,29,.96);border-top:1px solid #2a3a56;backdrop-filter:blur(24px);box-shadow:0 -12px 35px rgba(0,0,0,.2)}
+nav button{color:#8797b3;border-radius:12px;font-weight:650}
+nav button.active{background:linear-gradient(135deg,rgba(239,68,68,.22),rgba(79,140,255,.13));color:#fff;box-shadow:inset 0 0 0 1px rgba(239,68,68,.25)}
+nav span{filter:saturate(.9)}
+@media(min-width:900px){
+ body{background:radial-gradient(ellipse at 35% 0%,rgba(48,91,170,.16),transparent 45%),var(--bg)}
+ header{padding:20px 34px}
+ main{padding:30px 38px 125px;margin-left:auto;margin-right:auto}
+ .section-title{font-size:22px}
+ .stats .card{min-height:132px}
+ nav{width:min(100% - 64px,1050px);border:1px solid #2a3a56;border-bottom:0;border-radius:20px 20px 0 0}
+}
+@media(max-width:520px){
+ header{padding:calc(13px + env(safe-area-inset-top)) 15px 13px}
+ h1{font-size:21px}
+ main{padding-left:12px;padding-right:12px}
+ section#auth{margin:22px auto;padding:20px}
+ .card{padding:16px}
+ .stats .card{padding:14px;min-height:102px}
+ .stat-num{font-size:29px}
+ .section-title{font-size:19px}
+}
+
 </style>
 </head>
 <body>
