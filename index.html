@@ -1304,6 +1304,38 @@ db.auth.onAuthStateChange((event, session) => {
 });
 </script>
 <script>
+/* Diagnostic de secours indépendant du script principal */
+(function(){
+  function showDiagnostic(message){
+    const box=document.getElementById('authMsg');
+    if(box){box.textContent=message;box.classList.remove('hidden');}
+  }
+  window.addEventListener('error',function(event){
+    if(event && (event.message || event.target)){
+      const detail=event.message || 'Une ressource JavaScript ne se charge pas.';
+      showDiagnostic('Erreur technique VIGENTRA : '+detail+'. Recharge la page. Si cela persiste, envoie cette capture au support.');
+    }
+  });
+  window.addEventListener('unhandledrejection',function(event){
+    const reason=event.reason;
+    showDiagnostic('Erreur de connexion VIGENTRA : '+(reason && reason.message ? reason.message : 'échec réseau ou serveur indisponible')+'. Réessaie après avoir vérifié Internet.');
+  });
+  window.addEventListener('load',function(){
+    const login=document.getElementById('loginBtn');
+    if(!login) return;
+    if(typeof window.supabase==='undefined'){
+      showDiagnostic('Le module de connexion Supabase est bloqué ou indisponible. Essaie d’ouvrir VIGENTRA dans Safari, sans navigation privée, puis recharge.');
+      return;
+    }
+    if(!login.onclick){
+      login.addEventListener('click',function(){
+        showDiagnostic('Le bouton de connexion n’a pas été initialisé. Recharge le site dans un nouvel onglet. Si le message revient, envoie cette capture.');
+      });
+    }
+  });
+})();
+</script>
+<script>
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 }
