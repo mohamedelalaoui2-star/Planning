@@ -371,7 +371,65 @@ main{padding-bottom:calc(190px + env(safe-area-inset-bottom))}
 .planning-tools .grid{margin-top:10px}
 .planning-tools select{width:100%;min-width:0}
 .planning-tools #planningFilterReset{width:100%;margin-top:12px}
-#planningPrintBtn{width:100%;margin-top:10px}.planning-tools #planningFilterReset{margin-bottom:2px}</style>
+#planningPrintBtn{width:100%;margin-top:10px}.planning-tools #planningFilterReset{margin-bottom:2px}
+/* VIGENTRA executive home screen */
+#home{display:grid;gap:0}
+.home-hero{
+ position:relative;overflow:hidden;padding:23px 21px 17px;border-radius:24px;
+ background:radial-gradient(ellipse at 95% 0%,rgba(54,104,186,.27),transparent 48%),linear-gradient(140deg,#172945 0%,#101a2c 62%,#0c1525 100%);
+ border:1px solid rgba(111,146,199,.32);box-shadow:0 18px 38px rgba(0,0,0,.2);margin-bottom:26px
+}
+.home-hero:after{content:"";position:absolute;width:190px;height:190px;border:1px solid rgba(142,174,225,.10);border-radius:50%;right:-86px;top:65px;box-shadow:0 0 0 22px rgba(142,174,225,.025),0 0 0 48px rgba(142,174,225,.02);pointer-events:none}
+.hero-top{display:flex;align-items:center;justify-content:space-between;gap:8px;position:relative;z-index:1}
+.hero-eyebrow,.hero-version{font-size:9px;font-weight:800;letter-spacing:.12em;color:#b9c9e2}
+.hero-eyebrow{display:flex;align-items:center;gap:7px}
+.hero-version{padding:6px 8px;border-radius:7px;border:1px solid rgba(155,184,226,.2);background:rgba(255,255,255,.035)}
+.status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#5fd4a1;box-shadow:0 0 10px rgba(95,212,161,.45);flex-shrink:0}
+.hero-title{position:relative;z-index:1;font-size:clamp(32px,8vw,46px);line-height:1.04;letter-spacing:-.055em;font-weight:850;margin-top:30px;color:#f5f8ff}
+.hero-title span{color:#ff5368}
+.hero-subtitle{position:relative;z-index:1;max-width:310px;color:#aebed6;font-size:13px;line-height:1.65;margin:13px 0 20px}
+.hero-actions{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.hero-actions button{min-height:47px;padding:10px 9px;font-size:12px;font-weight:750;white-space:normal}
+.hero-secondary{border:1px solid #354c6c;border-radius:13px;background:rgba(255,255,255,.035);color:#e8effb}
+.hero-footer{display:flex;align-items:center;gap:7px;margin-top:19px;padding-top:14px;border-top:1px solid rgba(151,177,215,.15);font-size:8px;letter-spacing:.1em;color:#8095b6;font-weight:800}
+.home-section-heading{display:flex;align-items:end;justify-content:space-between;gap:10px;margin:0 1px 13px}
+.home-section-heading h2{font-size:22px;letter-spacing:-.035em;margin:4px 0 0;color:#f3f6ff}
+.section-kicker{font-size:9px;letter-spacing:.14em;font-weight:850;color:#8199bc}
+.live-pill{display:flex;align-items:center;gap:6px;font-size:9px;color:#a9bad2;border:1px solid #293d59;border-radius:999px;padding:7px 9px;white-space:nowrap}
+.live-pill .status-dot{width:6px;height:6px}
+#home .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:26px}
+#home .stats .stat-card{min-width:0;min-height:126px;padding:15px 15px 13px;margin:0;border-radius:17px;background:linear-gradient(145deg,#14233b,#101a2c);border:1px solid #293d5a;box-shadow:0 8px 20px rgba(0,0,0,.11)}
+#home .stat-label{display:flex;align-items:center;gap:7px;font-size:11px;line-height:1.35;color:#a9bad2;font-weight:700}
+.stat-icon{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:rgba(93,137,204,.13);color:#9ec4ff;font-size:15px}
+#home .stat-num{font-size:34px;line-height:1.1;letter-spacing:-.05em;font-weight:850;color:#f7f9ff;margin-top:14px}
+#home .stat-foot{font-size:10px;color:#7186a6;margin-top:7px}
+.home-tools-heading{margin-top:0}
+.home-quick-actions{display:grid;gap:9px;margin-bottom:18px}
+.quick-action{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:13px 14px;border:1px solid #293d59;border-radius:16px;background:linear-gradient(120deg,#14233a,#101a2c);color:#f4f7ff;min-height:70px}
+.quick-action>span:nth-child(2){flex:1;min-width:0}
+.quick-action strong{display:block;font-size:13px}
+.quick-action small{display:block;color:#8fa3c2;font-size:11px;margin-top:4px}
+.quick-icon{width:39px;height:39px;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:19px;flex-shrink:0}
+.red-icon{background:rgba(237,51,75,.14);color:#ff7383}.blue-icon{background:rgba(74,135,219,.15);color:#91bcff}.gold-icon{background:rgba(220,174,82,.13);color:#f1cc78}
+.quick-arrow{font-size:24px;color:#8198ba}
+#home .dashboard-summary{padding:17px;border-radius:18px;background:linear-gradient(140deg,#14233a,#0f192b);border-color:#293d59}
+#home .dashboard-summary>strong{font-size:15px}
+#home .dashboard-summary .notice{font-size:12px;line-height:1.6;color:#9dafca;margin:9px 0 0}
+@media(min-width:700px){
+ #home{grid-template-columns:1fr;gap:0}
+ .home-hero{padding:30px 32px}
+ .hero-title{font-size:48px}
+ #home .stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .home-quick-actions{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:380px){
+ .home-hero{padding:19px 16px 15px}
+ .hero-title{font-size:32px}
+ .hero-actions{grid-template-columns:1fr}
+ .hero-footer{font-size:7px;letter-spacing:.07em}
+ .live-pill{font-size:8px;padding:6px}
+}
+</style>
 </head>
 <body>
 
@@ -417,18 +475,30 @@ main{padding-bottom:calc(190px + env(safe-area-inset-bottom))}
     </div>
 
     <section id="home">
+      <div class="home-hero">
+        <div class="hero-top"><span class="hero-eyebrow"><span class="status-dot"></span> ESPACE DE PILOTAGE</span><span class="hero-version">VIGENTRA PRO</span></div>
+        <div class="hero-title">La sécurité,<br><span>maîtrisée.</span></div>
+        <p class="hero-subtitle">Pilote tes équipes, tes sites et tes vacations depuis un seul espace.</p>
+        <div class="hero-actions">
+          <button class="primary" onclick="showTab('planning')"><span>▦</span> Ouvrir le planning</button>
+          <button class="hero-secondary" onclick="showTab('agents')"><span>＋</span> Gérer les agents</button>
+        </div>
+        <div class="hero-footer"><span>GESTION OPÉRATIONNELLE</span><span>•</span><span>ÉQUIPES · SITES · MISSIONS</span></div>
+      </div>
+      <div class="home-section-heading"><div><span class="section-kicker">VUE D’ENSEMBLE</span><h2>Activité</h2></div><span class="live-pill"><span class="status-dot"></span> Données du compte</span></div>
       <div class="stats">
-        <div class="card"><div class="stat-label">👮 Agents</div><div class="stat-num" id="agentCount">0</div></div>
-        <div class="card"><div class="stat-label">🏢 Sites clients</div><div class="stat-num" id="siteCount">0</div></div>
-        <div class="card"><div class="stat-label">📅 Vacations</div><div class="stat-num" id="shiftCount">0</div></div>
-        <div class="card"><div class="stat-label">🕒 Heures planifiées</div><div class="stat-num" id="hoursCount">0 h</div></div>
+        <div class="card stat-card"><div class="stat-label"><span class="stat-icon">♙</span> Agents</div><div class="stat-num" id="agentCount">0</div><div class="stat-foot">Effectif enregistré</div></div>
+        <div class="card stat-card"><div class="stat-label"><span class="stat-icon">⌂</span> Sites clients</div><div class="stat-num" id="siteCount">0</div><div class="stat-foot">Sites suivis</div></div>
+        <div class="card stat-card"><div class="stat-label"><span class="stat-icon">▦</span> Vacations</div><div class="stat-num" id="shiftCount">0</div><div class="stat-foot">Missions planifiées</div></div>
+        <div class="card stat-card"><div class="stat-label"><span class="stat-icon">◷</span> Heures planifiées</div><div class="stat-num" id="hoursCount">0 h</div><div class="stat-foot">Volume horaire</div></div>
       </div>
-      <div class="section-title">Bienvenue dans ton espace</div>
-      <div class="card">
-        <strong>VIGENTRA connecté</strong>
-        <p class="notice">Les listes sont chargées depuis Supabase pour le compte connecté.</p>
+      <div class="home-section-heading home-tools-heading"><div><span class="section-kicker">ACCÈS RAPIDE</span><h2>Actions courantes</h2></div></div>
+      <div class="home-quick-actions">
+        <button class="quick-action" onclick="showTab('planning')"><span class="quick-icon red-icon">▦</span><span><strong>Planifier une vacation</strong><small>Organiser les affectations</small></span><span class="quick-arrow">›</span></button>
+        <button class="quick-action" onclick="showTab('pointage')"><span class="quick-icon blue-icon">◷</span><span><strong>Suivre les pointages</strong><small>Prises et fins de poste</small></span><span class="quick-arrow">›</span></button>
+        <button class="quick-action" onclick="showTab('factures')"><span class="quick-icon gold-icon">€</span><span><strong>Gérer la facturation</strong><small>Factures et suivi client</small></span><span class="quick-arrow">›</span></button>
       </div>
-      <button class="primary" onclick="showTab('agents')">+ Ajouter mon premier agent</button><div id="dashMore" class="card"></div>
+      <div id="dashMore" class="card dashboard-summary"></div>
     </section>
 
     <section id="agents" class="hidden">
