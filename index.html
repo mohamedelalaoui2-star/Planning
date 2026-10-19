@@ -458,15 +458,16 @@ function render() {
     : '<div class="empty">Aucune vacation planifiée.</div>';
 }
 
+function timeToMinutes(value) {
+  if (!value) return 0;
+  const [h, m] = String(value).slice(0,5).split(':').map(Number);
+  return h * 60 + m;
+}
+
 function durationHours(start, end) {
   if (!start || !end) return 0;
-
-  const [sh, sm] = String(start).slice(0,5).split(':').map(Number);
-  const [eh, em] = String(end).slice(0,5).split(':').map(Number);
-
-  let mins = eh * 60 + em - (sh * 60 + sm);
-  if (mins < 0) mins += 1440;
-
+  let mins = timeToMinutes(end) - timeToMinutes(start);
+  if (mins <= 0) mins += 1440;
   return Math.round(mins / 60 * 100) / 100;
 }
 
@@ -540,9 +541,12 @@ async function saveClock(type,method){
  if(!currentUser)return;
  const agent_id=$('clockAgent').value,site_id=$('clockSite').value,planning_id=$('clockShift').value||null;
  if(!agent_id||!site_id)return msg('appMsg','Ajoute un agent et un site avant de pointer.');
+ const lastForAgent=pointages.find(p=>String(p.agent_id)===String(agent_id)&&String(p.site_id)===String(site_id));
+ if(type==='fin'&&(!lastForAgent||lastForAgent.type!=='debut'))return msg('appMsg','Impossible de clôturer : aucune prise de poste ouverte trouvée pour cet agent sur ce site.');
+ if(type==='debut'&&lastForAgent&&lastForAgent.type==='debut')return msg('appMsg','Une prise de poste est déjà ouverte pour cet agent sur ce site. Enregistre d’abord la fin de poste.');
  const {error}=await db.from('pointages').insert({user_id:currentUser.id,agent_id,site_id,planning_id,type,methode:method});
  if(error)return msg('appMsg','Pointage impossible : '+error.message);
- msg('appMsg','Pointage enregistré.');await loadExtraData();
+ msg('appMsg',type==='debut'?'Prise de poste enregistrée.':'Fin de poste enregistrée.');await loadExtraData();
 }
 $('clockInBtn').onclick=()=>saveClock('debut','bouton');$('clockOutBtn').onclick=()=>saveClock('fin','bouton');
 $('makeQrBtn').onclick=()=>{
@@ -568,13 +572,13 @@ async function deleteExtraRow(table,id){if(!confirm('Supprimer cet élément ?')
 async function closeLog(id){const {error}=await db.from('main_courante').update({statut:'clos'}).eq('id',id).eq('user_id',currentUser.id);if(error)return msg('appMsg',error.message);await loadExtraData();}
 async function markNotificationRead(id){const {error}=await db.from('notifications').update({lu:true}).eq('id',id).eq('user_id',currentUser.id);if(error)return msg('appMsg',error.message);await loadExtraData();}
 $('qualAddBtn').onclick=async()=>{const agent_id=$('qualAgent').value,type=$('qualType').value,date_expiration=$('qualExpiry').value||null,numero=$('qualNumber').value.trim()||null;if(!agent_id)return msg('appMsg','Ajoute un agent.');const {error}=await db.from('qualifications').insert({user_id:currentUser.id,agent_id,type,date_expiration,numero});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Qualification enregistrée.');};
-$('logAddBtn').onclick=async()=>{const titre=$('logTitle').value.trim(),description=$('logDescription').value.trim();if(!titre||!description)return msg('appMsg','Renseigne le titre et le compte rendu.');const {error}=await db.from('main_courante').insert({user_id:currentUser.id,type:$('logType').value,priorite:$('logPriority').value,agent_id:$('logAgent').value||null,site_id:$('logSite').value||null,titre,description});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Entrée enregistrée.');};
+$('logAddBtn').onclick=async()=>{const titre=$('logTitle').value.trim(),description=$('logDescription').value.trim();if(!titre||!description)return msg('appMsg','Renseigne le titre et le compte rendu.');const {error}=await db.from('main_courante').insert({user_id:currentUser.id,type:$('logType').value,priorite:$('logPriority').value,agent_id:$('logAgent').value||null,site_id:$('logSite').value||null,titre,description});if(error)return msg('appMsg',error.message);$('logTitle').value='';$('logDescription').value='';await loadExtraData();msg('appMsg','Entrée enregistrée dans la main courante.');};
 $('roundAddBtn').onclick=async()=>{const site_id=$('roundSite').value,nom=$('roundName').value.trim(),code=$('roundCode').value.trim()||null;if(!site_id||!nom)return msg('appMsg','Choisis un site et un nom de point.');const {error}=await db.from('ronde_points').insert({user_id:currentUser.id,site_id,nom,code});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Point créé.');};
 $('passageAddBtn').onclick=async()=>{const point_id=$('passagePoint').value,agent_id=$('passageAgent').value||null,note=$('passageNote').value.trim()||null;if(!point_id)return msg('appMsg','Crée un point de contrôle.');const {error}=await db.from('ronde_passages').insert({user_id:currentUser.id,point_id,agent_id,note});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Passage enregistré.');};
 $('noticeAddBtn').onclick=async()=>{const titre=$('noticeTitle').value.trim(),message=$('noticeMessage').value.trim(),niveau=$('noticeLevel').value;if(!titre||!message)return msg('appMsg','Renseigne le titre et le message.');const {error}=await db.from('notifications').insert({user_id:currentUser.id,titre,message,niveau});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Alerte créée.');};
 $('noticeRefreshBtn').onclick=async()=>{await loadExtraData();const now=new Date();now.setHours(0,0,0,0);const limit=new Date(now);limit.setDate(limit.getDate()+60);const due=qualifications.filter(q=>q.date_expiration&&new Date(q.date_expiration+'T00:00:00')<=limit);let count=0;for(const q of due){const {error}=await db.from('notifications').insert({user_id:currentUser.id,titre:'Échéance qualification',message:q.type+' expire le '+q.date_expiration,niveau:new Date(q.date_expiration+'T00:00:00')<now?'urgent':'attention'});if(!error)count++;}await loadExtraData();msg('appMsg',count+' alerte(s) créée(s).');};
 function answerAssistant(question){
- const q=question.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');let answer;
+ const q=question.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');let answer;
  if(!q.trim())answer='Écris une question.';
  else if(/factur|client|tva|prix/.test(q))answer='Tu as '+factures.length+' facture(s). Vérifie le client, le montant HT, la TVA et les mentions légales avant émission.';
  else if(/pointage|presence|debut|fin|heure/.test(q))answer='Tu as '+pointages.length+' pointage(s). Compare les prises et fins de poste avant de valider les heures.';
@@ -607,6 +611,20 @@ $('addShiftBtn').onclick = async () => {
 
   if (heure_debut === heure_fin) {
     return msg('appMsg', 'Les heures de début et de fin ne peuvent pas être identiques.');
+  }
+
+  // Refuse les vacations qui se chevauchent pour le même agent.
+  const startMin = timeToMinutes(heure_debut);
+  const endMin = timeToMinutes(heure_fin) + (timeToMinutes(heure_fin) <= startMin ? 1440 : 0);
+  const overlaps = shifts.some(x => {
+    if (String(x.agent_id) !== String(agent_id) || x.date_vacation !== date_vacation) return false;
+    const oldStart = timeToMinutes(x.heure_debut);
+    const oldEndRaw = timeToMinutes(x.heure_fin);
+    const oldEnd = oldEndRaw <= oldStart ? oldEndRaw + 1440 : oldEndRaw;
+    return startMin < oldEnd && oldStart < endMin;
+  });
+  if (overlaps) {
+    return msg('appMsg', 'Attention : cet agent a déjà une vacation qui chevauche cet horaire le même jour.');
   }
 
   await insertRow('planning', {
