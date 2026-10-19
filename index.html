@@ -148,6 +148,43 @@ label{display:block;font-size:13px;color:var(--muted);margin-top:8px}
       </div>
       <div id="shiftList"></div>
     </section>
+    <section id="pointage" class="hidden">
+      <div class="section-title">◷ Pointage des agents</div>
+      <div class="card">
+        <label>Agent</label><select id="clockAgent"></select>
+        <label>Site client</label><select id="clockSite"></select>
+        <label>Vacation prévue (facultatif)</label><select id="clockShift"><option value="">Sans vacation liée</option></select>
+        <button class="primary" id="clockInBtn">Prise de poste</button>
+        <button class="secondary" id="clockOutBtn">Fin de poste</button>
+      </div>
+      <div class="card"><strong>QR code du site</strong><label>Site</label><select id="qrSite"></select>
+        <button class="secondary" id="makeQrBtn">Créer le QR code</button><div id="qrBox" class="msg hidden"></div>
+        <p class="notice">Le QR code identifie le site, mais ne prouve pas à lui seul la présence physique.</p>
+      </div>
+      <div id="clockList"></div>
+    </section>
+    <section id="factures" class="hidden">
+      <div class="section-title">€ Facturation clients</div>
+      <div class="card">
+        <label>Client</label><input id="invoiceClient" placeholder="Nom du client">
+        <label>Description</label><input id="invoiceDescription" placeholder="Surveillance du site">
+        <label>Type</label><select id="invoiceType"><option value="heures">Heures</option><option value="forfait">Forfait</option></select>
+        <label>Quantité</label><input id="invoiceQty" type="number" min="0.01" step="0.25" value="1">
+        <label>Prix unitaire HT (€)</label><input id="invoicePrice" type="number" min="0" step="0.01" value="25">
+        <label>TVA (%)</label><input id="invoiceVat" type="number" min="0" max="100" step="0.1" value="20">
+        <button class="primary" id="invoiceCreateBtn">Créer un brouillon</button>
+        <p class="notice">Vérifie les mentions obligatoires et le taux de TVA avant émission.</p>
+      </div><div id="invoiceList"></div>
+    </section>
+    <section id="assistant" class="hidden">
+      <div class="section-title">✦ Assistance VIGENTRA</div>
+      <div class="card"><p class="notice">Aide automatisée gratuite, sans clé API externe.</p>
+        <label>Ta question</label><input id="assistantQuestion" placeholder="Ex. Vérifie mon planning">
+        <button class="primary" id="assistantAskBtn">Demander de l’aide</button>
+        <button class="secondary" id="assistantAuditBtn">Analyser les données</button>
+        <div id="assistantAnswer" class="msg hidden" aria-live="polite"></div>
+      </div>
+    </section>
   </section>
 </main>
 
@@ -156,6 +193,9 @@ label{display:block;font-size:13px;color:var(--muted);margin-top:8px}
   <button data-tab="agents" onclick="showTab('agents')"><span>♙</span>Agents</button>
   <button data-tab="sites" onclick="showTab('sites')"><span>▦</span>Sites</button>
   <button data-tab="planning" onclick="showTab('planning')"><span>▣</span>Planning</button>
+  <button data-tab="pointage" onclick="showTab('pointage')"><span>◷</span>Pointage</button>
+  <button data-tab="factures" onclick="showTab('factures')"><span>€</span>Factures</button>
+  <button data-tab="assistant" onclick="showTab('assistant')"><span>✦</span>Aide IA</button>
 </nav>
 
 <script>
@@ -198,7 +238,7 @@ function esc(v) {
 }
 
 function showTab(tab) {
-  ['home','agents','sites','planning'].forEach(id => {
+  ['home','agents','sites','planning','pointage','factures','assistant'].forEach(id => {
     $(id).classList.toggle('hidden', id !== tab);
   });
 
@@ -260,6 +300,7 @@ async function openWorkspace(user) {
   $('accountLabel').textContent = user.email || 'Espace connecté';
   $('shiftDate').value = new Date().toISOString().slice(0,10);
   await refreshData();
+  await loadExtraData();
 }
 
 async function refreshData() {
@@ -412,6 +453,66 @@ $('addSiteBtn').onclick = async () => {
     $('siteName').value = '';
     $('siteAddress').value = '';
   }
+};
+
+
+let pointages=[], factures=[];
+async function loadExtraData(){
+ const [c,i]=await Promise.all([db.from('pointages').select('*').order('pointage_at',{ascending:false}),db.from('factures').select('*').order('date_facture',{ascending:false})]);
+ if(c.error||i.error){msg('appMsg','Erreur : '+[c.error,i.error].filter(Boolean).map(e=>e.message).join(' / '));return;}
+ pointages=c.data||[];factures=i.data||[];renderExtra();
+}
+function renderExtra(){
+ const ao=agents.map(a=>'<option value="'+esc(a.id)+'">'+esc(agentNameOf(a))+'</option>').join('');
+ const so=sites.map(x=>'<option value="'+esc(x.id)+'">'+esc(siteNameOf(x))+'</option>').join('');
+ $('clockAgent').innerHTML=ao;$('clockSite').innerHTML=so;$('qrSite').innerHTML=so;
+ $('clockShift').innerHTML='<option value="">Sans vacation liée</option>'+shifts.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.date_vacation)+' '+esc(String(x.heure_debut).slice(0,5))+'-'+esc(String(x.heure_fin).slice(0,5))+'</option>').join('');
+ $('clockList').innerHTML=pointages.length?pointages.map(p=>{const a=agents.find(x=>String(x.id)===String(p.agent_id)),site=sites.find(x=>String(x.id)===String(p.site_id));return '<div class="item"><div><strong>'+esc(p.type==='debut'?'Prise de poste':'Fin de poste')+' · '+esc(new Date(p.pointage_at).toLocaleString('fr-FR'))+'</strong><small>'+esc(a?agentNameOf(a):'Agent')+' · '+esc(site?siteNameOf(site):'Site')+' · '+esc(p.methode)+'</small></div></div>';}).join(''):'<div class="empty">Aucun pointage.</div>';
+ $('invoiceList').innerHTML=factures.length?factures.map(f=>'<div class="item"><div><strong>'+esc(f.numero)+' · '+esc(f.client_nom)+'</strong><small>'+esc(f.description)+' · '+Number(f.total_ttc).toFixed(2)+' € TTC · '+esc(f.statut)+'</small></div><button onclick="markInvoicePaid('+Number(f.id)+')">Payée</button></div>').join(''):'<div class="empty">Aucune facture.</div>';
+}
+async function saveClock(type,method){
+ if(!currentUser)return;
+ const agent_id=$('clockAgent').value,site_id=$('clockSite').value,planning_id=$('clockShift').value||null;
+ if(!agent_id||!site_id)return msg('appMsg','Ajoute un agent et un site avant de pointer.');
+ const {error}=await db.from('pointages').insert({user_id:currentUser.id,agent_id,site_id,planning_id,type,methode:method});
+ if(error)return msg('appMsg','Pointage impossible : '+error.message);
+ msg('appMsg','Pointage enregistré.');await loadExtraData();
+}
+$('clockInBtn').onclick=()=>saveClock('debut','bouton');$('clockOutBtn').onclick=()=>saveClock('fin','bouton');
+$('makeQrBtn').onclick=()=>{
+ const site=sites.find(x=>String(x.id)===$('qrSite').value);if(!site)return msg('appMsg','Choisis un site.');
+ const url=new URL(location.href);url.searchParams.set('vigentra_site',String(site.id));
+ const box=$('qrBox');box.classList.remove('hidden');box.innerHTML='<div id="qrCanvas" style="background:white;padding:12px;display:inline-block"></div><p>'+esc(siteNameOf(site))+'</p>';
+ const script=document.createElement('script');script.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+ script.onload=()=>{if(window.QRCode)new QRCode($('qrCanvas'),{text:url.toString(),width:190,height:190});else msg('appMsg','Génération QR indisponible.');};
+ script.onerror=()=>msg('appMsg','Impossible de charger la génération QR.');document.head.appendChild(script);
+};
+$('invoiceCreateBtn').onclick=async()=>{
+ const client_nom=$('invoiceClient').value.trim(),description=$('invoiceDescription').value.trim(),type_facturation=$('invoiceType').value,quantite=Number($('invoiceQty').value),prix_unitaire_ht=Number($('invoicePrice').value),taux_tva=Number($('invoiceVat').value);
+ if(!client_nom||!description)return msg('appMsg','Renseigne le client et la description.');
+ if(!(quantite>0)||prix_unitaire_ht<0||taux_tva<0||taux_tva>100)return msg('appMsg','Vérifie quantité, prix et TVA.');
+ const total_ht=Math.round(quantite*prix_unitaire_ht*100)/100,total_tva=Math.round(quantite*prix_unitaire_ht*taux_tva)/10000,total_ttc=Math.round((total_ht+total_tva)*100)/100;
+ const numero='VIG-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-6);
+ const {error}=await db.from('factures').insert({user_id:currentUser.id,numero,client_nom,description,type_facturation,quantite,prix_unitaire_ht,taux_tva,total_ht,total_tva,total_ttc,statut:'brouillon'});
+ if(error)return msg('appMsg','Facture impossible : '+error.message);
+ $('invoiceClient').value='';$('invoiceDescription').value='';msg('appMsg','Brouillon de facture créé.');await loadExtraData();
+};
+async function markInvoicePaid(id){const {error}=await db.from('factures').update({statut:'payee'}).eq('id',id).eq('user_id',currentUser.id);if(error)return msg('appMsg',error.message);await loadExtraData();}
+function answerAssistant(question){
+ const q=question.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');let answer;
+ if(!q.trim())answer='Écris une question.';
+ else if(/factur|client|tva|prix/.test(q))answer='Tu as '+factures.length+' facture(s). Vérifie le client, le montant HT, la TVA et les mentions légales avant émission.';
+ else if(/pointage|presence|debut|fin|heure/.test(q))answer='Tu as '+pointages.length+' pointage(s). Compare les prises et fins de poste avant de valider les heures.';
+ else answer='VIGENTRA : '+agents.length+' agent(s), '+sites.length+' site(s), '+shifts.length+' vacation(s). Vérifie affectations, horaires, repos et qualifications. Cette aide automatisée fonctionne sans API externe.';
+ msg('assistantAnswer',answer);
+}
+$('assistantAskBtn').onclick=()=>answerAssistant($('assistantQuestion').value);
+$('assistantAuditBtn').onclick=()=>{
+ const issues=[];if(!agents.length)issues.push('Aucun agent');if(!sites.length)issues.push('Aucun site');if(!shifts.length)issues.push('Aucune vacation');if(!pointages.length)issues.push('Aucun pointage');
+ const by={};shifts.forEach(x=>(by[String(x.agent_id)] ||= []).push(x));let n=0;
+ Object.values(by).forEach(list=>{list.sort((a,b)=>String(a.date_vacation).localeCompare(String(b.date_vacation))||String(a.heure_debut).localeCompare(String(b.heure_debut)));for(let j=1;j<list.length;j++)if(list[j].date_vacation===list[j-1].date_vacation&&String(list[j].heure_debut)<String(list[j-1].heure_fin))n++;});
+ if(n)issues.push(n+' chevauchement(s) potentiel(s)');
+ msg('assistantAnswer',issues.length?'À vérifier : '+issues.join(' ; '):'Aucun problème simple détecté. Vérifie aussi les repos, qualifications et pointages.');
 };
 
 $('addShiftBtn').onclick = async () => {
