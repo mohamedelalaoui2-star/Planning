@@ -360,6 +360,13 @@ main{padding-bottom:calc(190px + env(safe-area-inset-bottom))}
 .planning-shift-details strong{display:block;overflow-wrap:anywhere}
 .planning-shift-details small{display:block;margin-top:5px}
 @media(max-width:520px){.planning-shift{gap:9px;padding:11px}.planning-shift-time{min-width:82px;padding-right:8px}.planning-shift-time strong{font-size:12px}.planning-shift-details strong{font-size:13px}}
+
+.planning-audit{display:grid;gap:8px;margin-top:12px}
+.planning-warning,.planning-ok{padding:12px 13px;border-radius:13px;display:grid;gap:5px}
+.planning-warning{background:rgba(237,95,65,.1);border:1px solid rgba(245,117,76,.32);color:#ffd0c3}
+.planning-ok{background:rgba(58,166,121,.09);border:1px solid rgba(58,166,121,.28);color:#b9f3d6}
+.planning-warning strong,.planning-ok strong{font-size:13px}
+.planning-warning small,.planning-ok small{font-size:12px;line-height:1.5;color:#b6c5db;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -478,6 +485,7 @@ main{padding-bottom:calc(190px + env(safe-area-inset-bottom))}
         </div>
         <button class="secondary" id="planningFilterReset" type="button">Afficher toutes les vacations</button>
         <div id="planningSummary" class="planning-summary" aria-live="polite"></div>
+        <div id="planningAudit" class="planning-audit" aria-live="polite"></div>
       </div>
       <div id="shiftList"></div>
     </section>
@@ -721,6 +729,38 @@ function render() {
     `<option value="${esc(s.id)}">${esc(siteNameOf(s))}</option>`
   ).join('');
 
+  const auditBox = $('planningAudit');
+  if (auditBox) {
+    const missing = shifts.filter(x => !agents.some(a => String(a.id) === String(x.agent_id)) || !sites.some(s => String(s.id) === String(x.site_id)));
+    const conflicts = [];
+    const ordered = [...shifts].sort((a,b) => String(a.date_vacation).localeCompare(String(b.date_vacation)) || String(a.heure_debut).localeCompare(String(b.heure_debut)));
+    const startStamp = x => {
+      const d = String(x.date_vacation || '');
+      const t = timeToMinutes(x.heure_debut);
+      return Date.parse(d + 'T00:00:00Z') / 60000 + t;
+    };
+    const endStamp = x => {
+      let e = startStamp(x) + durationHours(x.heure_debut,x.heure_fin) * 60;
+      return e;
+    };
+    for (let i=0;i<ordered.length;i++) {
+      for (let j=i+1;j<ordered.length;j++) {
+        const a=ordered[i], b=ordered[j];
+        if (!a.agent_id || String(a.agent_id)!==String(b.agent_id)) continue;
+        const aStart=startStamp(a), bStart=startStamp(b);
+        if (bStart >= endStamp(a)) break;
+        if (aStart < endStamp(b) && bStart < endStamp(a)) {
+          const name=agents.find(x=>String(x.id)===String(a.agent_id));
+          conflicts.push({a,b,name:name?agentNameOf(name):'Agent inconnu'});
+        }
+      }
+    }
+    const warnings=[];
+    if (conflicts.length) warnings.push('<div class="planning-warning"><strong>⚠ '+conflicts.length+' chevauchement(s) détecté(s)</strong><small>'+conflicts.slice(0,3).map(z=>esc(z.name)+' · '+esc(z.a.date_vacation)+' '+esc(String(z.a.heure_debut).slice(0,5))+'–'+esc(String(z.a.heure_fin).slice(0,5))+' / '+esc(z.b.date_vacation)+' '+esc(String(z.b.heure_debut).slice(0,5))+'–'+esc(String(z.b.heure_fin).slice(0,5))).join('<br>')+(conflicts.length>3?'<br>… et '+(conflicts.length-3)+' autre(s)':'')+'</small></div>');
+    if (missing.length) warnings.push('<div class="planning-warning"><strong>⚠ '+missing.length+' vacation(s) à vérifier</strong><small>Un agent ou un site associé est introuvable. Ouvre chaque vacation et vérifie les affectations.</small></div>');
+    if (!warnings.length) warnings.push('<div class="planning-ok"><strong>✓ Aucun chevauchement détecté</strong><small>Les affectations d’agents et de sites ont été vérifiées parmi les vacations enregistrées.</small></div>');
+    auditBox.innerHTML=warnings.join('');
+  }
   const filterFrom = $('planningFilterFrom')?.value || '';
   const filterTo = $('planningFilterTo')?.value || '';
   const filteredShifts = shifts.filter(x =>
