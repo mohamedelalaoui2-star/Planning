@@ -1116,7 +1116,63 @@ $('planningPrintBtn').addEventListener('click', () => {
   }).join('');
   const w=window.open('','_blank');
   if(!w)return msg('appMsg','Autorise les fenêtres surgissantes pour exporter le planning.');
-  w.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>VIGENTRA — Planning</title><style>body{font:13px Arial,sans-serif;color:#172033;padding:25px}h1{margin:0 0 6px;color:#142744}p{color:#566477}table{border-collapse:collapse;width:100%;margin-top:22px}th,td{border:1px solid #cbd4e1;padding:9px;text-align:left}th{background:#eaf0f8}.total{margin-top:18px;font-weight:bold}@media print{body{padding:0}}</style></head><body><h1>VIGENTRA — Planning des vacations</h1><p><strong>Période :</strong> '+esc(from||'Toutes dates')+' au '+esc(to||'Toutes dates')+'<br><strong>Agent :</strong> '+esc(agents.find(a=>String(a.id)===agentId)?agentNameOf(agents.find(a=>String(a.id)===agentId)):'Tous les agents')+'<br><strong>Site :</strong> '+esc(sites.find(s=>String(s.id)===siteId)?siteNameOf(sites.find(s=>String(s.id)===siteId)):'Tous les sites')+'<br><strong>Édité le :</strong> '+new Date().toLocaleDateString('fr-FR')+'</p><table><thead><tr><th>Date</th><th>Horaires</th><th>Agent</th><th>Site</th><th>Durée</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5">Aucune vacation sur cette période.</td></tr>')+'</tbody></table><p class="total">Vacations : '+list.length+' · Total planifié : '+list.reduce((sum,s)=>sum+durationHours(s.heure_debut,s.heure_fin),0)+' h</p><script>window.onload=function(){window.print()}<\/script></body></html>');
+  w.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>VIGENTRA — Planning</title><style>body{font:13px Arial,sans-serif;color:#172033;padding:25px}h1{margin:0 0 6px;color:#142744}p{color:#566477}table{border-collapse:collapse;width:100%;margin-top:22px}th,td{border:1px solid #cbd4e1;padding:9px;text-align:left}th{background:#eaf0f8}.total{margin-top:18px;font-weight:bold}@media print{body{padding:0}}
+/* Harmonisation professionnelle de tous les onglets */
+:root{--field:#0b1425;--surface:#142139;--surface-raised:#192943;--accent-line:#304867}
+section:not(.hidden){animation:tabReveal .22s ease-out}
+@keyframes tabReveal{from{opacity:.72;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+section:not(#home):not(#auth)>.section-title{display:flex;align-items:center;gap:10px;padding:5px 0 12px;margin:12px 0 16px;border-bottom:1px solid rgba(130,158,199,.18);font-size:21px}
+section:not(#home):not(#auth)>.section-title:after{content:"";height:3px;width:28px;border-radius:99px;background:linear-gradient(90deg,#ff5368,#477cff);margin-left:auto}
+section:not(#home)>.card{position:relative;overflow:hidden}
+section:not(#home)>.card>strong,section:not(#home) .planning-tools-head strong{font-size:15px;letter-spacing:-.01em}
+section .card p{max-width:68ch}
+section .card label:first-child{margin-top:2px}
+input,select,textarea{background:linear-gradient(180deg,#0b1425,#0e182b)!important;border:1px solid #30415e!important;color:#f4f7ff!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.015);transition:border-color .15s,box-shadow .15s}
+input::placeholder,textarea::placeholder{color:#687d9e}
+input:focus,select:focus,textarea:focus{border-color:#6795f5!important;box-shadow:0 0 0 3px rgba(79,140,255,.12)!important}
+select{color-scheme:dark}
+button{transition:transform .12s ease,filter .12s ease,border-color .12s ease}
+button:active{transform:scale(.985)}
+.primary{background:linear-gradient(135deg,#f04b5e,#c92343);border:1px solid rgba(255,255,255,.08);box-shadow:0 7px 18px rgba(226,45,72,.17)}
+.secondary{background:linear-gradient(135deg,#263955,#1a2940);border:1px solid #3a5274;color:#edf4ff}
+.item{background:linear-gradient(135deg,#17263e,#121e32);border:1px solid #2a3e5b!important;border-radius:14px;padding:13px}
+.item strong{color:#f4f7ff;font-size:13px}
+.item small{color:#94a9c9;line-height:1.5}
+.item p{font-size:12px;line-height:1.55;color:#b4c1d7}
+.empty{border:1px dashed #344a69;border-radius:13px;padding:17px;text-align:center;background:rgba(18,31,51,.5);line-height:1.5}
+.msg{border:1px solid #344a69;background:#16243a;color:#dce8fb;line-height:1.5}
+.notice{font-size:12px}
+.grid{gap:12px}
+#agents .card,#sites .card,#planning .card,#pointage .card,#factures .card,#qualifications .card,#maincourante .card,#rondes .card,#notifications .card,#assistant .card{margin-bottom:15px}
+#agentList,#siteList,#shiftList,#clockList,#invoiceList,#qualList,#logList,#roundList,#noticeList{margin-top:12px}
+#agentList .item,#siteList .item,#shiftList .item,#clockList .item,#invoiceList .item,#qualList .item,#logList .item,#roundList .item,#noticeList .item{box-shadow:0 8px 20px rgba(0,0,0,.12)}
+nav button{position:relative;color:#91a3c1;font-weight:650;letter-spacing:.005em}
+nav button.active{background:linear-gradient(145deg,rgba(239,68,68,.2),rgba(79,140,255,.08));box-shadow:inset 0 0 0 1px rgba(239,68,68,.35);color:#fff}
+nav button.active:before{content:"";position:absolute;top:0;left:25%;right:25%;height:2px;border-radius:9px;background:#ff5368}
+nav span{filter:saturate(.85)}
+#planning .planning-tools,#planning .week-view-card{border-color:#344b6d}
+#planning .planning-summary>div{background:#0e192b;border:1px solid #2d4362;border-radius:12px;padding:11px}
+#planning .planning-audit{border-radius:12px}
+#planning .planning-shift{align-items:center}
+#planning .planning-shift-time{background:#0d192b;border:1px solid #2d4260;border-radius:11px;padding:8px;min-width:84px}
+#planning .planning-shift-date{color:#8fa8ce}
+#planning .planning-shift-details{min-width:0;overflow-wrap:anywhere}
+#planning .planning-shift-details strong{font-size:13px}
+#planning .planning-shift-details small{font-size:11px}
+#pointage #qrBox{border:1px dashed #415b7e;border-radius:14px;padding:14px;text-align:center}
+#factures .item,#qualifications .item,#notifications .item{align-items:center}
+#assistant .card{border-color:#344b6d}
+#assistant textarea{min-height:100px}
+#home .home-hero{margin-bottom:25px}
+@media(max-width:520px){
+ section:not(#home):not(#auth)>.section-title{font-size:19px}
+ section .card{padding:16px}
+ .item{gap:8px}
+ nav button{flex-basis:72px}
+}
+@media(prefers-reduced-motion:reduce){section:not(.hidden){animation:none}}
+
+</style></head><body><h1>VIGENTRA — Planning des vacations</h1><p><strong>Période :</strong> '+esc(from||'Toutes dates')+' au '+esc(to||'Toutes dates')+'<br><strong>Agent :</strong> '+esc(agents.find(a=>String(a.id)===agentId)?agentNameOf(agents.find(a=>String(a.id)===agentId)):'Tous les agents')+'<br><strong>Site :</strong> '+esc(sites.find(s=>String(s.id)===siteId)?siteNameOf(sites.find(s=>String(s.id)===siteId)):'Tous les sites')+'<br><strong>Édité le :</strong> '+new Date().toLocaleDateString('fr-FR')+'</p><table><thead><tr><th>Date</th><th>Horaires</th><th>Agent</th><th>Site</th><th>Durée</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5">Aucune vacation sur cette période.</td></tr>')+'</tbody></table><p class="total">Vacations : '+list.length+' · Total planifié : '+list.reduce((sum,s)=>sum+durationHours(s.heure_debut,s.heure_fin),0)+' h</p><script>window.onload=function(){window.print()}<\/script></body></html>');
   w.document.close();
 });
 
