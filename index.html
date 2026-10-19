@@ -271,6 +271,46 @@ nav button.active{
  nav{gap:2px;padding-left:6px;padding-right:6px}
  nav button{min-width:62px;padding-left:8px;padding-right:8px}
 }
+
+/* Executive dashboard refinement */
+#home .stats{gap:12px}
+#home .stats .card{
+ min-height:132px;display:flex;flex-direction:column;justify-content:center;
+ padding:18px 17px;margin-bottom:0;position:relative;overflow:hidden;
+ background:linear-gradient(145deg,#152640 0%,#101a2d 75%);
+ border:1px solid #2a4163;border-radius:19px;
+}
+#home .stats .card:after{
+ content:"";position:absolute;width:76px;height:76px;border-radius:50%;
+ right:-27px;top:-29px;background:rgba(70,119,200,.10);
+}
+#home .stat-label{font-size:13px;font-weight:650;line-height:1.4;color:#aabbd5;position:relative;z-index:1}
+#home .stat-num{font-size:34px;line-height:1.15;letter-spacing:-.045em;margin-top:12px;position:relative;z-index:1}
+#home>.section-title{font-size:22px;margin-top:30px;margin-bottom:14px}
+#home>.card{
+ padding:20px;border-radius:19px;background:linear-gradient(145deg,#14223a,#101a2c);
+}
+#home>.card strong{font-size:17px;letter-spacing:-.015em}
+#home>.card .notice{font-size:14px;line-height:1.65}
+#home>.primary{max-width:100%;min-height:52px;letter-spacing:.005em}
+#workspace>.card:first-child{padding:20px;border-radius:20px}
+#workspace>.card:first-child strong{overflow-wrap:anywhere;font-size:16px}
+#workspace>.card:first-child .notice{font-size:14px}
+#workspace>.card:first-child .secondary{min-height:50px}
+nav{gap:4px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));}
+nav button{flex:1 0 64px;max-width:110px;min-width:62px;min-height:58px;border-radius:14px;font-weight:650;letter-spacing:-.01em}
+nav button.active{background:linear-gradient(145deg,rgba(237,51,75,.2),rgba(56,99,170,.16));box-shadow:inset 0 0 0 1px rgba(237,51,75,.28)}
+main{padding-bottom:calc(115px + env(safe-area-inset-bottom))}
+@media(max-width:520px){
+ #home .stats{gap:10px}
+ #home .stats .card{min-height:112px;padding:14px;border-radius:17px}
+ #home .stat-label{font-size:12px}
+ #home .stat-num{font-size:30px;margin-top:9px}
+ #home>.section-title{font-size:21px}
+ #workspace>.card:first-child{padding:17px}
+ nav button{font-size:10px;padding-left:5px;padding-right:5px}
+ nav button span{font-size:19px}
+}
 </style>
 </head>
 <body>
