@@ -626,6 +626,20 @@ hr{border:0;border-top:1px solid var(--line);margin:18px 0}
     <section id="planning" class="hidden">
       <div class="section-title">📅 Planning des vacations</div>
       <div class="card"><strong>Exporter le planning d’un agent en PDF</strong><label>Agent à exporter</label><select id="pdfAgent"></select><div class="grid"><div><label>Du</label><input id="pdfFrom" type="date"></div><div><label>Au</label><input id="pdfTo" type="date"></div></div><button class="secondary" id="pdfAgentBtn">Préparer le PDF / Imprimer</button><p class="notice">Sur iPhone, utilise le menu de partage puis Imprimer ou Enregistrer dans Fichiers en PDF.</p></div>
+      <div class="card planning-tools" id="agentRecommendationCard">
+        <div class="planning-tools-head"><strong>🤖 Assistant d’affectation</strong><span class="planning-tag">SANS API PAYANTE</span></div>
+        <p class="notice">Je recherche un agent qualifié, libre sur ces horaires et avec une charge de travail aussi équilibrée que possible. La recommandation ne crée pas la vacation automatiquement.</p>
+        <label>Qualification nécessaire</label>
+        <select id="recommendQualification">
+          <option value="APS">APS</option>
+          <option value="SSIAP 1">SSIAP 1</option>
+          <option value="SSIAP 2">SSIAP 2</option>
+          <option value="SSIAP 3">SSIAP 3</option>
+          <option value="SST">SST</option>
+        </select>
+        <button class="primary" type="button" id="recommendAgentBtn">Trouver le meilleur agent disponible</button>
+        <div id="agentRecommendationResult" class="msg hidden" aria-live="polite"></div>
+      </div>
       <div class="card">
         <label>Agent</label>
         <select id="shiftAgent"></select>
@@ -1378,6 +1392,79 @@ $('pdfAgentBtn').onclick = () => {
   popup.focus();
   popup.print();
 };
+
+function recommendBestAgent() {
+  const result = $('agentRecommendationResult');
+  const showResult = text => {
+    result.textContent = text;
+    result.classList.remove('hidden');
+  };
+  const required = String($('recommendQualification').value || '').trim().toUpperCase();
+  const date = $('shiftDate').value;
+  const start = $('shiftStart').value;
+  const end = $('shiftEnd').value;
+  if (!date || !start || !end || start === end) {
+    showResult('Renseigne d’abord la date, l’heure de début et l’heure de fin de la vacation.');
+    return;
+  }
+  if (!agents.length) {
+    showResult('Aucun agent enregistré. Ajoute d’abord tes agents dans « Mes agents ».');
+    return;
+  }
+
+  const startAt = Date.parse(date + 'T00:00:00Z') / 60000 + timeToMinutes(start);
+  let duration = timeToMinutes(end) - timeToMinutes(start);
+  if (duration <= 0) duration += 1440;
+  const endAt = startAt + duration;
+  const weekStart = Math.floor((Date.parse(date + 'T00:00:00Z') / 86400000 + 3) / 7) * 7 - 3;
+  const weekStartAt = weekStart * 1440;
+  const weekEndAt = weekStartAt + 7 * 1440;
+
+  const candidates = agents.filter(agent => agent.actif !== false && agent.actif !== 'false').map(agent => {
+    const qualification = String(agent.qualification ?? agent.Qualification ?? '').toUpperCase();
+    const qualificationParts = qualification.split(/[+,/;|]/).map(x => x.trim()).filter(Boolean);
+    const qualified = qualification === required || qualificationParts.includes(required) || qualification.includes(required);
+    if (!qualified) return null;
+    const ownShifts = shifts.filter(shift => String(shift.agent_id) === String(agent.id));
+    const conflict = ownShifts.some(shift => {
+      if (!shift.date_vacation) return false;
+      const oldStart = Date.parse(String(shift.date_vacation) + 'T00:00:00Z') / 60000 + timeToMinutes(shift.heure_debut);
+      const oldDuration = durationHours(shift.heure_debut, shift.heure_fin) * 60;
+      const oldEnd = oldStart + oldDuration;
+      return startAt < oldEnd && oldStart < endAt;
+    });
+    if (conflict) return null;
+    const weeklyMinutes = ownShifts.reduce((sum, shift) => {
+      if (!shift.date_vacation) return sum;
+      const shiftStart = Date.parse(String(shift.date_vacation) + 'T00:00:00Z') / 60000 + timeToMinutes(shift.heure_debut);
+      const shiftEnd = shiftStart + durationHours(shift.heure_debut, shift.heure_fin) * 60;
+      const overlap = Math.max(0, Math.min(shiftEnd, weekEndAt) - Math.max(shiftStart, weekStartAt));
+      return sum + overlap;
+    }, 0);
+    return {agent, weeklyMinutes, qualification};
+  }).filter(Boolean).sort((a,b) => a.weeklyMinutes - b.weeklyMinutes);
+
+  if (!candidates.length) {
+    const hasQualified = agents.some(agent => {
+      const q = String(agent.qualification ?? agent.Qualification ?? '').toUpperCase();
+      return agent.actif !== false && (q === required || q.split(/[+,/;|]/).map(x=>x.trim()).includes(required) || q.includes(required));
+    });
+    showResult(hasQualified
+      ? 'Aucun agent qualifié n’est libre sur ce créneau. Modifie les horaires ou la date, puis relance la recherche.'
+      : 'Aucun agent actif ne possède la qualification « ' + required + ' ». Vérifie les qualifications enregistrées dans Mes agents.');
+    return;
+  }
+
+  const best = candidates[0];
+  $('shiftAgent').value = String(best.agent.id);
+  const weeklyHours = (best.weeklyMinutes / 60).toLocaleString('fr-FR', {maximumFractionDigits:1});
+  showResult('Agent recommandé : ' + agentNameOf(best.agent) + '\nQualification : ' + best.qualification + '\nCharge déjà planifiée cette semaine : ' + weeklyHours + ' h.\nAucun chevauchement détecté sur ce créneau. L’agent est sélectionné dans le formulaire : vérifie les informations puis appuie sur « Ajouter la vacation ».');
+}
+
+$('recommendAgentBtn').addEventListener('click', recommendBestAgent);
+['shiftDate','shiftStart','shiftEnd','recommendQualification'].forEach(id => $(id)?.addEventListener('change', () => {
+  $('agentRecommendationResult')?.classList.add('hidden');
+}));
 
 $('addShiftBtn').onclick = async () => {
   const agent_id = $('shiftAgent').value;
