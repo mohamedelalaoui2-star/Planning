@@ -1179,7 +1179,43 @@ $('pdfAgentBtn').onclick = () => {
   }).join('');
   const popup = window.open('', '_blank');
   if (!popup) return msg('appMsg', 'Autorise les fenêtres surgissantes pour imprimer le planning.');
-  popup.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Planning VIGENTRA</title><style>body{font:14px Arial;padding:28px;color:#172033}table{width:100%;border-collapse:collapse;margin-top:20px}td,th{border:1px solid #ccd2dc;padding:8px;text-align:left}th{background:#edf1f7}</style></head><body><h1>VIGENTRA — Planning agent</h1><p>Agent : ' + esc(agentNameOf(agent)) + '</p><p>Période : ' + esc(from || 'Toutes dates') + ' au ' + esc(to || 'Toutes dates') + '</p><table><thead><tr><th>Date</th><th>Horaires</th><th>Site</th><th>Durée</th></tr></thead><tbody>' + (rows || '<tr><td colspan="4">Aucune vacation sur cette période</td></tr>') + '</tbody></table><p>Total : ' + list.reduce((sum, s) => sum + durationHours(s.heure_debut, s.heure_fin), 0).toFixed(2) + ' h</p></body></html>');
+  popup.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Planning VIGENTRA</title><style>body{font:14px Arial;padding:28px;color:#172033}table{width:100%;border-collapse:collapse;margin-top:20px}td,th{border:1px solid #ccd2dc;padding:8px;text-align:left}th{background:#edf1f7}</style></head><body><h1>VIGENTRA — Planning agent</h1><p>Agent : ' + esc(agentNameOf(agent)) + '</p><p>Période : ' + esc(from || 'Toutes dates') + ' au ' + esc(to || 'Toutes dates') + '</p><table><thead><tr><th>Date</th><th>Horaires</th><th>Site</th><th>Durée</th></tr></thead><tbody>' + (rows || '<tr><td colspan="4">Aucune vacation sur cette période</td></tr>') + '</tbody></table><p>Total : ' + list.reduce((sum, s) => sum + durationHours(s.heure_debut, s.heure_fin), 0).toFixed(2) + ' h</p>
+<style>
+/* VIGENTRA planning: touch targets and keyboard focus */
+#planning button,
+#planning input,
+#planning select,
+#planning textarea { max-width:100%; }
+#planning input,
+#planning select,
+#planning textarea {
+  min-height:44px;
+  border-radius:10px;
+}
+#planning button { min-height:42px; }
+#planning button:focus-visible,
+#planning input:focus-visible,
+#planning select:focus-visible,
+#planning textarea:focus-visible {
+  outline:3px solid #77b7ff;
+  outline-offset:2px;
+}
+#planning button:disabled { opacity:.55; cursor:not-allowed; }
+#planning .planning-tools { min-width:0; }
+#planning .planning-summary > div { min-width:0; }
+#planning .planning-summary span { overflow-wrap:anywhere; }
+#planning .planning-shift-details small { line-height:1.45; overflow-wrap:anywhere; }
+#planning .week-day-head { overflow-wrap:anywhere; }
+@media(max-width:380px) {
+  #planning .planning-summary { gap:6px; }
+  #planning .planning-summary > div { padding:8px; gap:5px; }
+  #planning .planning-summary span { font-size:10px; }
+  #planning .planning-summary strong { font-size:17px; }
+  #planning .planning-shift-time { min-width:72px; }
+}
+</style>
+
+</body></html>');
   popup.document.close();
   popup.focus();
   popup.print();
