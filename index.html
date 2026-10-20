@@ -1438,5 +1438,39 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   #planning * { scroll-behavior:auto !important; animation:none !important; transition:none !important; }
 }
 </style>
+<style>
+/* VIGENTRA planning: touch targets and keyboard focus */
+#planning button,
+#planning input,
+#planning select,
+#planning textarea { max-width:100%; }
+#planning input,
+#planning select,
+#planning textarea {
+  min-height:44px;
+  border-radius:10px;
+}
+#planning button { min-height:42px; }
+#planning button:focus-visible,
+#planning input:focus-visible,
+#planning select:focus-visible,
+#planning textarea:focus-visible {
+  outline:3px solid #77b7ff;
+  outline-offset:2px;
+}
+#planning button:disabled { opacity:.55; cursor:not-allowed; }
+#planning .planning-tools { min-width:0; }
+#planning .planning-summary > div { min-width:0; }
+#planning .planning-summary span { overflow-wrap:anywhere; }
+#planning .planning-shift-details small { line-height:1.45; overflow-wrap:anywhere; }
+#planning .week-day-head { overflow-wrap:anywhere; }
+@media(max-width:380px) {
+  #planning .planning-summary { gap:6px; }
+  #planning .planning-summary > div { padding:8px; gap:5px; }
+  #planning .planning-summary span { font-size:10px; }
+  #planning .planning-summary strong { font-size:17px; }
+  #planning .planning-shift-time { min-width:72px; }
+}
+</style>
 </body>
 </html>
