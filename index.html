@@ -1163,17 +1163,30 @@ $('addShiftBtn').onclick = async () => {
     return msg('appMsg', 'Les heures de début et de fin ne peuvent pas être identiques.');
   }
 
-  // Refuse les chevauchements, y compris lorsqu'une vacation passe minuit.
-  const newStart = Date.parse(date_vacation + 'T00:00:00Z') / 60000 + timeToMinutes(heure_debut);
-  const newEnd = newStart + durationHours(heure_debut, heure_fin) * 60;
-  const overlaps = shifts.some(x => {
-    if (String(x.agent_id) !== String(agent_id) || !x.date_vacation) return false;
-    const oldStart = Date.parse(String(x.date_vacation) + 'T00:00:00Z') / 60000 + timeToMinutes(x.heure_debut);
-    const oldEnd = oldStart + durationHours(x.heure_debut, x.heure_fin) * 60;
+  // Contrôle des chevauchements sur toutes les dates, y compris les vacations de nuit.
+  const toMinute = (date, time) => {
+    const day = Date.parse(String(date) + 'T00:00:00Z') / 60000;
+    return day + timeToMinutes(String(time || '00:00'));
+  };
+  const newStart = toMinute(date_vacation, heure_debut);
+  const newDuration = durationHours(heure_debut, heure_fin);
+  if (!Number.isFinite(newStart) || !Number.isFinite(newDuration) || newDuration <= 0 || newDuration > 24) {
+    return msg('appMsg', 'Vérifie les horaires : la durée doit être supérieure à 0 et ne pas dépasser 24 heures.');
+  }
+  const newEnd = newStart + newDuration * 60;
+  const conflicts = shifts.filter(x => {
+    if (String(x.agent_id) !== String(agent_id) || !x.date_vacation || !x.heure_debut || !x.heure_fin) return false;
+    const oldStart = toMinute(x.date_vacation, x.heure_debut);
+    const oldDuration = durationHours(x.heure_debut, x.heure_fin);
+    if (!Number.isFinite(oldStart) || !Number.isFinite(oldDuration) || oldDuration <= 0 || oldDuration > 24) return false;
+    const oldEnd = oldStart + oldDuration * 60;
     return newStart < oldEnd && oldStart < newEnd;
   });
-  if (overlaps) {
-    return msg('appMsg', 'Attention : cet agent a déjà une vacation qui chevauche cet horaire le même jour.');
+  if (conflicts.length) {
+    const conflict = conflicts[0];
+    return msg('appMsg', 'Vacation impossible : cet agent a déjà une mission qui chevauche cet horaire (' +
+      conflict.date_vacation + ', ' + String(conflict.heure_debut).slice(0, 5) + '–' +
+      String(conflict.heure_fin).slice(0, 5) + '). Vérifie le planning avant de continuer.');
   }
 
   await insertRow('planning', {
