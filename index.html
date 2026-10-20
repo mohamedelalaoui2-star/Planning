@@ -493,6 +493,51 @@ hr{border:0;border-top:1px solid var(--line);margin:18px 0}
 }
 
 .invoice-summary{margin:12px 0}.invoice-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.invoice-summary-grid>div{background:var(--card,rgba(127,127,127,.08));border:1px solid var(--border,rgba(127,127,127,.2));border-radius:12px;padding:12px;min-width:0}.invoice-summary-grid small,.invoice-summary-grid span{display:block;font-size:12px;opacity:.8}.invoice-summary-grid strong{display:block;font-size:21px;margin:6px 0;overflow-wrap:anywhere}@media(max-width:380px){.invoice-summary-grid{gap:5px}.invoice-summary-grid>div{padding:8px}.invoice-summary-grid strong{font-size:18px}.invoice-summary-grid small,.invoice-summary-grid span{font-size:10px}}\n#profitCalc{margin-top:16px}#profitCalc .section-title{margin-top:0}#profitCalc .dashboard-kpis{margin-top:14px}#profitCalc .dashboard-kpi{padding:12px}#profitCalc .dashboard-kpi>strong{font-size:clamp(18px,4vw,25px);overflow-wrap:anywhere}@media(min-width:700px){#profitCalc .grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Correctif iPhone : conserver les boutons d’action lisibles dans les fiches */
+.item-actions{
+  display:flex;
+  flex:0 0 148px;
+  min-width:0;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:center;
+  gap:8px;
+}
+.item .item-actions button,
+.item .item-actions button:not(.primary):not(.secondary){
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  min-width:0;
+  min-height:44px;
+  height:auto;
+  flex:0 0 auto;
+  margin:0;
+  padding:10px 8px;
+  white-space:normal;
+  overflow-wrap:normal;
+  word-break:normal;
+  line-height:1.2;
+  font-size:14px;
+  border-radius:12px;
+}
+.item .item-actions button:last-child:not(.secondary){
+  border:1px solid rgba(255,105,120,.35);
+  background:rgba(201,39,58,.14);
+  color:#ff9aa6;
+  box-shadow:none;
+}
+@media(max-width:520px){
+  .item-actions{flex-basis:116px;gap:8px}
+  .item .item-actions button,
+  .item .item-actions button:not(.primary):not(.secondary){
+    font-size:13px;
+    padding:9px 6px;
+  }
+}
+
 </style>
 </head>
 <body>
