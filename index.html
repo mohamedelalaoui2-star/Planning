@@ -491,7 +491,8 @@ hr{border:0;border-top:1px solid var(--line);margin:18px 0}
   input,select,textarea,.card,.item{border-color:#526583}
 }
 
-.invoice-summary{margin:12px 0}.invoice-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.invoice-summary-grid>div{background:var(--card,rgba(127,127,127,.08));border:1px solid var(--border,rgba(127,127,127,.2));border-radius:12px;padding:12px;min-width:0}.invoice-summary-grid small,.invoice-summary-grid span{display:block;font-size:12px;opacity:.8}.invoice-summary-grid strong{display:block;font-size:21px;margin:6px 0;overflow-wrap:anywhere}@media(max-width:380px){.invoice-summary-grid{gap:5px}.invoice-summary-grid>div{padding:8px}.invoice-summary-grid strong{font-size:18px}.invoice-summary-grid small,.invoice-summary-grid span{font-size:10px}}\n</style>
+.invoice-summary{margin:12px 0}.invoice-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.invoice-summary-grid>div{background:var(--card,rgba(127,127,127,.08));border:1px solid var(--border,rgba(127,127,127,.2));border-radius:12px;padding:12px;min-width:0}.invoice-summary-grid small,.invoice-summary-grid span{display:block;font-size:12px;opacity:.8}.invoice-summary-grid strong{display:block;font-size:21px;margin:6px 0;overflow-wrap:anywhere}@media(max-width:380px){.invoice-summary-grid{gap:5px}.invoice-summary-grid>div{padding:8px}.invoice-summary-grid strong{font-size:18px}.invoice-summary-grid small,.invoice-summary-grid span{font-size:10px}}\n#profitCalc{margin-top:16px}#profitCalc .section-title{margin-top:0}#profitCalc .dashboard-kpis{margin-top:14px}#profitCalc .dashboard-kpi{padding:12px}#profitCalc .dashboard-kpi>strong{font-size:clamp(18px,4vw,25px);overflow-wrap:anywhere}@media(min-width:700px){#profitCalc .grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
 </head>
 <body>
 
@@ -563,6 +564,23 @@ hr{border:0;border-top:1px solid var(--line);margin:18px 0}
       <div id="dashMore" class="card dashboard-summary"></div>
     </section>
 
+    <section id="profitCalc" class="card" aria-labelledby="profitCalcTitle">
+      <div class="section-title" id="profitCalcTitle">📈 Simulateur de rentabilité</div>
+      <p class="notice">Simulation indicative, calculée sur ton appareil. Aucun montant n’est enregistré dans Supabase.</p>
+      <div class="grid">
+        <div><label>Heures facturées par mois</label><input id="profitHours" type="number" min="0" step="1" value="150"></div>
+        <div><label>Prix de vente HT par heure (€)</label><input id="profitSell" type="number" min="0" step="0.01" value="25"></div>
+        <div><label>Coût total agent par heure (€)</label><input id="profitCost" type="number" min="0" step="0.01" value="17"></div>
+        <div><label>Autres charges mensuelles (€)</label><input id="profitCharges" type="number" min="0" step="0.01" value="500"></div>
+      </div>
+      <div class="dashboard-kpis" id="profitResults" aria-live="polite">
+        <div class="dashboard-kpi"><span>Chiffre d’affaires HT</span><strong>—</strong></div>
+        <div class="dashboard-kpi"><span>Coût agents estimé</span><strong>—</strong></div>
+        <div class="dashboard-kpi"><span>Charges totales</span><strong>—</strong></div>
+        <div class="dashboard-kpi"><span>Marge estimée</span><strong>—</strong></div>
+      </div>
+      <p id="profitMarginNote" class="notice"></p>
+    </section>
     <section id="agents" class="hidden">
       <div class="section-title">👮 Mes agents</div>
       <div class="card">
@@ -1271,6 +1289,20 @@ async function deleteRow(table, id) {
 
   await refreshData();
 }
+
+function updateProfitability(){
+  const hours=Math.max(0,Number($('profitHours').value)||0);
+  const sell=Math.max(0,Number($('profitSell').value)||0);
+  const cost=Math.max(0,Number($('profitCost').value)||0);
+  const charges=Math.max(0,Number($('profitCharges').value)||0);
+  const revenue=hours*sell, agentCost=hours*cost, totalCost=agentCost+charges, margin=revenue-totalCost;
+  const euro=n=>new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2}).format(n);
+  const vals=[revenue,agentCost,totalCost,margin];
+  $('profitResults').innerHTML=vals.map((v,i)=>'<div class="dashboard-kpi'+(i===3?(v<0?' is-danger':''):'')+'"><span>'+['Chiffre d’affaires HT','Coût agents estimé','Charges totales','Marge estimée'][i]+'</span><strong>'+euro(v)+'</strong><small>'+ (i===3?(revenue>0?'Marge sur CA : '+(100*margin/revenue).toFixed(1).replace('.',',')+' %':'Aucun chiffre d’affaires saisi'):'Estimation mensuelle')+'</small></div>').join('');
+  $('profitMarginNote').textContent=margin<0?'Attention : la simulation prévoit une perte. Vérifie ton prix de vente, les coûts et le volume facturé.':'Estimation avant impôts, frais variables non renseignés, absences, congés et éventuels frais de gestion. Le coût horaire doit inclure les cotisations patronales et les coûts réellement supportés.';
+}
+['profitHours','profitSell','profitCost','profitCharges'].forEach(id=>$(id).addEventListener('input',updateProfitability));
+updateProfitability();
 
 db.auth.getSession().then(({data, error}) => {
   if (error) {
