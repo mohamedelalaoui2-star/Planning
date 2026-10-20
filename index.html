@@ -1880,6 +1880,17 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
 @media(min-width:700px){.dashboard-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.dashboard-bar-track{max-width:36px}.dashboard-bottom-line span{font-size:11px}}
 @media(max-width:360px){#home #dashMore{padding:13px}.dashboard-period{font-size:7px;padding:6px}.dashboard-kpi{padding:11px}.dashboard-kpi>strong{font-size:25px}.dashboard-bottom-line{gap:5px}.dashboard-bottom-line span{padding:8px 4px;font-size:8px}}
 
+
+/* Positionnement cohérent des actions, notamment Supprimer, sur iPhone */
+.item-actions{display:flex;flex:0 0 auto;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:8px;margin-left:auto}
+.item-actions button{white-space:nowrap;min-width:88px}
+.item>button[aria-label*="Supprimer"],.item>button[onclick*="deleteUnavailability"]{margin-left:auto;align-self:center;flex-shrink:0}
+@media(max-width:520px){
+  .item{align-items:flex-start}
+  .item-actions{max-width:46%;gap:6px}
+  .item-actions button{min-width:78px;padding:8px 9px}
+  .item>button[aria-label*="Supprimer"],.item>button[onclick*="deleteUnavailability"]{min-width:42px}
+}
 </style>
 </body>
 </html>
