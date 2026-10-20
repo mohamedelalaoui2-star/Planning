@@ -583,6 +583,14 @@ hr{border:0;border-top:1px solid var(--line);margin:18px 0}
 
     <section id="agents" class="hidden">
       <div class="section-title">👮 Mes agents</div>
+      <div class="card" id="agentAccountCard">
+        <div class="section-title">🔐 Accès personnel agent</div>
+        <p class="notice">Envoie une invitation sécurisée à l’adresse e-mail de l’agent. Il utilisera ce lien pour ouvrir son espace VIGENTRA.</p>
+        <label>Agent à inviter</label><select id="inviteAgentSelect"><option value="">Choisir un agent</option></select>
+        <label>Adresse e-mail de l’agent</label><input id="inviteAgentEmail" type="email" autocomplete="email" placeholder="agent@exemple.fr">
+        <button class="primary" id="inviteAgentBtn">Envoyer l’invitation</button>
+        <div id="inviteAgentMsg" class="msg hidden" aria-live="polite"></div>
+      </div>
       <div class="card">
         <label>Nom et prénom</label>
         <input id="agentName" placeholder="Ex. Karim Benali">
@@ -744,6 +752,8 @@ try {
 const $ = id => document.getElementById(id);
 
 let currentUser = null;
+let currentAgent = null;
+let agentMode = false;
 let agents = [];
 let sites = [];
 let shifts = [];
@@ -841,12 +851,89 @@ async function openWorkspace(user) {
   currentUser = user;
   $('auth').classList.add('hidden');
   $('workspace').classList.remove('hidden');
-  $('nav').classList.remove('hidden');
   $('accountLabel').textContent = user.email || 'Espace connecté';
   $('shiftDate').value = new Date().toISOString().slice(0,10);
+  const linked = await db.from('agents').select('*').eq('auth_user_id', user.id).maybeSingle();
+  if (linked.error) {
+    msg('appMsg', 'Impossible de vérifier le profil agent : ' + linked.error.message);
+    return;
+  }
+  currentAgent = linked.data || null;
+  agentMode = !!currentAgent;
+  $('nav').classList.toggle('hidden', agentMode);
+  $('agentAccountCard')?.classList.toggle('hidden', agentMode);
   await refreshData();
   await loadExtraData();
+  if (agentMode) renderAgentPortal();
+  else {
+    $('agentPortal')?.classList.add('hidden');
+    ['home','agents','sites','planning','pointage','factures','qualifications','maincourante','rondes','notifications','assistant'].forEach(id => $(id)?.classList.add('hidden'));
+    $('home').classList.remove('hidden');
+  }
 }
+
+function renderAgentPortal() {
+  const accountCard = $('workspace').querySelector('.card');
+  let portal = $('agentPortal');
+  if (!portal) {
+    portal = document.createElement('section');
+    portal.id = 'agentPortal';
+    portal.className = 'card';
+    accountCard.insertAdjacentElement('afterend', portal);
+  }
+  const fullName = [currentAgent.Prenom, currentAgent.nom].filter(Boolean).join(' ') || currentAgent.nom || 'Agent';
+  const fmtDate = value => value ? new Date(value + 'T00:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'long',year:'numeric'}) : 'Date non définie';
+  const ownShifts = [...shifts].sort((a,b)=>String(a.date_vacation).localeCompare(String(b.date_vacation)) || String(a.heure_debut).localeCompare(String(b.heure_debut)));
+  portal.innerHTML = '<div class="home-section-heading"><div><span class="section-kicker">ESPACE AGENT</span><h2>Bonjour '+esc(fullName)+'</h2></div><span class="live-pill">Compte agent</span></div><p class="notice">Tu as accès uniquement à tes vacations attribuées et à tes pointages.</p><div class="section-title">Mon planning</div>' +
+    (ownShifts.length ? ownShifts.map(s=>{const site=sites.find(x=>String(x.id)===String(s.site_id));const ps=pointages.filter(p=>String(p.planning_id)===String(s.id)).sort((a,b)=>String(a.pointage_at).localeCompare(String(b.pointage_at)));const started=ps.some(p=>p.type==='debut'),ended=ps.some(p=>p.type==='fin');const canStart=!started,canEnd=started&&!ended;return '<div class="item agent-shift"><div><strong>'+esc(fmtDate(s.date_vacation))+'</strong><small>'+esc(String(s.heure_debut||'').slice(0,5))+' – '+esc(String(s.heure_fin||'').slice(0,5))+' · '+esc(site?siteNameOf(site):'Site attribué')+'</small><small>Statut : '+esc(s.statut||'Prévu')+' · '+(ended?'Poste terminé':started?'Prise de poste enregistrée':'En attente de pointage')+'</small></div><div class="agent-shift-actions">'+(canStart?'<button class="primary" onclick="agentClock(\'debut\','+Number(s.id)+')">Prise de poste</button>':'')+(canEnd?'<button class="secondary" onclick="agentClock(\'fin\','+Number(s.id)+')">Fin de poste</button>':'')+'</div></div>';}).join('') : '<div class="empty">Aucune vacation ne t’est attribuée pour le moment.</div>')+
+    '<div class="section-title">Mes pointages récents</div>'+(pointages.length?pointages.slice(0,20).map(p=>{const shift=ownShifts.find(s=>String(s.id)===String(p.planning_id));const site=sites.find(s=>String(s.id)===String(p.site_id));return '<div class="item"><div><strong>'+(p.type==='debut'?'Prise de poste':'Fin de poste')+'</strong><small>'+esc(new Date(p.pointage_at).toLocaleString('fr-FR'))+' · '+esc(site?siteNameOf(site):'Site')+(shift?' · Vacation du '+esc(fmtDate(shift.date_vacation)):'')+'</small></div></div>';}).join(''):'<div class="empty">Aucun pointage enregistré.</div>')+
+    '<div class="card"><label>Définir ou changer mon mot de passe</label><input id="agentNewPassword" type="password" minlength="8" autocomplete="new-password" placeholder="8 caractères minimum"><button class="secondary" onclick="agentSetPassword()">Enregistrer le mot de passe</button><div id="agentPasswordMsg" class="msg hidden"></div></div>';
+}
+
+async function agentSetPassword() {
+  const password = $('agentNewPassword')?.value || '';
+  if (password.length < 8) return msg('agentPasswordMsg', 'Choisis un mot de passe de 8 caractères minimum.');
+  const {error} = await db.auth.updateUser({password});
+  if (error) return msg('agentPasswordMsg', 'Mot de passe non modifié : ' + error.message);
+  $('agentNewPassword').value = '';
+  msg('agentPasswordMsg', 'Mot de passe enregistré.');
+}
+
+async function agentClock(type, shiftId) {
+  if (!agentMode || !currentAgent || !currentUser) return;
+  const shift = shifts.find(s => String(s.id) === String(shiftId) && String(s.agent_id) === String(currentAgent.id));
+  if (!shift) return msg('appMsg', 'Cette vacation ne correspond pas à ton compte.');
+  const existing = pointages.filter(p => String(p.planning_id) === String(shift.id));
+  if (type === 'debut' && existing.some(p=>p.type==='debut')) return msg('appMsg','La prise de poste est déjà enregistrée pour cette vacation.');
+  if (type === 'fin' && (!existing.some(p=>p.type==='debut') || existing.some(p=>p.type==='fin'))) return msg('appMsg','Vérifie la prise de poste et la fin déjà enregistrée.');
+  const {error} = await db.from('pointages').insert({user_id:currentUser.id,agent_id:currentAgent.id,site_id:shift.site_id,planning_id:shift.id,type,methode:'bouton'});
+  if (error) return msg('appMsg','Pointage impossible : '+error.message);
+  msg('appMsg', type==='debut'?'Prise de poste enregistrée.':'Fin de poste enregistrée.');
+  await loadExtraData();
+  renderAgentPortal();
+}
+
+$('inviteAgentBtn').onclick = async () => {
+  if (agentMode || !currentUser) return;
+  const agent_id = Number($('inviteAgentSelect').value);
+  const email = $('inviteAgentEmail').value.trim();
+  const out = $('inviteAgentMsg');
+  out.classList.remove('hidden'); out.textContent = 'Envoi de l’invitation…';
+  $('inviteAgentBtn').disabled = true;
+  try {
+    const {data,error} = await db.functions.invoke('invite-vigentra-agent',{body:{agent_id,email}});
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    out.textContent = data?.message || 'Invitation envoyée.';
+    $('inviteAgentEmail').value = '';
+    await refreshData();
+    await loadExtraData();
+  } catch (e) {
+    out.textContent = 'Invitation impossible : ' + (e?.message || 'erreur inconnue') + '. Vérifie l’e-mail et la configuration d’envoi des e-mails Supabase.';
+  } finally {
+    $('inviteAgentBtn').disabled = false;
+  }
+};
 
 async function refreshData() {
   if (!currentUser) return;
