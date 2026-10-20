@@ -1454,9 +1454,8 @@ function recommendBestAgent() {
       if (!u.heure_debut && !u.heure_fin) return true;
       if (!u.heure_debut || !u.heure_fin) return true;
       const unStart = Date.parse(from + 'T00:00:00Z') / 60000 + timeToMinutes(u.heure_debut);
-      let unDuration = timeToMinutes(u.heure_fin) - timeToMinutes(u.heure_debut);
-      if (unDuration <= 0) unDuration += 1440;
-      const unEnd = unStart + unDuration;
+      let unEnd = Date.parse(to + 'T00:00:00Z') / 60000 + timeToMinutes(u.heure_fin);
+      if (unEnd <= unStart) unEnd += 1440;
       return startAt < unEnd && unStart < endAt;
     });
     if (unavailable) return null;
