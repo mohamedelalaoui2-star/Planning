@@ -606,6 +606,7 @@ hr{border:0;border-top:1px solid var(--line);margin:18px 0}
           <option>Autre</option>
         </select>
         <button class="primary" id="addAgentBtn">Enregistrer l’agent</button>
+        <button class="secondary hidden" id="cancelAgentEditBtn" type="button">Annuler la modification</button>
       </div>
       <div id="agentList"></div>
     </section>
@@ -1007,7 +1008,10 @@ function render() {
           <strong>${esc(agentNameOf(a))}</strong>
           <small>${esc(a.qualification ?? a.Qualification ?? 'Qualification non renseignée')}</small>
         </div>
-        <button onclick="deleteRow('agents','${esc(a.id)}')">✕</button>
+        <div class="item-actions">
+          <button class="secondary" type="button" onclick="editAgent('${esc(a.id)}')">Modifier</button>
+          <button type="button" aria-label="Supprimer ${esc(agentNameOf(a))}" onclick="deleteRow('agents','${esc(a.id)}')">Supprimer</button>
+        </div>
       </div>
     `).join('')
     : '<div class="empty">Aucun agent enregistré.</div>';
@@ -1201,10 +1205,45 @@ async function insertRow(table, row) {
   return true;
 }
 
+let editingAgentId = null;
+
+function resetAgentForm() {
+  editingAgentId = null;
+  $('agentName').value = '';
+  $('agentQual').value = 'APS';
+  $('addAgentBtn').textContent = 'Enregistrer l’agent';
+  $('cancelAgentEditBtn')?.classList.add('hidden');
+}
+
+function editAgent(id) {
+  const agent = agents.find(a => String(a.id) === String(id));
+  if (!agent) return msg('appMsg', 'Agent introuvable. Actualise la page et réessaie.');
+  editingAgentId = agent.id;
+  $('agentName').value = agent.nom ?? agent.Nom ?? '';
+  $('agentQual').value = agent.qualification ?? agent.Qualification ?? 'Autre';
+  $('addAgentBtn').textContent = 'Enregistrer les modifications';
+  $('cancelAgentEditBtn')?.classList.remove('hidden');
+  $('agentName').focus();
+  msg('appMsg', 'Modification de ' + agentNameOf(agent) + ' : change les champs puis enregistre.');
+}
+
+$('cancelAgentEditBtn')?.addEventListener('click', resetAgentForm);
+
 $('addAgentBtn').onclick = async () => {
   const nom = $('agentName').value.trim();
-
   if (!nom) return msg('appMsg', 'Saisis le nom et le prénom.');
+
+  if (editingAgentId !== null) {
+    clearMsg('appMsg');
+    const { error } = await db.from('agents')
+      .update({ nom, qualification: $('agentQual').value })
+      .eq('id', editingAgentId)
+      .eq('user_id', currentUser.id);
+    if (error) return msg('appMsg', 'Modification impossible : ' + error.message);
+    resetAgentForm();
+    await refreshData();
+    return msg('appMsg', 'Agent modifié et enregistré dans Supabase.');
+  }
 
   const success = await insertRow('agents', {
     nom,
