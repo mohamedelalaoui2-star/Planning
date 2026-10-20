@@ -992,6 +992,14 @@ function render() {
   $('hoursCount').textContent =
     shifts.reduce((sum, x) => sum + durationHours(x.heure_debut, x.heure_fin), 0) + ' h';
 
+  const inviteSelect = $('inviteAgentSelect');
+  if (inviteSelect) {
+    const previous = inviteSelect.value;
+    inviteSelect.innerHTML = '<option value="">Choisir un agent</option>' + agents
+      .map(a => `<option value="${esc(a.id)}">${esc(agentNameOf(a))}</option>`).join('');
+    if (agents.some(a => String(a.id) === String(previous))) inviteSelect.value = previous;
+  }
+
   $('agentList').innerHTML = agents.length
     ? agents.map(a => `
       <div class="item">
