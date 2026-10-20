@@ -1400,5 +1400,43 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   main { padding-bottom: calc(130px + env(safe-area-inset-bottom)); }
 }
 </style>
+
+<style>
+/* VIGENTRA planning: executive readability polish */
+#planning .section-title { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+#planning .planning-tools-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+#planning .planning-summary { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin-top:14px; }
+#planning .planning-summary > div { min-width:0; padding:12px; border:1px solid #293d5a; border-radius:13px; background:rgba(17,31,51,.72); }
+#planning .planning-summary span { display:block; color:#a9bad2; font-size:11px; line-height:1.4; }
+#planning .planning-summary strong { display:block; margin-top:5px; font-size:21px; line-height:1.2; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+#planning .planning-audit { gap:9px; }
+#planning .planning-warning, #planning .planning-ok { padding:13px; }
+#planning .week-view-card { overflow:hidden; }
+#planning .week-view-head { align-items:center; gap:12px; }
+#planning .week-view-head > div:first-child { min-width:0; display:grid; gap:5px; }
+#planning .week-view-head strong { line-height:1.35; }
+#planning .week-controls { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:5px; }
+#planning .week-controls button { min-height:38px; padding:8px 11px; }
+#planning .week-range { color:#c5d7f4; font-size:12px; font-weight:750; margin:8px 0 10px; }
+#planning .week-days { gap:6px; }
+#planning .week-day { min-width:0; }
+#planning .week-event { overflow-wrap:anywhere; }
+#planning .planning-shift { align-items:center; gap:12px; }
+#planning .planning-shift-time { flex:0 0 auto; }
+#planning .planning-shift-details { overflow-wrap:anywhere; }
+#planning .planning-shift > button { flex:0 0 38px; min-width:38px; min-height:38px; border-radius:10px; }
+@media(max-width:520px) {
+  #planning .planning-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  #planning .planning-summary > div { padding:10px; }
+  #planning .planning-summary strong { font-size:19px; }
+  #planning .week-view-head { align-items:flex-start; flex-direction:column; }
+  #planning .week-controls { width:100%; justify-content:flex-start; }
+  #planning .week-controls button { flex:1 1 auto; }
+  #planning .planning-shift { align-items:flex-start; }
+}
+@media(prefers-reduced-motion:reduce) {
+  #planning * { scroll-behavior:auto !important; animation:none !important; transition:none !important; }
+}
+</style>
 </body>
 </html>
