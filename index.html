@@ -932,7 +932,16 @@ $('inviteAgentBtn').onclick = async () => {
     await refreshData();
     await loadExtraData();
   } catch (e) {
-    out.textContent = 'Invitation impossible : ' + (e?.message || 'erreur inconnue') + '. Vérifie l’e-mail et la configuration d’envoi des e-mails Supabase.';
+    let detail = e?.message || 'erreur inconnue';
+    try {
+      if (e?.context && typeof e.context.json === 'function') {
+        const payload = await e.context.json();
+        detail = payload?.error || payload?.message || payload?.msg || detail;
+      } else if (e?.context?.body) {
+        detail = e.context.body.error || e.context.body.message || detail;
+      }
+    } catch (_) {}
+    out.textContent = 'Invitation impossible : ' + detail + '.';
   } finally {
     $('inviteAgentBtn').disabled = false;
   }
