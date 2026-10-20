@@ -1093,7 +1093,7 @@ function renderExtra(){
  $('roundList').innerHTML=roundPoints.map(p=>'<div class="item"><div><strong>'+esc(p.nom)+'</strong><small>'+esc(p.code||'Point de contrôle')+'</small></div><button onclick="deleteExtraRow(\'ronde_points\','+Number(p.id)+')">✕</button></div>').join('')||'<div class="empty">Aucun point de contrôle.</div>';
  $('passageList').innerHTML=roundPassages.slice(0,25).map(p=>'<div class="item"><div><strong>'+esc(roundPoints.find(x=>String(x.id)===String(p.point_id))?.nom||'Point')+'</strong><small>'+esc(new Date(p.passage_at).toLocaleString('fr-FR'))+' · '+esc(p.note||'Passage enregistré')+'</small></div></div>').join('')||'<div class="empty">Aucun passage.</div>';
  $('noticeList').innerHTML=notifications.map(n=>'<div class="item"><div><strong>'+esc(n.titre)+' · '+esc(n.niveau)+'</strong><small>'+esc(new Date(n.created_at).toLocaleString('fr-FR'))+(n.lu?' · Lu':' · Non lu')+'</small><p>'+esc(n.message)+'</p></div><button onclick="markNotificationRead('+Number(n.id)+')">Lu</button></div>').join('')||'<div class="empty">Aucune alerte.</div>';
- $('dashMore').innerHTML='<strong>Vue du dirigeant</strong><p class="notice">'+logs.length+' entrée(s) main courante · '+qualifications.length+' qualification(s) · '+roundPassages.length+' passage(s) de ronde</p><p class="notice">'+factures.filter(f=>!['payee','annulee'].includes(f.statut)).length+' facture(s) à suivre · '+notifications.filter(n=>!n.lu).length+' alerte(s) non lue(s)</p>';
+ const dashboardNow=new Date();dashboardNow.setHours(0,0,0,0);const dashboardToday=dashboardNow.getFullYear()+'-'+String(dashboardNow.getMonth()+1).padStart(2,'0')+'-'+String(dashboardNow.getDate()).padStart(2,'0');const dashboardWeekStart=new Date(dashboardNow);dashboardWeekStart.setDate(dashboardNow.getDate()-((dashboardNow.getDay()+6)%7));const dashboardWeekEnd=new Date(dashboardWeekStart);dashboardWeekEnd.setDate(dashboardWeekStart.getDate()+7);const dashboardWeekStartKey=dashboardWeekStart.getFullYear()+'-'+String(dashboardWeekStart.getMonth()+1).padStart(2,'0')+'-'+String(dashboardWeekStart.getDate()).padStart(2,'0');const dashboardWeekEndKey=dashboardWeekEnd.getFullYear()+'-'+String(dashboardWeekEnd.getMonth()+1).padStart(2,'0')+'-'+String(dashboardWeekEnd.getDate()).padStart(2,'0');const dashboardShiftsWeek=shifts.filter(s=>String(s.date_vacation||'')>=dashboardWeekStartKey&&String(s.date_vacation||'')<dashboardWeekEndKey);const dashboardPointagesToday=pointages.filter(p=>String(p.pointage_at||'').slice(0,10)===dashboardToday).length;const dashboardLimit=new Date(dashboardNow);dashboardLimit.setDate(dashboardLimit.getDate()+60);const dashboardDue=qualifications.filter(q=>{if(!q.date_expiration)return false;const d=new Date(q.date_expiration+'T00:00:00');return !Number.isNaN(d.getTime())&&d<=dashboardLimit;});const dashboardExpired=dashboardDue.filter(q=>new Date(q.date_expiration+'T00:00:00')<dashboardNow).length;const dashboardOpenInvoices=factures.filter(f=>!['payee','payée','annulee','annulée'].includes(String(f.statut||'').toLowerCase()));const dashboardUnpaidTotal=dashboardOpenInvoices.reduce((sum,f)=>sum+(Number(f.total_ttc)||0),0);const dashboardOpenLogs=logs.filter(x=>!['clos','cloture','clôturé','termine','terminé'].includes(String(x.statut||'').toLowerCase())).length;const dashboardDays=Array.from({length:7},(_,i)=>{const d=new Date(dashboardNow);d.setDate(dashboardNow.getDate()-6+i);const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');return {key,label:d.toLocaleDateString('fr-FR',{weekday:'short'}).replace('.',''),count:shifts.filter(s=>String(s.date_vacation||'').slice(0,10)===key).length};});const dashboardMax=Math.max(1,...dashboardDays.map(d=>d.count));$('dashMore').innerHTML='<div class="dashboard-pro-head"><div><span class="section-kicker">PILOTAGE EN TEMPS RÉEL</span><strong>Tableau de bord du dirigeant</strong></div><span class="dashboard-period">7 DERNIERS JOURS</span></div><div class="dashboard-kpis"><div class="dashboard-kpi"><span>Vacations cette semaine</span><strong>'+dashboardShiftsWeek.length+'</strong><small>Du lundi au dimanche</small></div><div class="dashboard-kpi"><span>Pointages aujourd’hui</span><strong>'+dashboardPointagesToday+'</strong><small>Prises et fins de poste</small></div><div class="dashboard-kpi '+(dashboardExpired?'is-danger':'')+'"><span>Qualifications à surveiller</span><strong>'+dashboardDue.length+'</strong><small>'+(dashboardExpired?dashboardExpired+' expirée(s)': 'Échéances sous 60 jours')+'</small></div><div class="dashboard-kpi '+(dashboardOpenInvoices.length?'is-warm':'')+'"><span>Factures à suivre</span><strong>'+dashboardOpenInvoices.length+'</strong><small>'+dashboardUnpaidTotal.toLocaleString('fr-FR',{style:'currency',currency:'EUR'})+' TTC au total</small></div></div><div class="dashboard-chart-wrap"><div class="dashboard-chart-head"><strong>Activité des vacations</strong><span>Nombre par jour</span></div><div class="dashboard-bars">'+dashboardDays.map(d=>'<div class="dashboard-bar-col" title="'+esc(d.key)+': '+d.count+' vacation(s)"><span class="dashboard-bar-value">'+d.count+'</span><div class="dashboard-bar-track"><i style="height:'+Math.max(d.count?8:3,Math.round(d.count/dashboardMax*100))+'%"></i></div><span class="dashboard-bar-label">'+esc(d.label)+'</span></div>').join('')+'</div></div><div class="dashboard-bottom-line"><span><b>'+dashboardOpenLogs+'</b> incident(s) ouvert(s)</span><span><b>'+notifications.filter(n=>!n.lu).length+'</b> alerte(s) non lue(s)</span><span><b>'+roundPassages.length+'</b> passage(s) de ronde</span></div><p class="notice">Indicateurs calculés à partir des données chargées pour ton compte. Les montants sont une somme indicative des factures non payées/annulées, pas une comptabilité certifiée.</p>';
 }
 async function saveClock(type,method){
  if(!currentUser)return;
@@ -1524,6 +1524,39 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   #qualifications #qualAlerts .msg { padding:12px; }
   #planning #planningAudit { gap:8px; }
 }
+
+/* Tableau de bord exécutif — indicateurs calculés depuis les données existantes */
+#home #dashMore{padding:18px;margin-top:0;border-radius:20px;background:linear-gradient(145deg,#13223a,#0d1728);border:1px solid #2a3d5b}
+.dashboard-pro-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:16px}
+.dashboard-pro-head>div{display:grid;gap:5px;min-width:0}
+.dashboard-pro-head strong{font-size:17px;letter-spacing:-.025em}
+.dashboard-period{font-size:8px;letter-spacing:.08em;font-weight:800;color:#9eb7db;background:#1b2d49;border:1px solid #304767;border-radius:8px;padding:7px 8px;white-space:nowrap}
+.dashboard-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.dashboard-kpi{min-width:0;display:flex;flex-direction:column;gap:7px;padding:13px;border:1px solid #2b4160;border-radius:14px;background:linear-gradient(145deg,#172943,#111d30)}
+.dashboard-kpi>span{font-size:10px;line-height:1.4;color:#a9bad2;font-weight:700}
+.dashboard-kpi>strong{font-size:29px;line-height:1;letter-spacing:-.05em;color:#f7f9ff}
+.dashboard-kpi>small{font-size:10px;line-height:1.4;color:#8196b5}
+.dashboard-kpi.is-danger{border-color:rgba(255,89,105,.48);background:linear-gradient(145deg,rgba(103,30,48,.38),#171d30)}
+.dashboard-kpi.is-danger>strong{color:#ff8291}
+.dashboard-kpi.is-warm{border-color:rgba(230,189,104,.35)}
+.dashboard-kpi.is-warm>strong{color:#f1cc78}
+.dashboard-chart-wrap{margin-top:15px;padding:15px 12px 12px;border:1px solid #293d59;border-radius:15px;background:rgba(5,13,27,.28)}
+.dashboard-chart-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:12px}
+.dashboard-chart-head strong{font-size:12px}
+.dashboard-chart-head span{font-size:10px;color:#8fa3c2}
+.dashboard-bars{height:130px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;align-items:end}
+.dashboard-bar-col{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;min-width:0}
+.dashboard-bar-value{font-size:10px;font-weight:800;color:#b9d3ff}
+.dashboard-bar-track{height:82px;width:100%;max-width:24px;display:flex;align-items:flex-end;overflow:hidden;border-radius:7px;background:#1a2a42}
+.dashboard-bar-track i{display:block;width:100%;min-height:3px;border-radius:7px 7px 3px 3px;background:linear-gradient(180deg,#77a9ff,#4777d6)}
+.dashboard-bar-label{font-size:9px;color:#8fa3c2;text-transform:capitalize}
+.dashboard-bottom-line{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:13px}
+.dashboard-bottom-line span{padding:10px 8px;border-radius:11px;background:rgba(255,255,255,.025);border:1px solid rgba(90,120,170,.17);font-size:9px;line-height:1.5;color:#91a5c4;text-align:center}
+.dashboard-bottom-line b{display:block;font-size:17px;color:#edf3ff}
+#home #dashMore>.notice{font-size:10px;line-height:1.55;margin:12px 0 0;color:#8194b1}
+@media(min-width:700px){.dashboard-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.dashboard-bar-track{max-width:36px}.dashboard-bottom-line span{font-size:11px}}
+@media(max-width:360px){#home #dashMore{padding:13px}.dashboard-period{font-size:7px;padding:6px}.dashboard-kpi{padding:11px}.dashboard-kpi>strong{font-size:25px}.dashboard-bottom-line{gap:5px}.dashboard-bottom-line span{padding:8px 4px;font-size:8px}}
+
 </style>
 </body>
 </html>
