@@ -1438,5 +1438,44 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   #planning * { scroll-behavior:auto !important; animation:none !important; transition:none !important; }
 }
 </style>
+<style>
+/* VIGENTRA planning: clearer vacation form */
+#planning > .card:nth-of-type(3) {
+  border:1px solid #2d4567;
+  background:linear-gradient(155deg,rgba(22,39,64,.96),rgba(13,24,41,.98));
+}
+#planning > .card:nth-of-type(3) label {
+  display:block;
+  margin:12px 0 6px;
+  color:#c6d5ec;
+  font-size:12px;
+  font-weight:750;
+}
+#planning > .card:nth-of-type(3) label:first-child { margin-top:0; }
+#planning > .card:nth-of-type(3) input,
+#planning > .card:nth-of-type(3) select {
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+#planning > .card:nth-of-type(3) .grid { align-items:start; gap:12px; }
+#planning > .card:nth-of-type(3) button { width:100%; margin-top:14px; }
+#planning > .card:nth-of-type(3) .notice {
+  margin:10px 0 0;
+  padding:10px 11px;
+  border-radius:10px;
+  background:rgba(8,16,29,.48);
+  line-height:1.5;
+}
+#planning > .card:first-of-type button { width:100%; }
+#planning #planningFilterReset,
+#planning #planningPrintBtn { width:100%; margin-top:8px; }
+#planning #planningSummary,
+#planning #planningAudit { min-width:0; }
+@media(max-width:520px) {
+  #planning > .card:nth-of-type(3) { padding:13px; }
+  #planning > .card:nth-of-type(3) .grid { gap:8px; }
+}
+</style>
 </body>
 </html>
