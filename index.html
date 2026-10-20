@@ -880,13 +880,16 @@ function render() {
       let e = startStamp(x) + durationHours(x.heure_debut,x.heure_fin) * 60;
       return e;
     };
+    // Compare chaque paire sans interrompre la recherche selon l'ordre des dates :
+    // une vacation de nuit peut chevaucher une vacation du lendemain.
     for (let i=0;i<ordered.length;i++) {
       for (let j=i+1;j<ordered.length;j++) {
         const a=ordered[i], b=ordered[j];
         if (!a.agent_id || String(a.agent_id)!==String(b.agent_id)) continue;
         const aStart=startStamp(a), bStart=startStamp(b);
-        if (bStart >= endStamp(a)) break;
-        if (aStart < endStamp(b) && bStart < endStamp(a)) {
+        const aEnd=endStamp(a), bEnd=endStamp(b);
+        if (![aStart,bStart,aEnd,bEnd].every(Number.isFinite)) continue;
+        if (aStart < bEnd && bStart < aEnd) {
           const name=agents.find(x=>String(x.id)===String(a.agent_id));
           conflicts.push({a,b,name:name?agentNameOf(name):'Agent inconnu'});
         }
