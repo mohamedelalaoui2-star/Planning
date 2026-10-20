@@ -1881,15 +1881,17 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
 @media(max-width:360px){#home #dashMore{padding:13px}.dashboard-period{font-size:7px;padding:6px}.dashboard-kpi{padding:11px}.dashboard-kpi>strong{font-size:25px}.dashboard-bottom-line{gap:5px}.dashboard-bottom-line span{padding:8px 4px;font-size:8px}}
 
 
-/* Positionnement cohérent des actions, notamment Supprimer, sur iPhone */
-.item-actions{display:flex;flex:0 0 auto;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:8px;margin-left:auto}
-.item-actions button{white-space:nowrap;min-width:88px}
-.item>button[aria-label*="Supprimer"],.item>button[onclick*="deleteUnavailability"]{margin-left:auto;align-self:center;flex-shrink:0}
+/* Actions des fiches : boutons lisibles et alignés sur mobile */
+.item{min-width:0;gap:12px}
+.item>div:first-child{flex:1 1 0;min-width:0}
+.item-actions{display:flex;flex:0 0 46%;width:46%;max-width:46%;flex-direction:column;flex-wrap:nowrap;justify-content:center;align-items:stretch;gap:8px;margin-left:auto;min-width:0}
+.item-actions button{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;white-space:normal;word-break:normal;overflow-wrap:normal;text-align:center;padding:10px 8px;line-height:1.2}
+.item>button[aria-label*="Supprimer"],.item>button[onclick*="deleteUnavailability"]{margin-left:auto;align-self:center;flex:0 0 auto;min-width:88px;max-width:46%;box-sizing:border-box;white-space:normal;word-break:normal;overflow-wrap:normal;padding:10px 8px;line-height:1.2}
 @media(max-width:520px){
-  .item{align-items:flex-start}
-  .item-actions{max-width:46%;gap:6px}
-  .item-actions button{min-width:78px;padding:8px 9px}
-  .item>button[aria-label*="Supprimer"],.item>button[onclick*="deleteUnavailability"]{min-width:42px}
+  .item{align-items:center;gap:10px}
+  .item-actions{flex-basis:46%;width:46%;max-width:46%;gap:7px}
+  .item-actions button{min-height:44px;padding:10px 6px;font-size:14px}
+  .item>button[aria-label*="Supprimer"],.item>button[onclick*="deleteUnavailability"]{min-width:88px;max-width:46%;min-height:44px;font-size:14px}
 }
 </style>
 </body>
