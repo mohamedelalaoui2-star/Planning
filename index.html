@@ -933,8 +933,38 @@ function render() {
         }
       }
     }
+    const restIssues=[];
+    const weeklyHours=new Map();
+    const weeklyKey=x=>{
+      const d=new Date(String(x.date_vacation||'')+'T00:00:00Z');
+      if(Number.isNaN(d.getTime()))return '';
+      const day=(d.getUTCDay()+6)%7;
+      d.setUTCDate(d.getUTCDate()-day);
+      return String(x.agent_id)+'|'+d.toISOString().slice(0,10);
+    };
+    const validShifts=ordered.filter(x=>x.agent_id&&x.date_vacation&&x.heure_debut&&x.heure_fin);
+    for(const x of validShifts){
+      const key=weeklyKey(x);
+      if(key)weeklyHours.set(key,(weeklyHours.get(key)||0)+durationHours(x.heure_debut,x.heure_fin));
+    }
+    const weeklyOver=Array.from(weeklyHours.entries()).filter(([key,h])=>h>48).map(([key,h])=>({key,h}));
+    for(let i=0;i<validShifts.length;i++){
+      const a=validShifts[i];
+      for(let j=i+1;j<validShifts.length;j++){
+        const b=validShifts[j];
+        if(String(a.agent_id)!==String(b.agent_id))continue;
+        const gap=startStamp(b)-endStamp(a);
+        if(gap>=0&&gap<11*60){
+          const person=agents.find(x=>String(x.id)===String(a.agent_id));
+          restIssues.push({name:person?agentNameOf(person):'Agent inconnu',a,b,gap});
+        }
+        if(startStamp(b)-endStamp(a)>=11*60)break;
+      }
+    }
     const warnings=[];
     if (conflicts.length) warnings.push('<div class="planning-warning"><strong>⚠ '+conflicts.length+' chevauchement(s) détecté(s)</strong><small>'+conflicts.slice(0,3).map(z=>esc(z.name)+' · '+esc(z.a.date_vacation)+' '+esc(String(z.a.heure_debut).slice(0,5))+'–'+esc(String(z.a.heure_fin).slice(0,5))+' / '+esc(z.b.date_vacation)+' '+esc(String(z.b.heure_debut).slice(0,5))+'–'+esc(String(z.b.heure_fin).slice(0,5))).join('<br>')+(conflicts.length>3?'<br>… et '+(conflicts.length-3)+' autre(s)':'')+'</small></div>');
+    if(restIssues.length)warnings.push('<div class="planning-warning"><strong>⚠ Repos entre vacations à vérifier ('+restIssues.length+')</strong><small>'+restIssues.slice(0,3).map(z=>esc(z.name)+' · '+esc(z.a.date_vacation)+' fin '+esc(String(z.a.heure_fin).slice(0,5))+' → '+esc(z.b.date_vacation)+' début '+esc(String(z.b.heure_debut).slice(0,5))+' · repos '+Math.floor(z.gap/60)+' h '+String(z.gap%60).padStart(2,'0')).join('<br>')+'<br>Vérifie les règles applicables et les éventuelles dérogations.</small></div>');
+    if(weeklyOver.length)warnings.push('<div class="planning-warning"><strong>⚠ Volume hebdomadaire à vérifier ('+weeklyOver.length+')</strong><small>'+weeklyOver.slice(0,3).map(z=>{const parts=z.key.split('|');const a=agents.find(x=>String(x.id)===parts[0]);return esc(a?agentNameOf(a):'Agent inconnu')+' · semaine du '+esc(parts[1])+' · '+z.h.toFixed(2).replace('.',',')+' h planifiées';}).join('<br>')+'<br>Seuil d’alerte indicatif de 48 h : vérifie le temps de travail réel, les périodes de référence et les règles applicables.</small></div>');
     if (missing.length) warnings.push('<div class="planning-warning"><strong>⚠ '+missing.length+' vacation(s) à vérifier</strong><small>Un agent ou un site associé est introuvable. Ouvre chaque vacation et vérifie les affectations.</small></div>');
     if (!warnings.length) warnings.push('<div class="planning-ok"><strong>✓ Aucun chevauchement détecté</strong><small>Les affectations d’agents et de sites ont été vérifiées parmi les vacations enregistrées.</small></div>');
     auditBox.innerHTML=warnings.join('');
