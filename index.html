@@ -450,6 +450,47 @@ main{padding-bottom:calc(190px + env(safe-area-inset-bottom))}
 .week-empty{display:block;text-align:center;color:#526783;font-size:11px;padding-top:4px}
 .week-day-hours{font-size:8px;text-align:center;color:#8db9ff;margin-top:7px;font-weight:700}
 @media(max-width:480px){.week-view-card{padding:11px!important}.week-view-head{align-items:flex-start;flex-direction:column}.week-controls{width:100%;justify-content:flex-end}.week-day{padding:6px 2px;min-height:76px}.week-day-head{font-size:8px}.week-day-head strong{font-size:14px}.week-day-count{font-size:7px}.week-event{padding:3px 2px}.week-event b{font-size:8px}.week-event span{font-size:7px}.week-event small{font-size:6px}}
+
+
+/* VIGENTRA display polish — responsive, accessible, consistent */
+:root{color-scheme:dark;--focus-ring:rgba(106,160,255,.85)}
+::selection{background:rgba(79,140,255,.32);color:#fff}
+a{color:#9fc3ff}
+button:focus-visible,[role="button"]:focus-visible{outline:3px solid var(--focus-ring);outline-offset:3px}
+button:disabled{opacity:.55;cursor:not-allowed;filter:saturate(.5)}
+.card,.item,.msg{overflow-wrap:anywhere}
+.card{scroll-margin-top:100px}
+input:disabled,select:disabled,textarea:disabled{opacity:.65;cursor:not-allowed}
+label{line-height:1.45}
+input[type="checkbox"],input[type="radio"]{width:auto;min-height:20px;accent-color:var(--red)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:#b9c9e2;font-weight:750;background:rgba(255,255,255,.025)}
+td{color:#e7edfa}
+.table-wrap{max-width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:14px;-webkit-overflow-scrolling:touch}
+.table-wrap table{min-width:520px}
+.badge,.status-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:750;border:1px solid #344a6a;background:rgba(79,140,255,.1);color:#c7dcff}
+hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+@media(max-width:520px){
+  .grid{grid-template-columns:minmax(0,1fr)}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .card{min-width:0}
+  .item{min-width:0}
+  .item small{overflow-wrap:anywhere}
+  input,select,textarea{max-width:100%;min-width:0}
+  button{overflow-wrap:anywhere}
+  .primary,.secondary{white-space:normal;line-height:1.35}
+  #home .stats .stat-card{min-height:108px}
+}
+@media(min-width:521px) and (max-width:899px){
+  main{max-width:860px}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(prefers-contrast:more){
+  :root{--muted:#c3cde0;--line:#526583}
+  input,select,textarea,.card,.item{border-color:#526583}
+}
+
 </style>
 </head>
 <body>
