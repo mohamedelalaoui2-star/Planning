@@ -1179,22 +1179,7 @@ $('pdfAgentBtn').onclick = () => {
   }).join('');
   const popup = window.open('', '_blank');
   if (!popup) return msg('appMsg', 'Autorise les fenêtres surgissantes pour imprimer le planning.');
-  popup.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Planning VIGENTRA</title><style>body{font:14px Arial;padding:28px;color:#172033}table{width:100%;border-collapse:collapse;margin-top:20px}td,th{border:1px solid #ccd2dc;padding:8px;text-align:left}th{background:#edf1f7}</style></head><body><h1>VIGENTRA — Planning agent</h1><p>Agent : ' + esc(agentNameOf(agent)) + '</p><p>Période : ' + esc(from || 'Toutes dates') + ' au ' + esc(to || 'Toutes dates') + '</p><table><thead><tr><th>Date</th><th>Horaires</th><th>Site</th><th>Durée</th></tr></thead><tbody>' + (rows || '<tr><td colspan="4">Aucune vacation sur cette période</td></tr>') + '</tbody></table><p>Total : ' + list.reduce((sum, s) => sum + durationHours(s.heure_debut, s.heure_fin), 0).toFixed(2) + ' h</p>
-<style>
-/* VIGENTRA Pro : alertes de qualifications hiérarchisées */
-#qualifications #qualAlerts .qual-alert { display:grid; gap:5px; margin:0; border-left:4px solid #e6bd68; }
-#qualifications #qualAlerts .qual-alert strong { font-size:12px; letter-spacing:.035em; }
-#qualifications #qualAlerts .qual-alert span { font-size:14px; font-weight:700; }
-#qualifications #qualAlerts .qual-alert small { color:#b5c4dc; line-height:1.45; }
-#qualifications #qualAlerts .qual-alert--expired { border-color:#ff5969; background:rgba(237,51,75,.16); }
-#qualifications #qualAlerts .qual-alert--today,
-#qualifications #qualAlerts .qual-alert--urgent { border-color:#ff8a5b; background:rgba(237,113,51,.14); }
-#qualifications #qualAlerts .qual-alert--soon { border-color:#e6bd68; background:rgba(230,189,104,.09); }
-#qualifications #qualAlerts .qual-alert--upcoming { border-color:#4f8cff; background:rgba(79,140,255,.09); }
-#qualifications #qualAlerts .qual-alert--ok { border-color:#35c99a; background:rgba(53,201,154,.08); }
-#qualifications #qualList .item button[aria-label] { flex-shrink:0; }
-</style>
-</body></html>');
+  popup.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Planning VIGENTRA</title><style>body{font:14px Arial;padding:28px;color:#172033}table{width:100%;border-collapse:collapse;margin-top:20px}td,th{border:1px solid #ccd2dc;padding:8px;text-align:left}th{background:#edf1f7}</style></head><body><h1>VIGENTRA — Planning agent</h1><p>Agent : ' + esc(agentNameOf(agent)) + '</p><p>Période : ' + esc(from || 'Toutes dates') + ' au ' + esc(to || 'Toutes dates') + '</p><table><thead><tr><th>Date</th><th>Horaires</th><th>Site</th><th>Durée</th></tr></thead><tbody>' + (rows || '<tr><td colspan="4">Aucune vacation sur cette période</td></tr>') + '</tbody></table><p>Total : ' + list.reduce((sum, s) => sum + durationHours(s.heure_debut, s.heure_fin), 0).toFixed(2) + ' h</p></body></html>');
   popup.document.close();
   popup.focus();
   popup.print();
@@ -1539,6 +1524,20 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   #qualifications #qualAlerts .msg { padding:12px; }
   #planning #planningAudit { gap:8px; }
 }
+</style>
+<style>
+/* VIGENTRA Pro : alertes de qualifications hiérarchisées */
+#qualifications #qualAlerts .qual-alert { display:grid; gap:5px; margin:0; border-left:4px solid #e6bd68; }
+#qualifications #qualAlerts .qual-alert strong { font-size:12px; letter-spacing:.035em; }
+#qualifications #qualAlerts .qual-alert span { font-size:14px; font-weight:700; }
+#qualifications #qualAlerts .qual-alert small { color:#b5c4dc; line-height:1.45; }
+#qualifications #qualAlerts .qual-alert--expired { border-color:#ff5969; background:rgba(237,51,75,.16); }
+#qualifications #qualAlerts .qual-alert--today,
+#qualifications #qualAlerts .qual-alert--urgent { border-color:#ff8a5b; background:rgba(237,113,51,.14); }
+#qualifications #qualAlerts .qual-alert--soon { border-color:#e6bd68; background:rgba(230,189,104,.09); }
+#qualifications #qualAlerts .qual-alert--upcoming { border-color:#4f8cff; background:rgba(79,140,255,.09); }
+#qualifications #qualAlerts .qual-alert--ok { border-color:#35c99a; background:rgba(53,201,154,.08); }
+#qualifications #qualList .item button[aria-label] { flex-shrink:0; }
 </style>
 </body>
 </html>
