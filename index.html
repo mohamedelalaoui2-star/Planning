@@ -1179,10 +1179,7 @@ $('pdfAgentBtn').onclick = () => {
   }).join('');
   const popup = window.open('', '_blank');
   if (!popup) return msg('appMsg', 'Autorise les fenêtres surgissantes pour imprimer le planning.');
-  popup.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Planning VIGENTRA</title><style>body{font:14px Arial;padding:28px;color:#172033}table{width:100%;border-collapse:collapse;margin-top:20px}td,th{border:1px solid #ccd2dc;padding:8px;text-align:left}th{background:#edf1f7}</style></head><body><h1>VIGENTRA — Planning agent</h1><p>Agent : ' + esc(agentNameOf(agent)) + '</p><p>Période : ' + esc(from || 'Toutes dates') + ' au ' + esc(to || 'Toutes dates') + '</p><table><thead><tr><th>Date</th><th>Horaires</th><th>Site</th><th>Durée</th></tr></thead><tbody>' + (rows || '<tr><td colspan="4">Aucune vacation sur cette période</td></tr>') + '</tbody></table><p>Total : ' + list.reduce((sum, s) => sum + durationHours(s.heure_debut, s.heure_fin), 0).toFixed(2) + ' h</p>
-
-
-</body></html>');
+  popup.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Planning VIGENTRA</title><style>body{font:14px Arial;padding:28px;color:#172033}table{width:100%;border-collapse:collapse;margin-top:20px}td,th{border:1px solid #ccd2dc;padding:8px;text-align:left}th{background:#edf1f7}</style></head><body><h1>VIGENTRA — Planning agent</h1><p>Agent : ' + esc(agentNameOf(agent)) + '</p><p>Période : ' + esc(from || 'Toutes dates') + ' au ' + esc(to || 'Toutes dates') + '</p><table><thead><tr><th>Date</th><th>Horaires</th><th>Site</th><th>Durée</th></tr></thead><tbody>' + (rows || '<tr><td colspan="4">Aucune vacation sur cette période</td></tr>') + '</tbody></table><p>Total : ' + list.reduce((sum, s) => sum + durationHours(s.heure_debut, s.heure_fin), 0).toFixed(2) + ' h</p></body></html>');
   popup.document.close();
   popup.focus();
   popup.print();
