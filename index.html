@@ -45,6 +45,7 @@ label{display:block;font-size:13px;color:var(--muted);margin-top:8px}
 .msg{padding:11px;border-radius:10px;background:#292b35;margin:10px 0;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:520px){.grid{grid-template-columns:1fr}}
+.agent-shift{display:block}.agent-shift-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.agent-shift-actions button{margin-top:0}.agent-shift-actions button:only-child{grid-column:1/-1}#agentPortal .card{margin-top:18px}
 /* Optimisation mobile iPhone */
 html{min-height:100%;-webkit-text-size-adjust:100%;scroll-behavior:smooth;overscroll-behavior-y:contain}
 body{min-height:100dvh;padding-bottom:env(safe-area-inset-bottom);-webkit-tap-highlight-color:transparent}
@@ -864,10 +865,12 @@ async function openWorkspace(user) {
   $('agentAccountCard')?.classList.toggle('hidden', agentMode);
   await refreshData();
   await loadExtraData();
-  if (agentMode) renderAgentPortal();
-  else {
+  ['home','agents','sites','planning','pointage','factures','qualifications','maincourante','rondes','notifications','assistant'].forEach(id => $(id)?.classList.add('hidden'));
+  if (agentMode) {
+    renderAgentPortal();
+    $('agentPortal').classList.remove('hidden');
+  } else {
     $('agentPortal')?.classList.add('hidden');
-    ['home','agents','sites','planning','pointage','factures','qualifications','maincourante','rondes','notifications','assistant'].forEach(id => $(id)?.classList.add('hidden'));
     $('home').classList.remove('hidden');
   }
 }
