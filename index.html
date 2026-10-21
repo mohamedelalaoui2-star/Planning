@@ -1236,8 +1236,16 @@ $('inviteAgentBtn').onclick = async () => {
   if (agentMode || !currentUser) return;
   const agent_id = Number($('inviteAgentSelect').value);
   const email = $('inviteAgentEmail').value.trim();
+  const selectedAgent = agents.find(a => Number(a.id) === agent_id);
   const out = $('inviteAgentMsg');
-  out.classList.remove('hidden'); out.textContent = 'Envoi de l’invitation…';
+  out.classList.remove('hidden');
+  if (!selectedAgent) { out.textContent = 'Choisis un agent qui ne possède pas encore d’accès.'; return; }
+  if (selectedAgent.auth_user_id) { out.textContent = 'Cet agent possède déjà un accès individuel.'; return; }
+  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) { out.textContent = 'Saisis une adresse e-mail valide.'; return; }
+  const emailDiffers = selectedAgent.Email && String(selectedAgent.Email).trim().toLowerCase() !== email.toLowerCase();
+  const confirmText = 'Créer l’accès individuel de ' + agentNameOf(selectedAgent) + ' ?\\n\\nE-mail : ' + email + (emailDiffers ? '\\n\\nAttention : cette adresse remplacera l’e-mail enregistré sur la fiche agent.' : '') + '\\n\\nUne invitation sera envoyée par e-mail.';
+  if (!window.confirm(confirmText)) { out.textContent = 'Invitation annulée. Aucun accès n’a été créé.'; return; }
+  out.textContent = 'Envoi de l’invitation…';
   $('inviteAgentBtn').disabled = true;
   try {
     const {data,error} = await db.functions.invoke('invite-vigentra-agent',{body:{agent_id,email}});
@@ -1329,9 +1337,9 @@ function render() {
   const inviteSelect = $('inviteAgentSelect');
   if (inviteSelect) {
     const previous = inviteSelect.value;
-    inviteSelect.innerHTML = '<option value="">Choisir un agent</option>' + agents
-      .map(a => `<option value="${esc(a.id)}">${esc(agentNameOf(a))}</option>`).join('');
-    if (agents.some(a => String(a.id) === String(previous))) inviteSelect.value = previous;
+    inviteSelect.innerHTML = '<option value="">Choisir un agent sans accès</option>' + agents
+      .map(a => `<option value="${esc(a.id)}" ${a.auth_user_id ? 'disabled' : ''}>${esc(agentNameOf(a))}${a.auth_user_id ? ' — accès déjà créé' : ''}</option>`).join('');
+    if (agents.some(a => String(a.id) === String(previous) && !a.auth_user_id)) inviteSelect.value = previous;
   }
 
   $('agentList').innerHTML = agents.length
@@ -1341,6 +1349,7 @@ function render() {
           <strong>${esc(agentNameOf(a))}</strong>
           <small>${esc(a.qualification ?? a.Qualification ?? 'Qualification non renseignée')}${a.numero_carte_pro ? ' · Carte pro renseignée' : ' · Carte pro à renseigner'}</small>
           <small>${esc(a.Email ?? 'E-mail non renseigné')}${a.expiration_carte_pro ? ' · Expire le ' + esc(a.expiration_carte_pro) : ''}</small>
+          <small>${a.auth_user_id ? '🔐 Accès individuel activé' : '⚠️ Accès individuel à créer'}</small>
         </div>
         <div class="item-actions">
           <button class="secondary" type="button" onclick="editAgent('${esc(a.id)}')">Modifier</button>
