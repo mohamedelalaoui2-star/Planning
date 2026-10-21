@@ -1860,6 +1860,13 @@ $('addShiftBtn').onclick = async () => {
   if (!date_vacation || !heure_debut || !heure_fin) return showPlanningMessage('Complète la date et les heures.');
   if (heure_debut === heure_fin) return showPlanningMessage('Les heures de début et de fin ne peuvent pas être identiques.');
 
+  const selectedAgent = agents.find(a => String(a.id) === String(agent_id));
+  if (!selectedAgent || selectedAgent.actif === false || selectedAgent.actif === 'false') {
+    return showPlanningMessage('Cet agent est introuvable ou désactivé. Choisis un agent actif.');
+  }
+  const selectedSite = sites.find(s => String(s.id) === String(site_id));
+  if (!selectedSite) return showPlanningMessage('Le site sélectionné est introuvable. Actualise la page.');
+
   const newStart = Date.parse(date_vacation + 'T00:00:00Z') / 60000 + timeToMinutes(heure_debut);
   const newEnd = newStart + durationHours(heure_debut, heure_fin) * 60;
   const overlaps = shifts.some(x => {
@@ -1868,7 +1875,32 @@ $('addShiftBtn').onclick = async () => {
     const oldEnd = oldStart + durationHours(x.heure_debut, x.heure_fin) * 60;
     return newStart < oldEnd && oldStart < newEnd;
   });
-  if (overlaps) return showPlanningMessage('Attention : cet agent a déjà une vacation qui chevauche cet horaire.');
+  if (overlaps) return showPlanningMessage('Affectation refusée : cet agent a déjà une vacation qui chevauche cet horaire.');
+
+  const unavailable = indisponibilites.some(u => {
+    if (String(u.agent_id) !== String(agent_id) || u.actif === false) return false;
+    const from = String(u.date_debut || ''), to = String(u.date_fin || u.date_debut || '');
+    if (!from || date_vacation < from || date_vacation > to) return false;
+    if (!u.heure_debut && !u.heure_fin) return true;
+    if (!u.heure_debut || !u.heure_fin) return true;
+    const uStart = Date.parse(date_vacation + 'T00:00:00Z') / 60000 + timeToMinutes(u.heure_debut);
+    let uDuration = timeToMinutes(u.heure_fin) - timeToMinutes(u.heure_debut);
+    if (uDuration <= 0) uDuration += 1440;
+    return newStart < uStart + uDuration && uStart < newEnd;
+  });
+  if (unavailable) return showPlanningMessage('Affectation refusée : cet agent est déclaré indisponible sur cette date ou cet horaire.');
+
+  const previousShift = shifts
+    .filter(x => String(x.agent_id) === String(agent_id) && x.date_vacation)
+    .map(x => {
+      const startAt = Date.parse(String(x.date_vacation) + 'T00:00:00Z') / 60000 + timeToMinutes(x.heure_debut);
+      return { startAt, endAt: startAt + durationHours(x.heure_debut, x.heure_fin) * 60 };
+    })
+    .filter(x => x.endAt <= newStart)
+    .sort((a,b) => b.endAt - a.endAt)[0];
+  if (previousShift && newStart - previousShift.endAt < 11 * 60) {
+    return showPlanningMessage('Vérification nécessaire : moins de 11 heures séparent cette vacation de la précédente. Vérifie les règles de repos applicables avant de planifier.');
+  }
 
   button.disabled = true;
   button.textContent = 'Enregistrement…';
