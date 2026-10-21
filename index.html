@@ -1232,7 +1232,11 @@ nav button.active{color:#f1dba5;background:linear-gradient(145deg,rgba(216,181,1
 @media(max-width:520px){#planningCalendarCard .week-view-head{align-items:flex-start;flex-direction:column}.week-controls{width:100%;display:flex;justify-content:space-between}.month-days .week-day{min-height:67px}.calendar-agenda-item{grid-template-columns:52px minmax(0,1fr) auto;padding:12px 8px}}
 @media(min-width:900px){.month-days .week-day{min-height:115px;padding:9px!important}.month-days .week-event span,.month-days .week-event small{display:block}.month-days .week-event{font-size:10px}}
 </style>
-</head>
+<style id="vigentra-planning-interaction-fix">
+#planning [data-calendar-date]{cursor:pointer;transition:border-color .15s,transform .15s}
+#planning [data-calendar-date]:hover,#planning [data-calendar-date]:focus-visible{border-color:#e0bf79!important;outline:2px solid rgba(224,191,121,.25);outline-offset:1px}
+#planning .calendar-view-btn:focus-visible,#planning .week-controls button:focus-visible{outline:2px solid #e0bf79;outline-offset:2px}
+</style></head>
 <body>
 
 <header>
@@ -1417,6 +1421,8 @@ nav button.active{color:#f1dba5;background:linear-gradient(145deg,rgba(216,181,1
         <select id="shiftAgent"></select>
         <label>Site client</label>
         <select id="shiftSite"></select>
+        <label>Qualification requise pour cette vacation</label>
+        <select id="shiftQualification"><option value="APS">APS</option><option value="SSIAP 1">SSIAP 1</option><option value="SSIAP 2">SSIAP 2</option><option value="SSIAP 3">SSIAP 3</option><option value="SST">SST</option></select>
         <label>Date</label>
         <input type="date" id="shiftDate">
         <div class="grid">
@@ -2100,9 +2106,23 @@ function renderWeekView(filteredShifts) {
       const isToday=day.key===localDateKey(today),inMonth=day.d.getMonth()===new Date(today.getFullYear(),today.getMonth()+monthOffset,1).getMonth();
       const total=day.list.reduce((sum,x)=>sum+durationHours(x.heure_debut,x.heure_fin),0);
       const events=day.list.slice().sort((a,b)=>String(a.heure_debut).localeCompare(String(b.heure_debut)));
-      return '<div class="week-day '+(isToday?'is-today ':'')+(monthMode&&!inMonth?'is-outside':'')+'"><div class="week-day-head"><span>'+fmt(day.d)+'</span><strong>'+day.d.getDate()+'</strong></div><div class="week-day-count">'+day.list.length+' vac.</div><div class="week-day-events">'+(events.length?events.slice(0,monthMode?2:5).map(x=>{const a=agents.find(v=>String(v.id)===String(x.agent_id)),site=sites.find(v=>String(v.id)===String(x.site_id));return '<div class="week-event"><b>'+esc(String(x.heure_debut||'').slice(0,5))+'</b><span>'+esc(a?agentNameOf(a):'Agent')+'</span><small>'+esc(site?siteNameOf(site):'Site')+'</small></div>';}).join(''):'<span class="week-empty">—</span>')+(monthMode&&events.length>2?'<small class="calendar-more">+'+(events.length-2)+' autre(s)</small>':'')+'</div>'+(day.list.length?'<div class="week-day-hours">'+Math.round(total*100)/100+' h</div>':'')+'</div>';
+      return '<div class="week-day '+(isToday?'is-today ':'')+(monthMode&&!inMonth?'is-outside':'')+'" data-calendar-date="'+day.key+'" role="button" tabindex="0" aria-label="Choisir le '+day.d.toLocaleDateString('fr-FR')+' pour une vacation"><div class="week-day-head"><span>'+fmt(day.d)+'</span><strong>'+day.d.getDate()+'</strong></div><div class="week-day-count">'+day.list.length+' vac.</div><div class="week-day-events">'+(events.length?events.slice(0,monthMode?2:5).map(x=>{const a=agents.find(v=>String(v.id)===String(x.agent_id)),site=sites.find(v=>String(v.id)===String(x.site_id));return '<div class="week-event"><b>'+esc(String(x.heure_debut||'').slice(0,5))+'</b><span>'+esc(a?agentNameOf(a):'Agent')+'</span><small>'+esc(site?siteNameOf(site):'Site')+'</small></div>';}).join(''):'<span class="week-empty">—</span>')+(monthMode&&events.length>2?'<small class="calendar-more">+'+(events.length-2)+' autre(s)</small>':'')+'</div>'+(day.list.length?'<div class="week-day-hours">'+Math.round(total*100)/100+' h</div>':'')+'</div>';
     }).join('')+'</div>';
   }
+  target.querySelectorAll('[data-calendar-date]').forEach(cell=>{
+    const chooseDate=()=>{
+      const date=cell.dataset.calendarDate;
+      if(!date)return;
+      const input=$('shiftDate');
+      if(input)input.value=date;
+      const form=$('shiftAgent')?.closest('.card');
+      if(form)form.scrollIntoView({behavior:'smooth',block:'center'});
+      const saveMsg=$('planningSaveMsg');
+      if(saveMsg){saveMsg.textContent='Date sélectionnée : '+new Date(date+'T12:00:00').toLocaleDateString('fr-FR')+'. Choisis l’agent, le site et les horaires.';saveMsg.classList.remove('hidden','success');}
+    };
+    cell.addEventListener('click',chooseDate);
+    cell.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();chooseDate();}});
+  });
 }
 function moveCalendar(amount){
   if(planningViewMode==='month')monthOffset+=amount;
@@ -2509,7 +2529,14 @@ function recommendBestAgent() {
 async function deleteUnavailability(id){if(!confirm('Retirer cette indisponibilité ?'))return;const {error}=await db.from('indisponibilites').delete().eq('id',id).eq('user_id',currentUser.id);if(error)return msg('appMsg','Impossible de retirer : '+error.message);await loadExtraData();msg('appMsg','Indisponibilité retirée.');}
 $('unavailSaveBtn')?.addEventListener('click',async()=>{const agent_id=$('unavailAgent').value,date_debut=$('unavailFrom').value,date_fin=$('unavailTo').value,heure_debut=$('unavailStart').value||null,heure_fin=$('unavailEnd').value||null,motif=$('unavailReason').value;if(!agent_id||!date_debut||!date_fin)return msg('appMsg','Choisis un agent et renseigne les deux dates.');if(date_fin<date_debut)return msg('appMsg','La date de fin doit être égale ou postérieure à la date de début.');if((heure_debut&&!heure_fin)||(!heure_debut&&heure_fin))return msg('appMsg','Renseigne les deux heures, ou laisse les deux vides pour une journée entière.');const {error}=await db.from('indisponibilites').insert({user_id:currentUser.id,agent_id:Number(agent_id),date_debut,date_fin,heure_debut,heure_fin,motif});if(error)return msg('appMsg','Enregistrement impossible : '+error.message);$('unavailFrom').value='';$('unavailTo').value='';$('unavailStart').value='';$('unavailEnd').value='';await loadExtraData();msg('appMsg','Indisponibilité enregistrée : l’assistant en tiendra compte.');});
 $('recommendAgentBtn').addEventListener('click', recommendBestAgent);
-['shiftDate','shiftStart','shiftEnd','recommendQualification'].forEach(id => $(id)?.addEventListener('change', () => {
+const shiftQualification=$('shiftQualification');
+const recommendQualification=$('recommendQualification');
+if(shiftQualification&&recommendQualification){
+  shiftQualification.value=recommendQualification.value||'APS';
+  shiftQualification.addEventListener('change',()=>{recommendQualification.value=shiftQualification.value;$('agentRecommendationResult')?.classList.add('hidden');});
+  recommendQualification.addEventListener('change',()=>{shiftQualification.value=recommendQualification.value;$('agentRecommendationResult')?.classList.add('hidden');});
+}
+['shiftDate','shiftStart','shiftEnd','recommendQualification','shiftQualification'].forEach(id => $(id)?.addEventListener('change', () => {
   $('agentRecommendationResult')?.classList.add('hidden');
 }));
 
@@ -2542,7 +2569,7 @@ $('addShiftBtn').onclick = async () => {
   const selectedSite = sites.find(s => String(s.id) === String(site_id));
   if (!selectedSite) return showPlanningMessage('Le site sélectionné est introuvable. Actualise la page.');
 
-  const requiredQualification = String($('recommendQualification')?.value || '').trim().toUpperCase();
+  const requiredQualification = String($('shiftQualification')?.value || $('recommendQualification')?.value || '').trim().toUpperCase();
   const actualQualification = String(selectedAgent.qualification ?? selectedAgent.Qualification ?? '').toUpperCase();
   const qualificationParts = actualQualification.split(/[+,/;|]/).map(x => x.trim()).filter(Boolean);
   const hasRequiredQualification = actualQualification === requiredQualification || qualificationParts.includes(requiredQualification) || actualQualification.includes(requiredQualification);
