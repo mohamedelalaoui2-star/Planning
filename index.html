@@ -1752,20 +1752,24 @@ $('addShiftBtn').onclick = async () => {
   button.textContent = 'Enregistrement…';
   if (feedback) feedback.classList.add('hidden');
   try {
-    const saved = await insertRow('planning', {
+    const { data: savedRows, error: saveError } = await db.from('planning').insert({
       agent_id: Number(agent_id),
       site_id: Number(site_id),
       date_vacation,
       heure_debut,
       heure_fin,
-      statut: 'prévu'
-    });
-    if (saved) {
+      statut: 'prévu',
+      user_id: currentUser.id
+    }).select('id');
+    if (saveError) {
+      console.error('VIGENTRA planning insert:', saveError);
+      const detail = [saveError.message, saveError.code ? 'Code ' + saveError.code : '', saveError.details, saveError.hint].filter(Boolean).join(' — ');
+      showPlanningMessage('Enregistrement refusé : ' + detail);
+    } else {
+      await refreshData();
       showPlanningMessage('Vacation enregistrée ! Elle apparaît maintenant dans le planning.', true);
       button.textContent = 'Vacation ajoutée ✓';
       setTimeout(() => { button.textContent = 'Ajouter la vacation'; }, 2200);
-    } else {
-      showPlanningMessage('La base a refusé l’enregistrement. Le détail de l’erreur est affiché ici.');
     }
   } catch (error) {
     showPlanningMessage('Erreur lors de la création : ' + (error?.message || 'connexion ou autorisation refusée.'));
