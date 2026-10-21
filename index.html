@@ -1717,7 +1717,12 @@ async function openWorkspace(user) {
   $('auth').classList.add('hidden');
   $('workspace').classList.remove('hidden');
   $('accountLabel').textContent = (user.email || 'Espace connecté') + (workspaceOwnerId !== user.id ? ' · Espace direction partagé' : '');
-  const greetingName = (user.email || '').toLowerCase() === 'teasecurite@gmail.com' ? 'Mustapha' : 'Mohammed';
+  const metadata = user.user_metadata || {};
+  const email = (user.email || '').toLowerCase();
+  const emailName = (user.email || '').split('@')[0].replace(/[._-]+/g, ' ').trim().replace(/\b\p{L}/gu, c => c.toUpperCase());
+  const greetingName = metadata.full_name || metadata.name || metadata.display_name ||
+    (email === 'teasecurite@gmail.com' ? 'Mustapha' :
+     email === 'mohamed.elalaoui2@gmail.com' ? 'Mohammed' : emailName || 'Bienvenue');
   const greeting = $('dashboardGreeting');
   if (greeting) greeting.textContent = 'Bonjour ' + greetingName;
   $('shiftDate').value = new Date().toISOString().slice(0,10);
