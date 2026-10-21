@@ -1502,7 +1502,7 @@ nav button.active{color:#f1dba5;background:linear-gradient(145deg,rgba(216,181,1
     </section>
     <section id="backup" class="hidden">
       <div class="section-title">💾 Sauvegarde</div>
-      <div class="card"><p class="notice">Télécharge une copie JSON des données accessibles à ton compte. Conserve ce fichier dans un endroit privé. L’import-restauration sera activé après validation des règles de correspondance pour éviter les doublons et écrasements.</p><button class="primary" id="backupExportBtn">Exporter une sauvegarde JSON</button><div id="backupMsg" class="msg hidden" aria-live="polite"></div></div>
+      <div class="card"><p class="notice">La sauvegarde contient les données accessibles à ton compte, mais pas les fichiers privés. Garde le fichier dans un emplacement sécurisé.</p><button class="primary" id="backupExportBtn">Exporter une sauvegarde JSON</button><div class="backup-restore-panel"><label for="backupImportFile">Fichier JSON à restaurer</label><input id="backupImportFile" type="file" accept=".json,application/json"><p class="notice">La restauration est réservée au même compte. Les enregistrements déjà présents ne seront pas remplacés. Les nouveaux enregistrements sont ajoutés dans l’ordre des relations.</p><div id="backupPreview" class="notice" aria-live="polite">Sélectionne un fichier pour vérifier son contenu avant restauration.</div><button class="secondary" id="backupRestoreBtn" disabled>Vérifier et restaurer les données</button></div><div id="backupMsg" class="msg hidden" aria-live="polite"></div></div>
     </section>
     <section id="qualifications" class="hidden"><div class="section-title">🎓 Qualifications</div><div class="card"><label>Agent</label><select id="qualAgent"></select><label>Qualification</label><select id="qualType"><option>Carte professionnelle CNAPS</option><option>APS</option><option>SSIAP 1</option><option>SSIAP 2</option><option>SSIAP 3</option><option>SST</option><option>H0B0</option><option>Autre</option></select><label>Numéro</label><input id="qualNumber"><label>Expiration</label><input id="qualExpiry" type="date"><button class="primary" id="qualAddBtn">Enregistrer</button></div><div id="qualAlerts"></div><div id="qualList"></div></section>
     <section id="maincourante" class="hidden"><div class="section-title">📝 Main courante numérique</div><div class="card"><label>Type d’entrée</label><select id="logType"><option value="information">Information</option><option value="incident">Incident</option><option value="consigne">Consigne</option><option value="anomalie">Anomalie</option></select><label>Priorité</label><select id="logPriority"><option value="normale">Normale</option><option value="basse">Basse</option><option value="haute">Haute</option><option value="urgente">Urgente</option></select><label>Agent concerné</label><select id="logAgent"></select><label>Site concerné</label><select id="logSite"></select><label>Vacation liée (facultatif)</label><select id="logShift"><option value="">Sans vacation liée</option></select><label>Titre de l’événement</label><input id="logTitle" maxlength="120" placeholder="Résumé court et factuel"><label>Compte rendu</label><textarea id="logDescription" rows="4" maxlength="4000" placeholder="Décrire les faits de façon précise et objective"></textarea><button class="primary" id="logAddBtn">Enregistrer l’entrée</button><div id="logFormMsg" class="msg hidden" aria-live="polite"></div></div><div class="card"><div class="section-title">Rechercher et filtrer</div><label>Recherche</label><input id="logSearch" placeholder="Mot-clé, agent, site…"><label>Type</label><select id="logFilterType"><option value="">Tous les types</option><option value="information">Information</option><option value="incident">Incident</option><option value="consigne">Consigne</option><option value="anomalie">Anomalie</option></select><label>Priorité</label><select id="logFilterPriority"><option value="">Toutes les priorités</option><option value="basse">Basse</option><option value="normale">Normale</option><option value="haute">Haute</option><option value="urgente">Urgente</option></select><label>Statut</label><select id="logFilterStatus"><option value="">Tous les statuts</option><option value="ouvert">Ouvert</option><option value="clos">Clos</option></select><div class="button-row"><button class="secondary" id="logExportBtn">Exporter CSV</button><button class="secondary" id="logResetFiltersBtn">Effacer les filtres</button></div><p class="notice">La clôture conserve le compte rendu dans l’historique.</p></div><div id="logCount" class="notice"></div><div id="logList"></div></section>
@@ -2762,19 +2762,78 @@ async function loadBusinessTools(){
  }
 }
 $('auditRefreshBtn')?.addEventListener('click',loadBusinessTools);
-$('backupExportBtn')?.addEventListener('click',async()=>{
- const names=['agents','Site','planning','pointages','factures','qualifications','main_courante','ronde_points','ronde_passages','notifications','indisponibilites','agent_documents','charges_entreprise'];
- const backup={app:'VIGENTRA PRO',version:1,exported_at:new Date().toISOString(),account:currentUser.id,tables:{}};
- for(const table of names){
-  const {data,error}=await db.from(table).select('*');
-  if(error){msg('backupMsg','Sauvegarde interrompue sur '+table+' : '+error.message);return;}
-  backup.tables[table]=data||[];
+
+const VIGENTRA_BACKUP_TABLES=['agents','Site','planning','pointages','factures','qualifications','main_courante','ronde_points','ronde_passages','notifications','indisponibilites','agent_documents','charges_entreprise'];
+function validateVigentraBackup(backup){
+ if(!currentUser||agentMode)throw new Error('La sauvegarde et la restauration sont réservées au compte gestionnaire.');
+ if(!backup||backup.app!=='VIGENTRA PRO'||![1,2].includes(Number(backup.version))||backup.account!==currentUser.id||!backup.tables||typeof backup.tables!=='object'||Array.isArray(backup.tables))throw new Error('Fichier invalide ou créé pour un autre compte.');
+ for(const table of VIGENTRA_BACKUP_TABLES){
+  const rows=backup.tables[table];
+  if(!Array.isArray(rows))throw new Error('Sauvegarde incomplète : la table '+table+' est absente ou invalide.');
+  for(const row of rows){
+   if(!row||typeof row!=='object'||Array.isArray(row)||row.id===undefined||row.id===null||String(row.user_id)!==currentUser.id)throw new Error('Une ligne de '+table+' ne correspond pas au compte connecté. Aucun enregistrement n’a été restauré.');
+  }
  }
- const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
- const url=URL.createObjectURL(blob),a=document.createElement('a');
- a.href=url;a.download='vigentra-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url);
- msg('backupMsg','Sauvegarde JSON téléchargée. Garde ce fichier confidentiel. Les fichiers originaux du stockage privé ne sont pas inclus.');
+ return backup;
+}
+async function readVigentraBackupFile(){
+ const file=$('backupImportFile')?.files?.[0];
+ if(!file)throw new Error('Sélectionne d’abord un fichier JSON.');
+ if(file.size>25*1024*1024)throw new Error('Le fichier dépasse la limite de 25 Mo.');
+ let backup;
+ try{backup=JSON.parse(await file.text());}catch(e){throw new Error('Le fichier ne contient pas un JSON valide.');}
+ return validateVigentraBackup(backup);
+}
+$('backupExportBtn')?.addEventListener('click',async()=>{
+ clearMsg('backupMsg');
+ if(!currentUser||agentMode){msg('backupMsg','Cette action est réservée au compte gestionnaire.');return;}
+ const button=$('backupExportBtn');button.disabled=true;
+ try{
+  const backup={app:'VIGENTRA PRO',version:2,format:'vigentra-backup',exported_at:new Date().toISOString(),account:currentUser.id,tables:{},counts:{}};
+  for(const table of VIGENTRA_BACKUP_TABLES){
+   const {data,error}=await db.from(table).select('*');
+   if(error)throw new Error('Export interrompu sur '+table+' : '+error.message);
+   backup.tables[table]=data||[];
+   backup.counts[table]=backup.tables[table].length;
+  }
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='vigentra-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  msg('backupMsg','Sauvegarde créée : '+VIGENTRA_BACKUP_TABLES.reduce((n,t)=>n+backup.counts[t],0)+' enregistrements dans '+VIGENTRA_BACKUP_TABLES.length+' tables. Les fichiers privés ne sont pas inclus. Conserve ce fichier en lieu sûr.');
+ }catch(error){msg('backupMsg',error.message||'Impossible de créer la sauvegarde.');}
+ finally{button.disabled=false;}
 });
+$('backupImportFile')?.addEventListener('change',async()=>{
+ const button=$('backupRestoreBtn'),preview=$('backupPreview');
+ button.disabled=true;preview.textContent='Vérification du fichier…';clearMsg('backupMsg');
+ try{
+  const backup=await readVigentraBackupFile();
+  const total=VIGENTRA_BACKUP_TABLES.reduce((n,t)=>n+backup.tables[t].length,0);
+  preview.textContent='Fichier valide pour ce compte · '+total+' enregistrements · '+VIGENTRA_BACKUP_TABLES.length+' tables. Les doublons seront ignorés et les lignes existantes ne seront pas modifiées.';
+  button.disabled=false;
+ }catch(error){preview.textContent=error.message||'Fichier non valide.';msg('backupMsg','Restauration non préparée : aucune donnée modifiée.');}
+});
+$('backupRestoreBtn')?.addEventListener('click',async()=>{
+ const button=$('backupRestoreBtn');
+ if(button.disabled)return;
+ button.disabled=true;clearMsg('backupMsg');
+ try{
+  const backup=await readVigentraBackupFile();
+  const total=VIGENTRA_BACKUP_TABLES.reduce((n,t)=>n+backup.tables[t].length,0);
+  if(!window.confirm('Restaurer cette sauvegarde dans le compte connecté ?\n\n'+total+' enregistrements dans '+VIGENTRA_BACKUP_TABLES.length+' tables.\nLes lignes existantes ne seront pas écrasées. Cette opération ajoute les lignes manquantes.')){button.disabled=false;return;}
+  const {data,error}=await db.rpc('vigentra_restore_backup',{p_backup:backup});
+  if(error)throw new Error(error.message||'Supabase a refusé la restauration.');
+  const inserted=Number(data?.inserted||0);
+  msg('backupMsg','Restauration terminée. '+inserted+' nouveaux enregistrements ajoutés. Les doublons ont été ignorés. Rechargement des données…');
+  $('backupPreview').textContent='Restauration terminée. Les données seront rechargées.';
+  setTimeout(()=>location.reload(),1200);
+ }catch(error){
+  msg('backupMsg','Restauration interrompue : '+(error.message||'erreur inconnue')+'. Les lignes déjà présentes n’ont pas été remplacées. Si l’opération a été partielle, tu peux relancer le même fichier : les identifiants déjà importés seront ignorés.');
+  button.disabled=false;
+ }
+});
+
 $('documentType')?.addEventListener('change',e=>{if(e.target.value==='ssi ap')e.target.value='autre';});
 db.auth.getSession().then(({data, error}) => {
   if (error) {
@@ -3250,6 +3309,13 @@ nav button.active{box-shadow:inset 0 0 0 1px rgba(241,38,73,.65),0 5px 18px rgba
 .notification-item.is-read{opacity:.82}
 .notification-item p{overflow-wrap:anywhere;line-height:1.55}
 .notification-nav-badge{display:inline-grid;place-items:center;min-width:17px;height:17px;padding:0 4px;margin-left:3px;border-radius:99px;background:#f12649;color:#fff;font-size:9px;font-weight:900;line-height:1}
+
+
+/* Sauvegarde/restauration — interface claire et commandes protégées */
+.backup-restore-panel{display:grid;gap:10px;margin-top:20px;padding:16px;border:1px solid rgba(232,189,101,.2);border-radius:16px;background:rgba(11,23,40,.55)}
+#backupImportFile{padding:10px;min-height:48px}
+#backupRestoreBtn:disabled{opacity:.45;cursor:not-allowed;filter:saturate(.4)}
+#backupPreview{overflow-wrap:anywhere;line-height:1.5}
 
 </style>
 </body>
