@@ -845,7 +845,8 @@ nav span{display:block;font-size:20px;margin-bottom:5px}
           <div><label>Heure de début</label><input type="time" id="shiftStart" value="08:00"></div>
           <div><label>Heure de fin</label><input type="time" id="shiftEnd" value="16:00"></div>
         </div>
-        <button class="primary" id="addShiftBtn">Ajouter la vacation</button>
+        <button class="primary" id="addShiftBtn" type="button">Ajouter la vacation</button>
+        <div id="planningSaveMsg" class="msg hidden" role="status" aria-live="polite"></div>
         <p class="notice">Vérifie les horaires et les temps de pause avant de valider un planning réel.</p>
       </div>
       <div class="card planning-tools">
@@ -1716,25 +1717,27 @@ $('recommendAgentBtn').addEventListener('click', recommendBestAgent);
 }));
 
 $('addShiftBtn').onclick = async () => {
+  const button = $('addShiftBtn');
+  const feedback = $('planningSaveMsg');
+  const showPlanningMessage = (message, ok = false) => {
+    if (feedback) {
+      feedback.textContent = message;
+      feedback.classList.remove('hidden');
+      feedback.classList.toggle('success', ok);
+      feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    msg('appMsg', message);
+  };
   const agent_id = $('shiftAgent').value;
   const site_id = $('shiftSite').value;
   const date_vacation = $('shiftDate').value;
   const heure_debut = $('shiftStart').value;
   const heure_fin = $('shiftEnd').value;
 
-  if (!agent_id || !site_id) {
-    return msg('appMsg', 'Ajoute un agent et un site avant de créer une vacation.');
-  }
+  if (!agent_id || !site_id) return showPlanningMessage('Choisis un agent et un site avant de créer la vacation.');
+  if (!date_vacation || !heure_debut || !heure_fin) return showPlanningMessage('Complète la date et les heures.');
+  if (heure_debut === heure_fin) return showPlanningMessage('Les heures de début et de fin ne peuvent pas être identiques.');
 
-  if (!date_vacation || !heure_debut || !heure_fin) {
-    return msg('appMsg', 'Complète la date et les heures.');
-  }
-
-  if (heure_debut === heure_fin) {
-    return msg('appMsg', 'Les heures de début et de fin ne peuvent pas être identiques.');
-  }
-
-  // Refuse les chevauchements, y compris lorsqu'une vacation passe minuit.
   const newStart = Date.parse(date_vacation + 'T00:00:00Z') / 60000 + timeToMinutes(heure_debut);
   const newEnd = newStart + durationHours(heure_debut, heure_fin) * 60;
   const overlaps = shifts.some(x => {
@@ -1743,18 +1746,33 @@ $('addShiftBtn').onclick = async () => {
     const oldEnd = oldStart + durationHours(x.heure_debut, x.heure_fin) * 60;
     return newStart < oldEnd && oldStart < newEnd;
   });
-  if (overlaps) {
-    return msg('appMsg', 'Attention : cet agent a déjà une vacation qui chevauche cet horaire le même jour.');
-  }
+  if (overlaps) return showPlanningMessage('Attention : cet agent a déjà une vacation qui chevauche cet horaire.');
 
-  await insertRow('planning', {
-    agent_id,
-    site_id,
-    date_vacation,
-    heure_debut,
-    heure_fin,
-    statut: 'prévu'
-  });
+  button.disabled = true;
+  button.textContent = 'Enregistrement…';
+  if (feedback) feedback.classList.add('hidden');
+  try {
+    const saved = await insertRow('planning', {
+      agent_id: Number(agent_id),
+      site_id: Number(site_id),
+      date_vacation,
+      heure_debut,
+      heure_fin,
+      statut: 'prévu'
+    });
+    if (saved) {
+      showPlanningMessage('Vacation enregistrée ! Elle apparaît maintenant dans le planning.', true);
+      button.textContent = 'Vacation ajoutée ✓';
+      setTimeout(() => { button.textContent = 'Ajouter la vacation'; }, 2200);
+    } else {
+      showPlanningMessage('La base a refusé l’enregistrement. Le détail de l’erreur est affiché ici.');
+    }
+  } catch (error) {
+    showPlanningMessage('Erreur lors de la création : ' + (error?.message || 'connexion ou autorisation refusée.'));
+  } finally {
+    button.disabled = false;
+    if (button.textContent === 'Enregistrement…') button.textContent = 'Ajouter la vacation';
+  }
 };
 
 async function deleteRow(table, id) {
