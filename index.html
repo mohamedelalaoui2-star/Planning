@@ -746,6 +746,37 @@ button:active{transform:scale(.98);filter:brightness(1.12)}
 #nav button{font-weight:650;letter-spacing:-.02em}
 @media(max-width:390px){#workspace section>.section-title{font-size:21px}#agentList .item,#siteList .item,#shiftList .item,#invoiceList .item{gap:7px;padding:11px!important}#invoiceList .item-actions{max-width:135px}}
 </style>
+<style id="vigentra-dashboard-layout">
+/* Tableau de bord : hiérarchie et raccourcis proches de la maquette fournie */
+#home{display:flex;flex-direction:column;gap:14px}
+#home .home-hero{position:relative;overflow:hidden;margin:0;padding:18px!important}
+#home .hero-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:22px}
+#home .hero-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:850;letter-spacing:.09em;color:#c7d7f0}
+#home .hero-version{font-size:9px;font-weight:850;letter-spacing:.12em;color:#ff6b8b}
+#home .hero-title{font-size:27px!important;line-height:1.12;margin:0 0 7px}
+#home .hero-subtitle{font-size:13px;line-height:1.55;margin:0 0 16px;max-width:28ch}
+#home .hero-date{display:flex;align-items:center;gap:8px;padding:11px 12px;margin:0 0 14px;font-size:12px;font-weight:650}
+#home .hero-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#home .hero-actions button{width:100%;min-height:44px;margin:0;padding:10px 8px;font-size:12px;font-weight:750}
+#home .home-section-heading{margin:4px 2px 0;align-items:center}
+#home .home-section-heading h2{font-size:21px;margin-top:4px}
+#home .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#home .stat-card{padding:13px!important;min-height:112px;display:flex;flex-direction:column;justify-content:space-between;gap:8px}
+#home .stat-label{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;color:#b8c8df}
+#home .stat-icon{display:inline-grid;place-items:center;width:29px;height:29px;border-radius:9px;background:#172b48;color:#62a2ff;font-size:17px}
+#home .stat-num{font-size:30px!important;line-height:1;font-variant-numeric:tabular-nums}
+#home .stat-foot{font-size:10px;color:#8398b7}
+#home .home-quick-actions{display:grid;grid-template-columns:1fr;gap:8px}
+#home .quick-action{display:flex;align-items:center;gap:11px;text-align:left;width:100%;padding:12px!important;min-height:66px;margin:0}
+#home .quick-action>span:nth-child(2){display:flex;flex:1;flex-direction:column;gap:4px;min-width:0}
+#home .quick-action strong{font-size:12px;font-weight:800}
+#home .quick-action small{font-size:10px;color:#9aabc5}
+#home .quick-icon{display:grid;place-items:center;width:38px;height:38px;flex:0 0 38px;border-radius:12px;background:#192e4b;font-size:18px}
+#home .quick-arrow{font-size:23px;color:#90a7c8}
+#home #dashMore{margin:0;padding:14px!important}
+#home #profitCalc{margin:0}
+@media(min-width:430px){#home .home-quick-actions{grid-template-columns:1fr 1fr}#home .quick-action{min-height:82px}#home .quick-action>span:nth-child(2){gap:5px}}
+</style>
 </head>
 <body>
 
