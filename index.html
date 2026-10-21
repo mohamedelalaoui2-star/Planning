@@ -846,6 +846,67 @@ button:active{transform:scale(.98);filter:brightness(1.12)}
 @media(min-width:430px){#home .home-quick-actions{grid-template-columns:1fr}#home .quick-action{min-height:72px!important}}
 @media(prefers-reduced-motion:no-preference){#home .stat-card,#home .quick-action{transition:border-color .16s ease,transform .16s ease}#home .quick-action:hover{transform:translateY(-1px)}}
 </style>
+<style id="vigentra-premium-suite">
+:root{--v-bg:#070d18;--v-panel:#0d1728;--v-panel-raised:#111f33;--v-border:#263a58;--v-red:#ff315d;--v-blue:#4c98ff;--v-muted:#9bacc5}
+body{background:radial-gradient(ellipse at 50% -12%,#142542 0%,#070d18 48%) fixed!important}
+header{position:sticky;top:0;z-index:20!important}
+header .brand{max-width:760px;margin:auto}
+main{padding-top:16px!important}
+#workspace{display:flex;flex-direction:column;gap:16px}
+#workspace>section{animation:vFadeIn .22s ease both}
+@keyframes vFadeIn{from{opacity:.55;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+#workspace section>.section-title{font-size:24px!important;line-height:1.15!important;font-weight:850!important;letter-spacing:-.045em!important;padding:5px 2px 4px!important}
+#workspace section>.section-title:before{content:"";display:inline-block;width:4px;height:23px;border-radius:5px;background:linear-gradient(#ff5577,#e90042);margin-right:7px;vertical-align:-4px}
+#workspace .card{padding:16px!important;border-radius:19px!important;background:linear-gradient(150deg,rgba(17,31,51,.98),rgba(10,20,35,.98))!important;border:1px solid #263b59!important;box-shadow:0 10px 28px #0002!important}
+#workspace .card>.section-title{font-size:15px!important;letter-spacing:-.015em!important;margin:0 0 13px!important;padding:0!important}
+#workspace .card>.section-title:before{display:none}
+#workspace .notice{padding:11px 12px;background:#0a1526;border:1px solid #223651;border-radius:12px;line-height:1.55}
+#workspace .item{border-radius:15px!important;border:1px solid #263b59!important;background:linear-gradient(130deg,#12223a,#0c1728)!important;box-shadow:0 5px 14px #0002!important}
+#workspace .item strong{font-weight:800!important;letter-spacing:-.015em}
+#workspace .item small{line-height:1.6!important}
+#workspace input,#workspace select,#workspace textarea{width:100%;min-height:47px;padding:12px 13px!important;background:#081324!important;border:1px solid #2b4262!important;border-radius:12px!important;color:#f5f7ff!important;font-size:14px!important;outline:none!important;box-shadow:inset 0 1px 2px #0002}
+#workspace input:focus,#workspace select:focus,#workspace textarea:focus{border-color:#478fff!important;box-shadow:0 0 0 3px #347fff22!important}
+#workspace textarea{min-height:105px;resize:vertical}
+#workspace label{display:block;font-size:11px!important;letter-spacing:.025em;font-weight:750!important;color:#aabbd3!important;margin-bottom:6px}
+#workspace .primary,#workspace button.primary{min-height:46px;border-radius:12px!important;font-size:13px!important;font-weight:800!important;letter-spacing:-.01em;box-shadow:0 7px 20px #ff174f20!important}
+#workspace button.secondary,#workspace .secondary{min-height:42px;border-radius:12px!important;font-size:12px!important;font-weight:750!important}
+#workspace button:disabled{opacity:.42;filter:grayscale(.35)}
+#workspace .stats .stat-card{padding:14px!important}
+#workspace .section-title+.card{margin-top:2px}
+#workspace .item-actions{gap:6px}
+#workspace .item-actions button{border-radius:10px!important}
+#workspace .status-dot{display:inline-block;width:7px;height:7px;background:#22d39a;border-radius:50%;box-shadow:0 0 10px #22d39a70}
+#nav{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;align-items:stretch!important}
+#nav button{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;max-width:none!important;width:100%!important;min-height:53px!important;padding:6px 1px!important;border:1px solid transparent!important;background:transparent!important;color:#8fa2bf!important;border-radius:13px!important}
+#nav button span{display:block!important;font-size:19px!important;line-height:1.1!important;margin:0!important}
+#nav button.active{color:#fff!important;background:linear-gradient(145deg,#3a1c30,#24182a)!important;border:1px solid #763149!important;box-shadow:inset 0 1px #ff799433!important}
+#nav button.active span{filter:drop-shadow(0 0 5px #ff315d55)}
+#moreMenu{z-index:40!important;backdrop-filter:blur(24px)}
+#moreMenu button{display:flex!important;align-items:center!important;gap:10px!important;text-align:left!important;padding:12px 13px!important}
+#moreMenu button:active{border-color:#ff315d!important}
+#auth{min-height:calc(100dvh - 100px);align-content:center}
+#auth .card{max-width:430px;margin:0 auto;padding:24px!important;border-radius:24px!important;background:linear-gradient(150deg,#12233b,#0a1424)!important;border:1px solid #304665!important;box-shadow:0 24px 70px #0005!important}
+#auth .primary{width:100%;min-height:49px;font-size:14px!important}
+#auth input{min-height:49px}
+#home .hero-actions{margin-top:3px}
+#home .stats .stat-card{border-top:2px solid #2a5d96!important}
+#home .stats .stat-card:nth-child(2){border-top-color:#1a9c9b!important}
+#home .stats .stat-card:nth-child(3){border-top-color:#ff315d!important}
+#home .stats .stat-card:nth-child(4){border-top-color:#d89b35!important}
+#home .live-pill .status-dot{width:6px;height:6px}
+#planning .week-day{transition:border-color .15s,background .15s}
+#planning .week-day:hover{border-color:#4b88d8!important}
+#pointage .primary{background:linear-gradient(100deg,#087e62,#13b783)!important;box-shadow:0 7px 20px #0ba97920!important}
+#pointage .secondary{background:linear-gradient(100deg,#8e1938,#e82e53)!important}
+#factures .item{border-left:3px solid #3889f5!important}
+#qualifications .item{border-left:3px solid #438eff!important}
+#notifications .item{border-left:3px solid #ff315d!important}
+#maincourante .item{border-left:3px solid #d59b42!important}
+#rondes .item{border-left:3px solid #18a98a!important}
+@media(min-width:700px){main{max-width:860px!important}#workspace{gap:19px}#workspace section>.section-title{font-size:28px!important}}
+@media(max-width:380px){main{padding-left:10px!important;padding-right:10px!important}#workspace .card{padding:13px!important}#workspace section>.section-title{font-size:22px!important}#nav button{font-size:9px!important}}
+@media(prefers-reduced-motion:reduce){#workspace section{animation:none!important}button{transition:none!important}}
+</style>
 </head>
 <body>
 
