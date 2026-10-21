@@ -801,9 +801,19 @@ nav span{display:block;font-size:20px;margin-bottom:5px}
         </select>
         <label>Autres qualifications / certifications (ex. CQP, SST)</label>
         <input id="agentOtherQual" placeholder="CQP, SST, H0B0…">
-        <p class="notice">La photo et les justificatifs PDF nécessitent un stockage privé sécurisé ; je ne les enregistre pas dans un champ public.</p>
+        <p class="notice">Les scans sont stockés dans un espace privé, pas dans un lien public.</p>
         <button class="primary" id="addAgentBtn">Enregistrer l’agent</button>
         <button class="secondary hidden" id="cancelAgentEditBtn" type="button">Annuler la modification</button>
+      </div>
+      <div class="card" id="agentDocumentsCard">
+        <div class="section-title">📁 Documents et justificatifs</div>
+        <label>Agent concerné</label><select id="documentAgent"><option value="">Choisir un agent</option></select>
+        <label>Type de document</label><select id="documentType"><option value="carte_pro">Carte professionnelle CNAPS</option><option value="photo">Photo de l’agent</option><option value="diplome">Diplôme / qualification</option><option value="sst">SST</option><option value="ssi ap">SSIAP</option><option value="autre">Autre justificatif</option></select>
+        <label>Fichier PDF ou image (10 Mo maximum)</label><input id="documentFile" type="file" accept="application/pdf,image/jpeg,image/png,image/webp">
+        <label>Date d’expiration (facultatif)</label><input id="documentExpiry" type="date">
+        <button class="primary" id="documentUploadBtn">Ajouter au dossier</button>
+        <div id="documentMsg" class="msg hidden" aria-live="polite"></div>
+        <div id="documentList"></div>
       </div>
       <div id="agentList"></div>
     </section>
@@ -911,6 +921,25 @@ nav span{display:block;font-size:20px;margin-bottom:5px}
         <button class="primary" id="invoiceCreateBtn">Créer un brouillon</button>
         <p class="notice">Vérifie les mentions obligatoires et le taux de TVA avant émission.</p>
       </div><div id="invoiceSummary" class="invoice-summary"></div><div id="invoiceList"></div>
+    </section>
+    <section id="charges" class="hidden">
+      <div class="section-title">💶 Charges et rentabilité réelle</div>
+      <div class="card">
+        <label>Date de la charge</label><input id="chargeDate" type="date">
+        <label>Catégorie</label><select id="chargeCategory"><option>Salaires et charges sociales</option><option>Carburant et déplacements</option><option>Matériel et uniformes</option><option>Assurance</option><option>Téléphone et logiciels</option><option>Loyer</option><option>Autre</option></select>
+        <label>Description</label><input id="chargeDescription" placeholder="Ex. achat chaussures de sécurité">
+        <label>Montant HT (€)</label><input id="chargeAmount" type="number" min="0" step="0.01">
+        <button class="primary" id="chargeAddBtn">Enregistrer la charge</button>
+      </div>
+      <div id="chargeSummary" class="invoice-summary"></div><div id="chargeList"></div>
+    </section>
+    <section id="audit" class="hidden">
+      <div class="section-title">🛡️ Historique des modifications</div>
+      <div class="card"><p class="notice">Historique technique des créations, modifications et suppressions enregistrées par la base.</p><button class="secondary" id="auditRefreshBtn">Actualiser l’historique</button><div id="auditList"></div></div>
+    </section>
+    <section id="backup" class="hidden">
+      <div class="section-title">💾 Sauvegarde</div>
+      <div class="card"><p class="notice">Télécharge une copie JSON des données accessibles à ton compte. Conserve ce fichier dans un endroit privé. L’import-restauration sera activé après validation des règles de correspondance pour éviter les doublons et écrasements.</p><button class="primary" id="backupExportBtn">Exporter une sauvegarde JSON</button><div id="backupMsg" class="msg hidden" aria-live="polite"></div></div>
     </section>
     <section id="qualifications" class="hidden"><div class="section-title">🎓 Qualifications</div><div class="card"><label>Agent</label><select id="qualAgent"></select><label>Qualification</label><select id="qualType"><option>Carte professionnelle CNAPS</option><option>APS</option><option>SSIAP 1</option><option>SSIAP 2</option><option>SSIAP 3</option><option>SST</option><option>H0B0</option><option>Autre</option></select><label>Numéro</label><input id="qualNumber"><label>Expiration</label><input id="qualExpiry" type="date"><button class="primary" id="qualAddBtn">Enregistrer</button></div><div id="qualAlerts"></div><div id="qualList"></div></section>
     <section id="maincourante" class="hidden"><div class="section-title">📝 Main courante</div><div class="card"><label>Type</label><select id="logType"><option value="information">Information</option><option value="incident">Incident</option><option value="consigne">Consigne</option><option value="anomalie">Anomalie</option></select><label>Priorité</label><select id="logPriority"><option>normale</option><option>basse</option><option>haute</option><option>urgente</option></select><label>Agent</label><select id="logAgent"></select><label>Site</label><select id="logSite"></select><label>Titre</label><input id="logTitle"><label>Compte rendu</label><textarea id="logDescription" rows="4"></textarea><button class="primary" id="logAddBtn">Enregistrer l'entrée</button></div><div id="logList"></div></section>
@@ -1024,7 +1053,7 @@ function openMoreTab(tab) {
   showTab(tab);
 }
 function showTab(tab) {
-  ['home','agents','sites','planning','pointage','factures','qualifications','maincourante','rondes','notifications','assistant'].forEach(id => {
+  ['home','agents','sites','planning','pointage','factures','charges','audit','backup','qualifications','maincourante','rondes','notifications','assistant'].forEach(id => {
     $(id).classList.toggle('hidden', id !== tab);
   });
   $('moreMenu')?.classList.add('hidden');
@@ -1110,7 +1139,7 @@ async function openWorkspace(user) {
   $('agentAccountCard')?.classList.toggle('hidden', agentMode);
   await refreshData();
   await loadExtraData();
-  ['home','agents','sites','planning','pointage','factures','qualifications','maincourante','rondes','notifications','assistant'].forEach(id => $(id)?.classList.add('hidden'));
+  ['home','agents','sites','planning','pointage','factures','charges','audit','backup','qualifications','maincourante','rondes','notifications','assistant'].forEach(id => $(id)?.classList.add('hidden'));
   if (agentMode) {
     renderAgentPortal();
     $('agentPortal').classList.remove('hidden');
@@ -1279,6 +1308,13 @@ function render() {
       </div>
     `).join('')
     : '<div class="empty">Aucun agent enregistré.</div>';
+
+  const documentAgentSelect = $('documentAgent');
+  if (documentAgentSelect) {
+    const previousDocAgent = documentAgentSelect.value;
+    documentAgentSelect.innerHTML = '<option value="">Choisir un agent</option>' + agents.map(a => '<option value="'+esc(a.id)+'">'+esc(agentNameOf(a))+'</option>').join('');
+    if (agents.some(a => String(a.id) === String(previousDocAgent))) documentAgentSelect.value = previousDocAgent;
+  }
 
   $('siteList').innerHTML = sites.length
     ? sites.map(s => `
@@ -1852,6 +1888,84 @@ function updateProfitability(){
 ['profitHours','profitSell','profitCost','profitCharges'].forEach(id=>$(id).addEventListener('input',updateProfitability));
 updateProfitability();
 
+async function loadAgentDocuments() {
+  if (!currentUser || agentMode) return;
+  const list = $('documentList');
+  if (!list) return;
+  const { data, error } = await db.from('agent_documents').select('*').order('created_at',{ascending:false}).limit(100);
+  if (error) { list.innerHTML = '<p class="notice">Documents indisponibles : '+esc(error.message)+'</p>'; return; }
+  list.innerHTML = (data||[]).map(d => {
+    const agent = agents.find(a => String(a.id) === String(d.agent_id));
+    return '<div class="item"><div><strong>'+esc(d.file_name)+'</strong><small>'+esc(agent ? agentNameOf(agent) : 'Agent')+' · '+esc(d.document_type)+' · '+esc(d.expires_on || 'Sans échéance')+'</small></div><div class="item-actions"><button class="secondary" type="button" onclick="openAgentDocument('+Number(d.id)+')">Consulter</button></div></div>';
+  }).join('') || '<div class="empty">Aucun document ajouté.</div>';
+}
+async function openAgentDocument(id) {
+  const {data,error}=await db.from('agent_documents').select('*').eq('id',id).single();
+  if(error||!data) return msg('documentMsg','Document introuvable ou accès refusé.');
+  const {data:link,error:linkError}=await db.storage.from('vigentra-agent-documents').createSignedUrl(data.storage_path,60);
+  if(linkError) return msg('documentMsg','Ouverture impossible : '+linkError.message);
+  window.open(link.signedUrl,'_blank','noopener');
+}
+$('documentUploadBtn')?.addEventListener('click', async()=>{
+  const agentId=$('documentAgent').value, file=$('documentFile').files?.[0];
+  if(!agentId) return msg('documentMsg','Choisis un agent.');
+  if(!file) return msg('documentMsg','Choisis un fichier.');
+  const allowed=['application/pdf','image/jpeg','image/png','image/webp'];
+  if(!allowed.includes(file.type)) return msg('documentMsg','Format accepté : PDF, JPG, PNG ou WEBP.');
+  if(file.size>10*1024*1024) return msg('documentMsg','Le fichier dépasse 10 Mo.');
+  const agent=agents.find(a=>String(a.id)===String(agentId));
+  if(!agent||String(agent.user_id)!==String(currentUser.id)) return msg('documentMsg','Agent non autorisé.');
+  const btn=$('documentUploadBtn'); btn.disabled=true;
+  try {
+    const cleanName=file.name.normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g,'_').slice(-100)||'document';
+    const path=currentUser.id+'/'+agent.id+'/'+crypto.randomUUID()+'-'+cleanName;
+    const {error:uploadError}=await db.storage.from('vigentra-agent-documents').upload(path,file,{contentType:file.type,upsert:false});
+    if(uploadError) throw uploadError;
+    const {error:metaError}=await db.from('agent_documents').insert({user_id:currentUser.id,agent_id:Number(agent.id),document_type:$('documentType').value,file_name:file.name,storage_path:path,mime_type:file.type,expires_on:$('documentExpiry').value||null});
+    if(metaError){await db.storage.from('vigentra-agent-documents').remove([path]);throw metaError;}
+    $('documentFile').value='';$('documentExpiry').value='';
+    msg('documentMsg','Document ajouté au dossier privé.');
+    await loadAgentDocuments();
+  } catch(e) { msg('documentMsg','Échec de l’ajout : '+(e.message||'erreur inconnue')); }
+  finally { btn.disabled=false; }
+});
+$('chargeAddBtn')?.addEventListener('click',async()=>{
+ const montant_ht=Number($('chargeAmount').value),description=$('chargeDescription').value.trim();
+ if(!Number.isFinite(montant_ht)||montant_ht<0||!description) return msg('appMsg','Saisis une description et un montant positif.');
+ const {error}=await db.from('charges_entreprise').insert({user_id:currentUser.id,date_charge:$('chargeDate').value||new Date().toISOString().slice(0,10),categorie:$('chargeCategory').value,description,montant_ht});
+ if(error)return msg('appMsg','Charge non enregistrée : '+error.message);
+ $('chargeDescription').value='';$('chargeAmount').value='';await loadBusinessTools();msg('appMsg','Charge enregistrée.');
+});
+async function loadBusinessTools(){
+ if(!currentUser||agentMode)return;
+ const [cr,ar]=await Promise.all([
+   db.from('charges_entreprise').select('*').order('date_charge',{ascending:false}).limit(200),
+   db.from('audit_log').select('id,table_name,record_id,action,changed_at').order('changed_at',{ascending:false}).limit(100)
+ ]);
+ if(!cr.error){
+   const rows=cr.data||[],total=rows.reduce((n,x)=>n+Number(x.montant_ht||0),0);
+   $('chargeSummary').innerHTML='<div class="dashboard-kpi"><span>Charges enregistrées</span><strong>'+rows.length+'</strong></div><div class="dashboard-kpi"><span>Total HT</span><strong>'+new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(total)+'</strong></div>';
+   $('chargeList').innerHTML=rows.map(x=>'<div class="item"><div><strong>'+esc(x.description)+'</strong><small>'+esc(x.date_charge)+' · '+esc(x.categorie)+'</small></div><strong>'+new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(Number(x.montant_ht))+'</strong></div>').join('')||'<div class="empty">Aucune charge enregistrée.</div>';
+ }
+ if(!ar.error){
+   $('auditList').innerHTML=(ar.data||[]).map(x=>'<div class="item"><div><strong>'+esc(x.action)+' · '+esc(x.table_name)+' #'+esc(x.record_id)+'</strong><small>'+esc(new Date(x.changed_at).toLocaleString('fr-FR'))+'</small></div></div>').join('')||'<div class="empty">Aucun événement journalisé pour le moment.</div>';
+ }
+}
+$('auditRefreshBtn')?.addEventListener('click',loadBusinessTools);
+$('backupExportBtn')?.addEventListener('click',async()=>{
+ const names=['agents','Site','planning','pointages','factures','qualifications','main_courante','ronde_points','ronde_passages','notifications','indisponibilites','agent_documents','charges_entreprise'];
+ const backup={app:'VIGENTRA PRO',version:1,exported_at:new Date().toISOString(),account:currentUser.id,tables:{}};
+ for(const table of names){
+  const {data,error}=await db.from(table).select('*');
+  if(error){msg('backupMsg','Sauvegarde interrompue sur '+table+' : '+error.message);return;}
+  backup.tables[table]=data||[];
+ }
+ const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='vigentra-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url);
+ msg('backupMsg','Sauvegarde JSON téléchargée. Garde ce fichier confidentiel. Les fichiers originaux du stockage privé ne sont pas inclus.');
+});
+$('documentType')?.addEventListener('change',e=>{if(e.target.value==='ssi ap')e.target.value='autre';});
 db.auth.getSession().then(({data, error}) => {
   if (error) {
     msg('authMsg', error.message);
