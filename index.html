@@ -713,6 +713,39 @@ button{transition:transform .12s ease,filter .12s ease}
 button:active{transform:scale(.98);filter:brightness(1.12)}
 @media(min-width:700px){main{max-width:760px!important}.stats{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
 </style>
+<style id="vigentra-screen-polish">
+/* Écrans de gestion : hiérarchie visuelle cohérente avec la maquette iPhone */
+#workspace>.card:first-child{background:#0b1628!important;border-color:#1d304b!important}
+#workspace section>.section-title{display:flex;align-items:center;gap:9px;font-size:23px;letter-spacing:-.035em;margin:8px 2px 16px}
+#agents .item,#sites .item,#shiftList .item,#invoiceList .item,#roundList .item,#passageList .item,#noticeList .item,#logList .item,#documentList .item{min-height:70px;padding:13px!important;margin:9px 0!important;background:linear-gradient(145deg,#101f34,#0c1728)!important;border:1px solid #203653!important;border-radius:16px!important}
+#agentList .item strong,#siteList .item strong,#shiftList .item strong,#invoiceList .item strong,#roundList .item strong,#noticeList .item strong,#logList .item strong{font-size:14px;letter-spacing:-.015em}
+#agentList .item small,#siteList .item small,#shiftList .item small,#invoiceList .item small,#roundList .item small,#noticeList .item small,#logList .item small{line-height:1.5;font-size:12px}
+#agents>.card,#sites>.card,#planning>.card,#pointage>.card,#factures>.card,#qualifications>.card,#maincourante>.card,#rondes>.card,#notifications>.card{background:linear-gradient(145deg,#101e32,#0b1627)!important;border-color:#203653!important}
+#planning .week-view-card{padding:12px!important}
+#planning .week-view{overflow-x:auto;overscroll-behavior-x:contain;padding-bottom:4px}
+#planning .week-days{min-width:490px;gap:5px}
+#planning .week-day{min-height:110px;background:#0b1729!important;border-color:#233a59!important;border-radius:11px!important;padding:7px 4px!important}
+#planning .week-day.is-today{background:#1a2035!important;border-color:#ff315d!important;box-shadow:inset 0 2px 0 #ff315d!important}
+#planning .week-day-head strong{font-size:15px}
+#planning .week-day-count{font-size:9px}
+#pointage .primary{background:linear-gradient(100deg,#0c9b68,#14b87b)!important;box-shadow:0 5px 18px #10a87524}
+#pointage .secondary{background:linear-gradient(100deg,#9b183a,#e91e4f)!important;border-color:#ff456d!important}
+#notifications .item{border-left:3px solid #ff315d!important}
+#qualifications .item{border-left:3px solid #287dff!important}
+#maincourante .item{align-items:flex-start}
+#invoiceList .item-actions{display:flex;flex-wrap:wrap;gap:6px}
+#invoiceList .item-actions button{width:auto;margin:0;min-height:38px;padding:8px 10px;font-size:12px}
+#agentList .item-actions button,#siteList .item-actions button{width:auto;min-height:38px;padding:8px 10px}
+#home .quick-action{background:linear-gradient(145deg,#101f34,#0b1729)!important;border:1px solid #203653!important;border-radius:15px!important}
+#home .stat-card{background:linear-gradient(145deg,#13233b,#0b1729)!important;border:1px solid #243a59!important}
+#home .stat-card:nth-child(4n+1){border-top:2px solid #1783ff!important}
+#home .stat-card:nth-child(4n+2){border-top:2px solid #10a7a0!important}
+#home .stat-card:nth-child(4n+3){border-top:2px solid #ff315d!important}
+#home .stat-card:nth-child(4n){border-top:2px solid #ffb02e!important}
+#home .stat-icon{color:#4e9aff}
+#nav button{font-weight:650;letter-spacing:-.02em}
+@media(max-width:390px){#workspace section>.section-title{font-size:21px}#agentList .item,#siteList .item,#shiftList .item,#invoiceList .item{gap:7px;padding:11px!important}#invoiceList .item-actions{max-width:135px}}
+</style>
 </head>
 <body>
 
