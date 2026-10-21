@@ -777,6 +777,31 @@ button:active{transform:scale(.98);filter:brightness(1.12)}
 #home #profitCalc{margin:0}
 @media(min-width:430px){#home .home-quick-actions{grid-template-columns:1fr 1fr}#home .quick-action{min-height:82px}#home .quick-action>span:nth-child(2){gap:5px}}
 </style>
+<style id="vigentra-agent-site-cards">
+/* Fiches agents et sites : priorité à l'information, aux statuts et aux actions tactiles */
+#agents>.section-title,#sites>.section-title{font-size:24px!important;font-weight:850;letter-spacing:-.04em;margin:4px 2px 17px!important}
+#agents #agentAccountCard{border-top:2px solid #277cff!important}
+#agents #agentAccountCard>.section-title{font-size:16px!important;margin:0 0 10px!important}
+#agents> .card:not(#agentAccountCard){padding:16px!important}
+#agents #agentList,#sites #siteList{display:flex;flex-direction:column;gap:10px}
+#agents #agentList .item,#sites #siteList .item{display:flex;align-items:center;gap:12px;min-height:78px;padding:13px!important;margin:0!important;border-radius:17px!important;background:linear-gradient(145deg,#12223a,#0b1729)!important;border:1px solid #263d5d!important;box-shadow:0 6px 18px #0002}
+#agents #agentList .item>div:first-child,#sites #siteList .item>div:first-child{flex:1;min-width:0}
+#agents #agentList .item strong,#sites #siteList .item strong{display:block;font-size:14px!important;line-height:1.35;color:#f5f7ff;margin-bottom:4px}
+#agents #agentList .item small,#sites #siteList .item small{display:block;font-size:11px!important;line-height:1.55;color:#a5b6d0!important;overflow-wrap:anywhere}
+#agents #agentList .item .item-actions,#sites #siteList .item .item-actions{display:flex;align-items:center;justify-content:flex-end;gap:5px;flex-wrap:wrap}
+#agents #agentList .item .item-actions button,#sites #siteList .item .item-actions button{width:auto;min-width:38px;min-height:38px;margin:0;padding:7px 9px;font-size:11px;border-radius:11px}
+#agents #agentList .badge,#sites #siteList .badge{font-size:10px}
+#sites #siteList .item{border-left:3px solid #2583ff!important}
+#agents #agentList .item:has(.status-active){border-left:3px solid #14b87b!important}
+#agents #agentList .item:has(.status-expired){border-left:3px solid #ff315d!important}
+#agents #agentList .item .item-actions button:first-child,#sites #siteList .item .item-actions button:first-child{background:#192c48;border:1px solid #304a6d;color:#f5f7ff}
+#agents input,#agents select,#sites input,#sites select{min-height:46px}
+#agents #addAgentBtn,#sites #addSiteBtn,#agents #inviteAgentBtn{min-height:48px;font-size:14px;font-weight:800}
+@media(max-width:390px){
+ #agents #agentList .item,#sites #siteList .item{gap:8px;padding:11px!important}
+ #agents #agentList .item .item-actions button,#sites #siteList .item .item-actions button{min-width:34px;min-height:36px;padding:6px;font-size:10px}
+}
+</style>
 </head>
 <body>
 
