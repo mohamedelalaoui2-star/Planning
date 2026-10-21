@@ -1804,15 +1804,38 @@ function recommendBestAgent() {
       return startAt < unEnd && unStart < endAt;
     });
     if (unavailable) return null;
-    const weeklyMinutes = ownShifts.reduce((sum, shift) => {
-      if (!shift.date_vacation) return sum;
+    const ownIntervals = ownShifts.filter(shift => shift.date_vacation).map(shift => {
       const shiftStart = Date.parse(String(shift.date_vacation) + 'T00:00:00Z') / 60000 + timeToMinutes(shift.heure_debut);
-      const shiftEnd = shiftStart + durationHours(shift.heure_debut, shift.heure_fin) * 60;
-      const overlap = Math.max(0, Math.min(shiftEnd, weekEndAt) - Math.max(shiftStart, weekStartAt));
+      return {start: shiftStart, end: shiftStart + durationHours(shift.heure_debut, shift.heure_fin) * 60};
+    });
+    const restViolation = ownIntervals.some(interval =>
+      (interval.end <= startAt && startAt - interval.end < 11 * 60) ||
+      (interval.start >= endAt && interval.start - endAt < 11 * 60)
+    );
+    if (restViolation) return null;
+    const weeklyMinutes = ownIntervals.reduce((sum, interval) => {
+      const overlap = Math.max(0, Math.min(interval.end, weekEndAt) - Math.max(interval.start, weekStartAt));
       return sum + overlap;
     }, 0);
-    return {agent, weeklyMinutes, qualification};
-  }).filter(Boolean).sort((a,b) => a.weeklyMinutes - b.weeklyMinutes);
+    const dailyMinutes = ownIntervals.reduce((sum, interval) => {
+      const dayStart = dayNumber * 1440, dayEnd = dayStart + 1440;
+      return sum + Math.max(0, Math.min(interval.end, dayEnd) - Math.max(interval.start, dayStart));
+    }, 0);
+    const monthlyMinutes = ownIntervals.reduce((sum, interval) => {
+      const monthStartDate = new Date(date + 'T00:00:00Z');
+      monthStartDate.setUTCDate(1);
+      const monthStart = Math.floor(monthStartDate.getTime() / 60000);
+      const nextMonth = new Date(monthStartDate);
+      nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1);
+      const monthEnd = Math.floor(nextMonth.getTime() / 60000);
+      return sum + Math.max(0, Math.min(interval.end, monthEnd) - Math.max(interval.start, monthStart));
+    }, 0);
+    return {agent, weeklyMinutes, dailyMinutes, monthlyMinutes, qualification};
+  }).filter(Boolean).sort((a,b) =>
+    a.weeklyMinutes - b.weeklyMinutes ||
+    a.monthlyMinutes - b.monthlyMinutes ||
+    a.dailyMinutes - b.dailyMinutes
+  );
 
   if (!candidates.length) {
     const hasQualified = agents.some(agent => {
