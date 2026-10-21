@@ -1581,6 +1581,7 @@ try {
 const $ = id => document.getElementById(id);
 
 let currentUser = null;
+let workspaceOwnerId = null;
 let currentAgent = null;
 let agentMode = false;
 let agents = [];
@@ -1683,6 +1684,8 @@ $('signupBtn').onclick = () => signIn('signup');
 $('logoutBtn').onclick = async () => {
   await db.auth.signOut();
   currentUser = null;
+  workspaceOwnerId = null;
+  currentAgent = null;
   $('workspace').classList.add('hidden');
   $('nav').classList.add('hidden');
   $('auth').classList.remove('hidden');
@@ -1690,17 +1693,31 @@ $('logoutBtn').onclick = async () => {
 
 async function openWorkspace(user) {
   currentUser = user;
-  $('auth').classList.add('hidden');
-  $('workspace').classList.remove('hidden');
-  $('accountLabel').textContent = user.email || 'Espace connecté';
-  $('shiftDate').value = new Date().toISOString().slice(0,10);
   const linked = await db.from('agents').select('*').eq('auth_user_id', user.id).maybeSingle();
   if (linked.error) {
-    msg('appMsg', 'Impossible de vérifier le profil agent : ' + linked.error.message);
+    currentUser = null;
+    msg('authMsg', 'Impossible de vérifier le profil agent : ' + linked.error.message);
     return;
   }
   currentAgent = linked.data || null;
   agentMode = !!currentAgent;
+  if (agentMode) {
+    workspaceOwnerId = user.id;
+  } else {
+    const workspace = await db.rpc('vigentra_workspace_owner_id');
+    if (workspace.error || !workspace.data) {
+      currentUser = null;
+      currentAgent = null;
+      workspaceOwnerId = null;
+      msg('authMsg', 'Impossible d’ouvrir l’espace de gestion : ' + (workspace.error?.message || 'espace non attribué') + '. Vérifie la confirmation de l’adresse e-mail puis reconnecte-toi.');
+      return;
+    }
+    workspaceOwnerId = workspace.data;
+  }
+  $('auth').classList.add('hidden');
+  $('workspace').classList.remove('hidden');
+  $('accountLabel').textContent = (user.email || 'Espace connecté') + (workspaceOwnerId !== user.id ? ' · Espace direction partagé' : '');
+  $('shiftDate').value = new Date().toISOString().slice(0,10);
   $('nav').classList.toggle('hidden', agentMode);
   $('agentAccountCard')?.classList.toggle('hidden', agentMode);
   await refreshData();
@@ -1789,7 +1806,7 @@ async function agentClock(type, shiftId) {
   const existing = pointages.filter(p => String(p.planning_id) === String(shift.id));
   if (type === 'debut' && existing.some(p=>p.type==='debut')) return msg('appMsg','La prise de poste est déjà enregistrée pour cette vacation.');
   if (type === 'fin' && (!existing.some(p=>p.type==='debut') || existing.some(p=>p.type==='fin'))) return msg('appMsg','Vérifie la prise de poste et la fin déjà enregistrée.');
-  const {error} = await db.from('pointages').insert({user_id:currentUser.id,agent_id:currentAgent.id,site_id:shift.site_id,planning_id:shift.id,type,methode:'bouton'});
+  const {error} = await db.from('pointages').insert({user_id:workspaceOwnerId,agent_id:currentAgent.id,site_id:shift.site_id,planning_id:shift.id,type,methode:'bouton'});
   if (error) return msg('appMsg','Pointage impossible : '+error.message);
   msg('appMsg', type==='debut'?'Prise de poste enregistrée.':'Fin de poste enregistrée.');
   await loadExtraData();
@@ -2151,7 +2168,7 @@ async function insertRow(table, row) {
 
   const {error} = await db.from(table).insert({
     ...row,
-    user_id: currentUser.id
+    user_id: workspaceOwnerId
   });
 
   if (error) {
@@ -2213,7 +2230,7 @@ $('addAgentBtn').onclick = async () => {
   const profile = { nom, qualification: $('agentQual').value, adresse, 'Téléphone': telephone, Email: email, numero_carte_pro, expiration_carte_pro, autres_qualifications, actif: true };
   if (editingAgentId !== null) {
     clearMsg('appMsg');
-    const { error } = await db.from('agents').update(profile).eq('id', editingAgentId).eq('user_id', currentUser.id);
+    const { error } = await db.from('agents').update(profile).eq('id', editingAgentId).eq('user_id', workspaceOwnerId);
     if (error) return msg('appMsg', 'Modification impossible : ' + error.message);
     resetAgentForm();
     await refreshData();
@@ -2295,7 +2312,7 @@ async function saveClock(type,method){
  const lastForAgent=pointages.find(p=>String(p.agent_id)===String(agent_id)&&String(p.site_id)===String(site_id));
  if(type==='fin'&&(!lastForAgent||lastForAgent.type!=='debut'))return msg('appMsg','Impossible de clôturer : aucune prise de poste ouverte trouvée pour cet agent sur ce site.');
  if(type==='debut'&&lastForAgent&&lastForAgent.type==='debut')return msg('appMsg','Une prise de poste est déjà ouverte pour cet agent sur ce site. Enregistre d’abord la fin de poste.');
- const {error}=await db.from('pointages').insert({user_id:currentUser.id,agent_id,site_id,planning_id,type,methode:method});
+ const {error}=await db.from('pointages').insert({user_id:workspaceOwnerId,agent_id,site_id,planning_id,type,methode:method});
  if(error)return msg('appMsg','Pointage impossible : '+error.message);
  msg('appMsg',type==='debut'?'Prise de poste enregistrée.':'Fin de poste enregistrée.');await loadExtraData();
 }
@@ -2314,7 +2331,7 @@ $('invoiceCreateBtn').onclick=async()=>{
  if(!$('invoiceQty').value||!$('invoicePrice').value||!$('invoiceVat').value||!Number.isFinite(quantite)||!Number.isFinite(prix_unitaire_ht)||!Number.isFinite(taux_tva)||!(quantite>0)||prix_unitaire_ht<0||taux_tva<0||taux_tva>100)return msg('appMsg','Vérifie quantité, prix et TVA.');
  const total_ht=Math.round(quantite*prix_unitaire_ht*100)/100,total_tva=Math.round(total_ht*taux_tva)/100,total_ttc=Math.round((total_ht+total_tva)*100)/100;
  const numero='VIG-'+new Date().getFullYear()+'-'+Date.now().toString().slice(-6);
- const {error}=await db.from('factures').insert({user_id:currentUser.id,numero,client_nom,description,type_facturation,quantite,prix_unitaire_ht,taux_tva,total_ht,total_tva,total_ttc,statut:'brouillon'});
+ const {error}=await db.from('factures').insert({user_id:workspaceOwnerId,numero,client_nom,description,type_facturation,quantite,prix_unitaire_ht,taux_tva,total_ht,total_tva,total_ttc,statut:'brouillon'});
  if(error)return msg('appMsg','Facture impossible : '+error.message);
  $('invoiceClient').value='';$('invoiceDescription').value='';msg('appMsg','Brouillon de facture créé.');await loadExtraData();
 };
@@ -2330,15 +2347,15 @@ function printInvoice(id){
  win.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Facture '+safe(f.numero)+'</title><style>*{box-sizing:border-box}body{font:14px Arial,sans-serif;color:#172033;margin:0;padding:32px}.top{display:flex;justify-content:space-between;gap:24px;border-bottom:2px solid #182844;padding-bottom:20px}.brand{font-size:22px;font-weight:700}.muted{color:#596579;line-height:1.6}.tag{font-size:24px;font-weight:700;margin-top:30px}table{width:100%;border-collapse:collapse;margin-top:28px}th,td{padding:13px 10px;border-bottom:1px solid #d9dfeb;text-align:left}th{background:#f1f4f9}td.num,th.num{text-align:right}.totals{margin:24px 0 0 auto;max-width:320px}.totals div{display:flex;justify-content:space-between;padding:7px 0}.grand{font-size:19px;font-weight:700;border-top:2px solid #182844;margin-top:8px;padding-top:12px!important}.foot{margin-top:50px;border-top:1px solid #d9dfeb;padding-top:12px;font-size:11px;color:#596579}@media print{body{padding:0}@page{size:A4;margin:18mm}.no-print{display:none}}@media(max-width:600px){body{padding:16px}.top{flex-direction:column}}</style></head><body><div class="top"><div><div class="brand">TEA SÉCURITÉ PRIVÉE</div><div class="muted">Facturation — VIGENTRA</div><div class="muted">Compléter les coordonnées légales de l’entreprise avant émission.</div></div><div><strong>'+safe(f.numero)+'</strong><div class="muted">Date : '+date(f.date_facture||f.created_at)+'</div><div class="muted">Statut : '+safe(f.statut||'Brouillon')+'</div></div></div><div class="tag">FACTURE / BROUILLON</div><p><strong>Client</strong><br>'+safe(f.client_nom)+'</p><table><thead><tr><th>Description</th><th>Type</th><th class="num">Quantité</th><th class="num">Prix unitaire HT</th><th class="num">Total HT</th></tr></thead><tbody><tr><td>'+safe(f.description)+'</td><td>'+safe(f.type_facturation==='heures'?'Heures':'Forfait')+'</td><td class="num">'+safe(f.quantite)+'</td><td class="num">'+money(f.prix_unitaire_ht)+'</td><td class="num">'+money(f.total_ht)+'</td></tr></tbody></table><div class="totals"><div><span>Total HT</span><strong>'+money(f.total_ht)+'</strong></div><div><span>TVA ('+safe(f.taux_tva)+' %)</span><strong>'+money(f.total_tva)+'</strong></div><div class="grand"><span>Total TTC</span><span>'+money(f.total_ttc)+'</span></div></div><div class="foot">Document généré par VIGENTRA. Vérifier et compléter les mentions légales obligatoires (identité et adresse de l’entreprise, SIREN/SIRET, échéance et modalités de paiement, pénalités de retard et indemnité forfaitaire si applicable) avant émission. Un brouillon n’est pas une facture définitive.</div><p class="no-print"><button onclick="window.print()">Imprimer ou enregistrer en PDF</button></p><script>window.onload=()=>setTimeout(()=>window.print(),300);<\/script></body></html>');
  win.document.close();
 }
-async function markInvoicePaid(id){const {error}=await db.from('factures').update({statut:'payee'}).eq('id',id).eq('user_id',currentUser.id);if(error)return msg('appMsg',error.message);await loadExtraData();}
-async function deleteExtraRow(table,id){if(!confirm('Supprimer cet élément ?'))return;const {error}=await db.from(table).delete().eq('id',id).eq('user_id',currentUser.id);if(error)return msg('appMsg',error.message);await loadExtraData();}
-async function closeLog(id){const entry=logs.find(x=>String(x.id)===String(id));if(!entry)return msg('appMsg','Entrée introuvable. Actualise la main courante.');if(!window.confirm('Clore cette entrée ?\\n\\n'+entry.titre+'\\n\\nLe compte rendu sera conservé et son statut passera à « clos ».'))return;const {error}=await db.from('main_courante').update({statut:'clos'}).eq('id',id).eq('user_id',currentUser.id);if(error)return msg('appMsg',error.message);await loadExtraData();}
-async function markNotificationRead(id){const {error}=await db.from('notifications').update({lu:true}).eq('id',id).eq('user_id',currentUser.id);if(error)return msg('appMsg',error.message);await loadExtraData();}
-$('qualAddBtn').onclick=async()=>{const agent_id=$('qualAgent').value,type=$('qualType').value,date_expiration=$('qualExpiry').value||null,numero=$('qualNumber').value.trim()||null;if(!agent_id)return msg('appMsg','Ajoute un agent.');const {error}=await db.from('qualifications').insert({user_id:currentUser.id,agent_id,type,date_expiration,numero});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Qualification enregistrée.');};
-$('logAddBtn').onclick=async()=>{const titre=$('logTitle').value.trim(),description=$('logDescription').value.trim(),agent_id=$('logAgent').value||null,site_id=$('logSite').value||null,planning_id=$('logShift').value||null,type=$('logType').value,priorite=$('logPriority').value,out=$('logFormMsg');out.classList.remove('hidden');if(!titre||!description){out.textContent='Renseigne le titre et le compte rendu.';return;}const shift=planning_id?shifts.find(x=>String(x.id)===String(planning_id)):null;if(shift&&((agent_id&&String(shift.agent_id)!==String(agent_id))||(site_id&&String(shift.site_id)!==String(site_id)))){out.textContent='La vacation sélectionnée ne correspond pas à l’agent ou au site choisi.';return;}if(!window.confirm('Enregistrer cette entrée dans la main courante ?\\n\\nType : '+type+'\\nPriorité : '+priorite+'\\nTitre : '+titre)){out.textContent='Enregistrement annulé. Aucun changement effectué.';return;}const btn=$('logAddBtn');btn.disabled=true;try{const {error}=await db.from('main_courante').insert({user_id:currentUser.id,type,priorite,agent_id,site_id,planning_id,titre,description,statut:'ouvert'});if(error)throw error;$('logTitle').value='';$('logDescription').value='';$('logShift').value='';out.textContent='Entrée enregistrée et conservée dans l’historique.';await loadExtraData();}catch(e){out.textContent='Enregistrement impossible : '+(e?.message||'erreur inconnue');}finally{btn.disabled=false;}};
-$('roundAddBtn').onclick=async()=>{const site_id=$('roundSite').value,nom=$('roundName').value.trim(),code=$('roundCode').value.trim()||null;if(!site_id||!nom)return msg('appMsg','Choisis un site et un nom de point.');const {error}=await db.from('ronde_points').insert({user_id:currentUser.id,site_id,nom,code});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Point créé.');};
-$('passageAddBtn').onclick=async()=>{const point_id=$('passagePoint').value,agent_id=$('passageAgent').value||null,note=$('passageNote').value.trim()||null;if(!point_id)return msg('appMsg','Crée un point de contrôle.');const {error}=await db.from('ronde_passages').insert({user_id:currentUser.id,point_id,agent_id,note});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Passage enregistré.');};
-$('noticeAddBtn').onclick=async()=>{const titre=$('noticeTitle').value.trim(),message=$('noticeMessage').value.trim(),niveau=$('noticeLevel').value;if(!titre||!message)return msg('appMsg','Renseigne le titre et le message.');const {error}=await db.from('notifications').insert({user_id:currentUser.id,titre,message,niveau});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Alerte créée.');};
+async function markInvoicePaid(id){const {error}=await db.from('factures').update({statut:'payee'}).eq('id',id).eq('user_id',workspaceOwnerId);if(error)return msg('appMsg',error.message);await loadExtraData();}
+async function deleteExtraRow(table,id){if(!confirm('Supprimer cet élément ?'))return;const {error}=await db.from(table).delete().eq('id',id).eq('user_id',workspaceOwnerId);if(error)return msg('appMsg',error.message);await loadExtraData();}
+async function closeLog(id){const entry=logs.find(x=>String(x.id)===String(id));if(!entry)return msg('appMsg','Entrée introuvable. Actualise la main courante.');if(!window.confirm('Clore cette entrée ?\\n\\n'+entry.titre+'\\n\\nLe compte rendu sera conservé et son statut passera à « clos ».'))return;const {error}=await db.from('main_courante').update({statut:'clos'}).eq('id',id).eq('user_id',workspaceOwnerId);if(error)return msg('appMsg',error.message);await loadExtraData();}
+async function markNotificationRead(id){const {error}=await db.from('notifications').update({lu:true}).eq('id',id).eq('user_id',workspaceOwnerId);if(error)return msg('appMsg',error.message);await loadExtraData();}
+$('qualAddBtn').onclick=async()=>{const agent_id=$('qualAgent').value,type=$('qualType').value,date_expiration=$('qualExpiry').value||null,numero=$('qualNumber').value.trim()||null;if(!agent_id)return msg('appMsg','Ajoute un agent.');const {error}=await db.from('qualifications').insert({user_id:workspaceOwnerId,agent_id,type,date_expiration,numero});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Qualification enregistrée.');};
+$('logAddBtn').onclick=async()=>{const titre=$('logTitle').value.trim(),description=$('logDescription').value.trim(),agent_id=$('logAgent').value||null,site_id=$('logSite').value||null,planning_id=$('logShift').value||null,type=$('logType').value,priorite=$('logPriority').value,out=$('logFormMsg');out.classList.remove('hidden');if(!titre||!description){out.textContent='Renseigne le titre et le compte rendu.';return;}const shift=planning_id?shifts.find(x=>String(x.id)===String(planning_id)):null;if(shift&&((agent_id&&String(shift.agent_id)!==String(agent_id))||(site_id&&String(shift.site_id)!==String(site_id)))){out.textContent='La vacation sélectionnée ne correspond pas à l’agent ou au site choisi.';return;}if(!window.confirm('Enregistrer cette entrée dans la main courante ?\\n\\nType : '+type+'\\nPriorité : '+priorite+'\\nTitre : '+titre)){out.textContent='Enregistrement annulé. Aucun changement effectué.';return;}const btn=$('logAddBtn');btn.disabled=true;try{const {error}=await db.from('main_courante').insert({user_id:workspaceOwnerId,type,priorite,agent_id,site_id,planning_id,titre,description,statut:'ouvert'});if(error)throw error;$('logTitle').value='';$('logDescription').value='';$('logShift').value='';out.textContent='Entrée enregistrée et conservée dans l’historique.';await loadExtraData();}catch(e){out.textContent='Enregistrement impossible : '+(e?.message||'erreur inconnue');}finally{btn.disabled=false;}};
+$('roundAddBtn').onclick=async()=>{const site_id=$('roundSite').value,nom=$('roundName').value.trim(),code=$('roundCode').value.trim()||null;if(!site_id||!nom)return msg('appMsg','Choisis un site et un nom de point.');const {error}=await db.from('ronde_points').insert({user_id:workspaceOwnerId,site_id,nom,code});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Point créé.');};
+$('passageAddBtn').onclick=async()=>{const point_id=$('passagePoint').value,agent_id=$('passageAgent').value||null,note=$('passageNote').value.trim()||null;if(!point_id)return msg('appMsg','Crée un point de contrôle.');const {error}=await db.from('ronde_passages').insert({user_id:workspaceOwnerId,point_id,agent_id,note});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Passage enregistré.');};
+$('noticeAddBtn').onclick=async()=>{const titre=$('noticeTitle').value.trim(),message=$('noticeMessage').value.trim(),niveau=$('noticeLevel').value;if(!titre||!message)return msg('appMsg','Renseigne le titre et le message.');const {error}=await db.from('notifications').insert({user_id:workspaceOwnerId,titre,message,niveau});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Alerte créée.');};
 $('noticeRefreshBtn').onclick=async()=>{
  if(!currentUser||agentMode)return;
  const btn=$('noticeRefreshBtn');btn.disabled=true;
@@ -2362,7 +2379,7 @@ $('noticeRefreshBtn').onclick=async()=>{
   for(const item of pending){
    const exists=notifications.some(n=>n.titre===item.title&&(n.message===item.message||(item.legacyMessage&&String(n.message||'').includes(item.legacyMessage))));
    if(exists){skipped++;continue;}
-   const {error}=await db.from('notifications').insert({user_id:currentUser.id,titre:item.title,message:item.message,niveau:item.niveau});
+   const {error}=await db.from('notifications').insert({user_id:workspaceOwnerId,titre:item.title,message:item.message,niveau:item.niveau});
    if(error)failed++;else count++;
   }
   await loadExtraData();
@@ -2526,8 +2543,8 @@ function recommendBestAgent() {
   showResult('Agent recommandé : ' + agentNameOf(best.agent) + '\nQualification : ' + best.qualification + '\nCharge déjà planifiée cette semaine : ' + weeklyHours + ' h.\nAucun chevauchement détecté sur ce créneau. L’agent est sélectionné dans le formulaire : vérifie les informations puis appuie sur « Ajouter la vacation ».');
 }
 
-async function deleteUnavailability(id){if(!confirm('Retirer cette indisponibilité ?'))return;const {error}=await db.from('indisponibilites').delete().eq('id',id).eq('user_id',currentUser.id);if(error)return msg('appMsg','Impossible de retirer : '+error.message);await loadExtraData();msg('appMsg','Indisponibilité retirée.');}
-$('unavailSaveBtn')?.addEventListener('click',async()=>{const agent_id=$('unavailAgent').value,date_debut=$('unavailFrom').value,date_fin=$('unavailTo').value,heure_debut=$('unavailStart').value||null,heure_fin=$('unavailEnd').value||null,motif=$('unavailReason').value;if(!agent_id||!date_debut||!date_fin)return msg('appMsg','Choisis un agent et renseigne les deux dates.');if(date_fin<date_debut)return msg('appMsg','La date de fin doit être égale ou postérieure à la date de début.');if((heure_debut&&!heure_fin)||(!heure_debut&&heure_fin))return msg('appMsg','Renseigne les deux heures, ou laisse les deux vides pour une journée entière.');const {error}=await db.from('indisponibilites').insert({user_id:currentUser.id,agent_id:Number(agent_id),date_debut,date_fin,heure_debut,heure_fin,motif});if(error)return msg('appMsg','Enregistrement impossible : '+error.message);$('unavailFrom').value='';$('unavailTo').value='';$('unavailStart').value='';$('unavailEnd').value='';await loadExtraData();msg('appMsg','Indisponibilité enregistrée : l’assistant en tiendra compte.');});
+async function deleteUnavailability(id){if(!confirm('Retirer cette indisponibilité ?'))return;const {error}=await db.from('indisponibilites').delete().eq('id',id).eq('user_id',workspaceOwnerId);if(error)return msg('appMsg','Impossible de retirer : '+error.message);await loadExtraData();msg('appMsg','Indisponibilité retirée.');}
+$('unavailSaveBtn')?.addEventListener('click',async()=>{const agent_id=$('unavailAgent').value,date_debut=$('unavailFrom').value,date_fin=$('unavailTo').value,heure_debut=$('unavailStart').value||null,heure_fin=$('unavailEnd').value||null,motif=$('unavailReason').value;if(!agent_id||!date_debut||!date_fin)return msg('appMsg','Choisis un agent et renseigne les deux dates.');if(date_fin<date_debut)return msg('appMsg','La date de fin doit être égale ou postérieure à la date de début.');if((heure_debut&&!heure_fin)||(!heure_debut&&heure_fin))return msg('appMsg','Renseigne les deux heures, ou laisse les deux vides pour une journée entière.');const {error}=await db.from('indisponibilites').insert({user_id:workspaceOwnerId,agent_id:Number(agent_id),date_debut,date_fin,heure_debut,heure_fin,motif});if(error)return msg('appMsg','Enregistrement impossible : '+error.message);$('unavailFrom').value='';$('unavailTo').value='';$('unavailStart').value='';$('unavailEnd').value='';await loadExtraData();msg('appMsg','Indisponibilité enregistrée : l’assistant en tiendra compte.');});
 $('recommendAgentBtn').addEventListener('click', recommendBestAgent);
 const shiftQualification=$('shiftQualification');
 const recommendQualification=$('recommendQualification');
@@ -2641,7 +2658,7 @@ $('addShiftBtn').onclick = async () => {
       heure_debut,
       heure_fin,
       statut: 'prévu',
-      user_id: currentUser.id
+      user_id: workspaceOwnerId
     }).select('id');
     if (saveError) {
       console.error('VIGENTRA planning insert:', saveError);
@@ -2667,7 +2684,7 @@ async function deleteRow(table, id) {
   const {error} = await db.from(table)
     .delete()
     .eq('id', id)
-    .eq('user_id', currentUser.id);
+    .eq('user_id', workspaceOwnerId);
 
   if (error) {
     return msg('appMsg', 'Suppression impossible : ' + error.message);
@@ -2724,14 +2741,14 @@ $('documentUploadBtn')?.addEventListener('click', async()=>{
   if(!allowed.includes(file.type)) return msg('documentMsg','Format accepté : PDF, JPG, PNG ou WEBP.');
   if(file.size>10*1024*1024) return msg('documentMsg','Le fichier dépasse 10 Mo.');
   const agent=agents.find(a=>String(a.id)===String(agentId));
-  if(!agent||String(agent.user_id)!==String(currentUser.id)) return msg('documentMsg','Agent non autorisé.');
+  if(!agent||String(agent.user_id)!==String(workspaceOwnerId)) return msg('documentMsg','Agent non autorisé.');
   const btn=$('documentUploadBtn'); btn.disabled=true;
   try {
     const cleanName=file.name.normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g,'_').slice(-100)||'document';
-    const path=currentUser.id+'/'+agent.id+'/'+crypto.randomUUID()+'-'+cleanName;
+    const path=workspaceOwnerId+'/'+agent.id+'/'+crypto.randomUUID()+'-'+cleanName;
     const {error:uploadError}=await db.storage.from('vigentra-agent-documents').upload(path,file,{contentType:file.type,upsert:false});
     if(uploadError) throw uploadError;
-    const {error:metaError}=await db.from('agent_documents').insert({user_id:currentUser.id,agent_id:Number(agent.id),document_type:$('documentType').value,file_name:file.name,storage_path:path,mime_type:file.type,expires_on:$('documentExpiry').value||null});
+    const {error:metaError}=await db.from('agent_documents').insert({user_id:workspaceOwnerId,agent_id:Number(agent.id),document_type:$('documentType').value,file_name:file.name,storage_path:path,mime_type:file.type,expires_on:$('documentExpiry').value||null});
     if(metaError){await db.storage.from('vigentra-agent-documents').remove([path]);throw metaError;}
     $('documentFile').value='';$('documentExpiry').value='';
     msg('documentMsg','Document ajouté au dossier privé.');
@@ -2742,7 +2759,7 @@ $('documentUploadBtn')?.addEventListener('click', async()=>{
 $('chargeAddBtn')?.addEventListener('click',async()=>{
  const montant_ht=Number($('chargeAmount').value),description=$('chargeDescription').value.trim();
  if(!Number.isFinite(montant_ht)||montant_ht<0||!description) return msg('appMsg','Saisis une description et un montant positif.');
- const {error}=await db.from('charges_entreprise').insert({user_id:currentUser.id,date_charge:$('chargeDate').value||new Date().toISOString().slice(0,10),categorie:$('chargeCategory').value,description,montant_ht});
+ const {error}=await db.from('charges_entreprise').insert({user_id:workspaceOwnerId,date_charge:$('chargeDate').value||new Date().toISOString().slice(0,10),categorie:$('chargeCategory').value,description,montant_ht});
  if(error)return msg('appMsg','Charge non enregistrée : '+error.message);
  $('chargeDescription').value='';$('chargeAmount').value='';await loadBusinessTools();msg('appMsg','Charge enregistrée.');
 });
@@ -2766,12 +2783,12 @@ $('auditRefreshBtn')?.addEventListener('click',loadBusinessTools);
 const VIGENTRA_BACKUP_TABLES=['agents','Site','planning','pointages','factures','qualifications','main_courante','ronde_points','ronde_passages','notifications','indisponibilites','agent_documents','charges_entreprise'];
 function validateVigentraBackup(backup){
  if(!currentUser||agentMode)throw new Error('La sauvegarde et la restauration sont réservées au compte gestionnaire.');
- if(!backup||backup.app!=='VIGENTRA PRO'||![1,2].includes(Number(backup.version))||backup.account!==currentUser.id||!backup.tables||typeof backup.tables!=='object'||Array.isArray(backup.tables))throw new Error('Fichier invalide ou créé pour un autre compte.');
+ if(!backup||backup.app!=='VIGENTRA PRO'||![1,2].includes(Number(backup.version))||backup.account!==workspaceOwnerId||!backup.tables||typeof backup.tables!=='object'||Array.isArray(backup.tables))throw new Error('Fichier invalide ou créé pour un autre compte.');
  for(const table of VIGENTRA_BACKUP_TABLES){
   const rows=backup.tables[table];
   if(!Array.isArray(rows))throw new Error('Sauvegarde incomplète : la table '+table+' est absente ou invalide.');
   for(const row of rows){
-   if(!row||typeof row!=='object'||Array.isArray(row)||row.id===undefined||row.id===null||String(row.user_id)!==currentUser.id)throw new Error('Une ligne de '+table+' ne correspond pas au compte connecté. Aucun enregistrement n’a été restauré.');
+   if(!row||typeof row!=='object'||Array.isArray(row)||row.id===undefined||row.id===null||String(row.user_id)!==workspaceOwnerId)throw new Error('Une ligne de '+table+' ne correspond pas au compte connecté. Aucun enregistrement n’a été restauré.');
   }
  }
  return backup;
@@ -2789,7 +2806,7 @@ $('backupExportBtn')?.addEventListener('click',async()=>{
  if(!currentUser||agentMode){msg('backupMsg','Cette action est réservée au compte gestionnaire.');return;}
  const button=$('backupExportBtn');button.disabled=true;
  try{
-  const backup={app:'VIGENTRA PRO',version:2,format:'vigentra-backup',exported_at:new Date().toISOString(),account:currentUser.id,tables:{},counts:{}};
+  const backup={app:'VIGENTRA PRO',version:2,format:'vigentra-backup',exported_at:new Date().toISOString(),account:workspaceOwnerId,tables:{},counts:{}};
   for(const table of VIGENTRA_BACKUP_TABLES){
    const rows=[];let offset=0;const pageSize=500;
    while(true){
