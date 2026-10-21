@@ -808,7 +808,7 @@ nav span{display:block;font-size:20px;margin-bottom:5px}
       <div class="card" id="agentDocumentsCard">
         <div class="section-title">📁 Documents et justificatifs</div>
         <label>Agent concerné</label><select id="documentAgent"><option value="">Choisir un agent</option></select>
-        <label>Type de document</label><select id="documentType"><option value="carte_pro">Carte professionnelle CNAPS</option><option value="photo">Photo de l’agent</option><option value="diplome">Diplôme / qualification</option><option value="sst">SST</option><option value="ssi ap">SSIAP</option><option value="autre">Autre justificatif</option></select>
+        <label>Type de document</label><select id="documentType"><option value="carte_pro">Carte professionnelle CNAPS</option><option value="photo">Photo de l’agent</option><option value="diplome">Diplôme / qualification</option><option value="sst">SST</option><option value="ssiap">SSIAP</option><option value="autre">Autre justificatif</option></select>
         <label>Fichier PDF ou image (10 Mo maximum)</label><input id="documentFile" type="file" accept="application/pdf,image/jpeg,image/png,image/webp">
         <label>Date d’expiration (facultatif)</label><input id="documentExpiry" type="date">
         <button class="primary" id="documentUploadBtn">Ajouter au dossier</button>
@@ -974,6 +974,9 @@ nav span{display:block;font-size:20px;margin-bottom:5px}
 <div id="moreMenu" class="more-menu hidden" aria-label="Autres fonctions">
   <button onclick="openMoreTab('pointage')">◷ Pointage</button>
   <button onclick="openMoreTab('factures')">€ Factures</button>
+  <button onclick="openMoreTab('charges')">💶 Charges et rentabilité</button>
+  <button onclick="openMoreTab('audit')">🛡️ Historique</button>
+  <button onclick="openMoreTab('backup')">💾 Sauvegarde</button>
   <button onclick="openMoreTab('qualifications')">🎓 Qualifications</button>
   <button onclick="openMoreTab('maincourante')">📝 Main courante</button>
   <button onclick="openMoreTab('rondes')">🚶 Rondes</button>
@@ -1139,6 +1142,7 @@ async function openWorkspace(user) {
   $('agentAccountCard')?.classList.toggle('hidden', agentMode);
   await refreshData();
   await loadExtraData();
+  if (!agentMode) { await loadAgentDocuments(); await loadBusinessTools(); }
   ['home','agents','sites','planning','pointage','factures','charges','audit','backup','qualifications','maincourante','rondes','notifications','assistant'].forEach(id => $(id)?.classList.add('hidden'));
   if (agentMode) {
     renderAgentPortal();
