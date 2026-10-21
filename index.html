@@ -734,6 +734,86 @@ button:focus-visible{outline-color:var(--gold)}
  .card:hover{border-color:rgba(217,189,130,.25)}
 }
 
+
+/* VIGENTRA PRO — finition premium exécutive */
+:root{
+ --bg:#070b14;--panel:#101a2a;--panel2:#16243a;--gold:#dfc38b;
+ --gold-soft:#f6e8c7;--line:rgba(223,195,139,.22);
+ --muted:#aab5c7;--shadow:0 22px 60px rgba(0,0,0,.36)
+}
+body{
+ background:
+ radial-gradient(ellipse at 50% -22%,rgba(223,195,139,.14),transparent 44%),
+ radial-gradient(ellipse at 100% 15%,rgba(45,79,134,.2),transparent 35%),
+ linear-gradient(180deg,#070b14,#0a1220 54%,#070b14);
+ letter-spacing:.008em
+}
+header{
+ background:linear-gradient(120deg,rgba(7,12,23,.99),rgba(15,26,44,.98) 58%,rgba(31,28,28,.97));
+ border-bottom:1px solid rgba(223,195,139,.34);
+ box-shadow:0 12px 38px rgba(0,0,0,.2)
+}
+.logo{
+ background:linear-gradient(145deg,#fff0c9 0%,#dfc38b 38%,#a77d3d 100%);
+ color:#0a1020;border:1px solid rgba(255,244,213,.7);
+ box-shadow:0 0 0 4px rgba(223,195,139,.055),0 12px 28px rgba(223,195,139,.2)
+}
+h1{letter-spacing:.17em;text-shadow:0 2px 24px rgba(223,195,139,.12)}
+header p{color:#c3ccda;letter-spacing:.045em}
+.card{
+ position:relative;overflow:hidden;
+ background:linear-gradient(145deg,rgba(19,31,50,.98),rgba(10,19,33,.99));
+ border:1px solid rgba(163,184,216,.16);
+ border-radius:18px;box-shadow:0 14px 36px rgba(0,0,0,.2)
+}
+.card:before{
+ content:"";position:absolute;inset:0 0 auto;height:1px;
+ background:linear-gradient(90deg,transparent,rgba(223,195,139,.4),transparent);
+ pointer-events:none
+}
+.section-title{letter-spacing:.055em}
+.stat-num{color:#f8edda;text-shadow:0 2px 18px rgba(223,195,139,.08);font-variant-numeric:tabular-nums}
+.primary{
+ background:linear-gradient(115deg,#ed4a53,#b71f31);
+ border:1px solid rgba(255,226,203,.18);
+ box-shadow:0 9px 24px rgba(183,31,49,.22),inset 0 1px 0 rgba(255,255,255,.12)
+}
+.secondary{
+ background:linear-gradient(130deg,#253650,#131f32);
+ border:1px solid rgba(223,195,139,.22);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.035)
+}
+input,select,textarea{
+ background:rgba(5,11,21,.76);border:1px solid #34445c;border-radius:12px
+}
+input:focus,select:focus,textarea:focus{
+ border-color:#dfc38b;box-shadow:0 0 0 3px rgba(223,195,139,.12);outline:none
+}
+.item{
+ background:linear-gradient(115deg,rgba(23,38,60,.98),rgba(14,25,42,.98));
+ border:1px solid rgba(153,178,214,.15);border-radius:14px
+}
+.msg{background:rgba(23,35,54,.94);border:1px solid rgba(223,195,139,.16);border-radius:13px}
+nav{
+ background:rgba(7,12,22,.96);backdrop-filter:blur(18px);
+ border-top:1px solid rgba(223,195,139,.25)
+}
+nav button{min-height:46px}
+nav button.active{
+ color:#f3dfb4;background:linear-gradient(135deg,rgba(223,195,139,.14),rgba(210,48,61,.12));
+ box-shadow:inset 0 0 0 1px rgba(223,195,139,.22);border-radius:12px
+}
+button{transition:filter .16s ease,transform .16s ease,border-color .16s ease}
+button:active{transform:scale(.985)}
+button:focus-visible{outline:2px solid #dfc38b;outline-offset:3px}
+@media(min-width:760px){
+ .card{border-radius:20px}
+}
+@media(prefers-reduced-motion:no-preference){
+ .card,.item{transition:border-color .2s ease,box-shadow .2s ease}
+ .card:hover{border-color:rgba(223,195,139,.3);box-shadow:0 18px 44px rgba(0,0,0,.29)}
+}
+
 </style>
 <style id="vigentra-reference-design">
 :root{color-scheme:dark;--bg:#070e1b;--panel:#0d1728;--panel2:#111f33;--red:#ff174f;--text:#f5f7fc;--muted:#9aabc5;--line:#223551;--blue:#1677ff}
