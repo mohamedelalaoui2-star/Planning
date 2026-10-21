@@ -677,6 +677,63 @@ nav span{display:block;font-size:20px;margin-bottom:5px}
  #nav #moreNavBtn{display:flex;flex:1 1 0;min-width:0;max-width:none}
 }
 @media(min-width:700px){.more-menu{left:auto;right:24px;bottom:100px;width:340px}}
+
+/* VIGENTRA PRO — finition signature champagne, octobre 2026 */
+:root{
+ --bg:#080d18;--panel:#111a2b;--panel2:#17243a;
+ --gold:#d9bd82;--gold-soft:#f1dfb7;--line:#2b3b54;
+ --shadow:0 18px 46px rgba(0,0,0,.28)
+}
+body{
+ background:
+  radial-gradient(ellipse at 82% -12%,rgba(217,189,130,.09),transparent 34%),
+  radial-gradient(ellipse at 10% 8%,rgba(55,91,155,.18),transparent 38%),
+  var(--bg)
+}
+header{
+ background:linear-gradient(112deg,rgba(9,15,27,.98),rgba(18,28,46,.96) 70%,rgba(37,34,34,.94));
+ border-bottom:1px solid rgba(217,189,130,.23)
+}
+.logo{
+ background:linear-gradient(145deg,#e7d2a2,#b18b4c 62%,#78572c);
+ color:#111827;border:1px solid rgba(255,255,255,.38);
+ box-shadow:0 8px 25px rgba(185,147,78,.2)
+}
+h1{letter-spacing:.14em}
+header p{color:#c2c8d4}
+.card{
+ border-color:rgba(153,174,207,.16);
+ background:linear-gradient(145deg,rgba(21,32,51,.97),rgba(12,21,36,.99));
+ box-shadow:0 15px 40px rgba(0,0,0,.22)
+}
+.stats .card:after{background:radial-gradient(circle,rgba(217,189,130,.13),transparent 70%)}
+.stat-num{font-variant-numeric:tabular-nums}
+.section-title{color:#f5f0e5}
+.primary{
+ background:linear-gradient(120deg,#f04b55,#bd2434);
+ border:1px solid rgba(255,255,255,.12);
+ box-shadow:0 8px 22px rgba(201,39,50,.18)
+}
+.secondary{
+ background:linear-gradient(125deg,#273750,#17243a);
+ border-color:rgba(217,189,130,.2)
+}
+input,select,textarea{border-color:#34445f;background:rgba(7,14,26,.86)}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(217,189,130,.13)}
+.item{background:linear-gradient(115deg,rgba(26,40,62,.96),rgba(17,28,46,.98));border-color:rgba(145,167,201,.14)}
+.msg{border-color:rgba(217,189,130,.18);background:rgba(26,37,56,.95)}
+nav{border-top-color:rgba(217,189,130,.2)}
+nav button.active{background:linear-gradient(135deg,rgba(217,189,130,.17),rgba(239,68,68,.13));box-shadow:inset 0 0 0 1px rgba(217,189,130,.24)}
+button:focus-visible{outline-color:var(--gold)}
+@media(min-width:900px){
+ header{border-bottom-color:rgba(217,189,130,.22)}
+ nav{border-color:rgba(217,189,130,.22)}
+}
+@media(prefers-reduced-motion:no-preference){
+ .card,.item,.primary,.secondary{transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+ .card:hover{border-color:rgba(217,189,130,.25)}
+}
+
 </style>
 <style id="vigentra-reference-design">
 :root{color-scheme:dark;--bg:#070e1b;--panel:#0d1728;--panel2:#111f33;--red:#ff174f;--text:#f5f7fc;--muted:#9aabc5;--line:#223551;--blue:#1677ff}
