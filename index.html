@@ -552,6 +552,14 @@ hr{border:0;border-top:1px solid var(--line);margin:18px 0}
 }
 
 
+/* Correctif prioritaire : afficher les actions facture malgré les anciennes règles globales */
+#invoiceList .invoice-item{display:flex;flex-direction:column;align-items:stretch;gap:12px}
+#invoiceList .invoice-item>.item-main{display:block;width:100%;min-width:0;flex:none}
+#invoiceList .invoice-actions{display:grid;grid-template-columns:1fr;gap:8px;width:100%;min-width:0;flex:none}
+#invoiceList .invoice-actions button,
+#invoiceList .invoice-actions button:not(.primary):not(.secondary){display:flex;position:static;visibility:visible;opacity:1;align-items:center;justify-content:center;width:100%;min-width:0;min-height:46px;height:auto;flex:none;margin:0;padding:11px 12px;border:1px solid #365277;border-radius:12px;background:#1b2b43;color:#f4f7ff;font-size:14px;font-weight:700;line-height:1.25;white-space:normal;overflow-wrap:anywhere;box-shadow:none}
+#invoiceList .invoice-actions button:active{filter:brightness(1.15)}
+
 /* Facturation : actions adaptées aux écrans mobiles */
 .invoice-item{align-items:center}.invoice-item .item-main{flex:1;min-width:0}.invoice-actions{display:flex;flex-direction:column;gap:8px;flex:0 0 125px}.invoice-actions button{width:100%;white-space:normal;line-height:1.2;padding:9px 7px}
 @media(max-width:520px){.invoice-item{flex-wrap:wrap}.invoice-actions{flex:0 0 100%;width:100%;display:grid;grid-template-columns:1fr 1fr}.invoice-actions button{font-size:13px}}
