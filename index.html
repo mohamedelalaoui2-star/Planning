@@ -3186,6 +3186,60 @@ nav button.active span{color:#ff526c}
  .stat-num{font-size:27px}
 }
 
+
+/* VIGENTRA PRO — finition luxe v2, CSS uniquement (préserve HTML, données et logique) */
+:root{
+ --lux-gold-soft:rgba(232,189,101,.16);
+ --lux-glass:rgba(18,31,51,.72);
+ --lux-border:rgba(120,151,195,.24);
+}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+header{box-shadow:0 8px 30px rgba(0,0,0,.18)}
+header .brand,header .brand-name{min-width:0}
+.card{position:relative;isolation:isolate;overflow:hidden}
+.card:focus-within{border-color:rgba(232,189,101,.42)}
+.section-title{gap:12px}
+.section-title h2{letter-spacing:-.025em}
+input,select,textarea{
+ width:100%;min-height:46px;border-radius:12px;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+ transition:border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+input:focus,select:focus,textarea:focus{
+ outline:none;border-color:#dcb660!important;
+ box-shadow:0 0 0 3px rgba(232,189,101,.12),inset 0 1px 0 rgba(255,255,255,.04);
+ background:#0b192d;
+}
+button,.primary,.secondary,.hero-secondary,.quick-action,nav button{
+ -webkit-tap-highlight-color:transparent;
+ transition:transform .16s ease,border-color .18s ease,filter .18s ease,background .18s ease;
+}
+button:focus-visible,.quick-action:focus-visible,nav button:focus-visible{
+ outline:2px solid #e8bd65;outline-offset:3px;
+}
+button:active,.quick-action:active{transform:scale(.985)}
+.primary{background:linear-gradient(115deg,#ff3656 0%,#d90e39 65%,#b90e32 100%)}
+.secondary{box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
+.item{box-shadow:0 5px 15px rgba(0,0,0,.08);transition:border-color .18s ease,background .18s ease}
+.item:hover{border-color:rgba(232,189,101,.32)}
+.stat-card{border-radius:17px!important;box-shadow:0 9px 24px rgba(0,0,0,.13)}
+.stat-card:before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,transparent,rgba(232,189,101,.65),transparent);opacity:.7;pointer-events:none}
+.stat-icon{box-shadow:inset 0 0 0 1px rgba(255,255,255,.035)}
+.home-hero{box-shadow:0 18px 45px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.035)}
+.hero-version{color:#efd28e;border-color:rgba(232,189,101,.28)}
+.hero-date{box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}
+.quick-action{box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}
+.quick-action:hover{border-color:rgba(232,189,101,.45);background:#14243a}
+nav button{min-height:48px}
+nav button.active{box-shadow:inset 0 0 0 1px rgba(241,38,73,.65),0 5px 18px rgba(241,38,73,.08)}
+#planning .week-day,#planning [data-calendar-date]{transition:background .16s ease,border-color .16s ease}
+#planning [data-calendar-date]:focus-visible{outline:2px solid #e8bd65;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){
+ html{scroll-behavior:auto}
+ *,*::before,*::after{transition:none!important;animation:none!important}
+}
+
 </style>
 </body>
 </html>
