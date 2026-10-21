@@ -1890,6 +1890,12 @@ $('addShiftBtn').onclick = async () => {
   const selectedSite = sites.find(s => String(s.id) === String(site_id));
   if (!selectedSite) return showPlanningMessage('Le site sélectionné est introuvable. Actualise la page.');
 
+  const requiredQualification = String($('recommendQualification')?.value || '').trim().toUpperCase();
+  const actualQualification = String(selectedAgent.qualification ?? selectedAgent.Qualification ?? '').toUpperCase();
+  const qualificationParts = actualQualification.split(/[+,/;|]/).map(x => x.trim()).filter(Boolean);
+  const hasRequiredQualification = actualQualification === requiredQualification || qualificationParts.includes(requiredQualification) || actualQualification.includes(requiredQualification);
+  if (!hasRequiredQualification) return showPlanningMessage('Affectation refusée : cet agent ne possède pas la qualification requise (« ' + requiredQualification + ' »). Choisis un agent qualifié ou relance la recommandation.');
+
   const newStart = Date.parse(date_vacation + 'T00:00:00Z') / 60000 + timeToMinutes(heure_debut);
   const newEnd = newStart + durationHours(heure_debut, heure_fin) * 60;
   const overlaps = shifts.some(x => {
@@ -1922,8 +1928,28 @@ $('addShiftBtn').onclick = async () => {
     .filter(x => x.endAt <= newStart)
     .sort((a,b) => b.endAt - a.endAt)[0];
   if (previousShift && newStart - previousShift.endAt < 11 * 60) {
-    return showPlanningMessage('Vérification nécessaire : moins de 11 heures séparent cette vacation de la précédente. Vérifie les règles de repos applicables avant de planifier.');
+    return showPlanningMessage('Affectation refusée : moins de 11 heures séparent cette vacation de la précédente. Vérifie les règles de repos applicables avant de planifier.');
   }
+  const nextShift = shifts
+    .filter(x => String(x.agent_id) === String(agent_id) && x.date_vacation)
+    .map(x => {
+      const startAt = Date.parse(String(x.date_vacation) + 'T00:00:00Z') / 60000 + timeToMinutes(x.heure_debut);
+      return { startAt, endAt: startAt + durationHours(x.heure_debut, x.heure_fin) * 60 };
+    })
+    .filter(x => x.startAt >= newEnd)
+    .sort((a,b) => a.startAt - b.startAt)[0];
+  if (nextShift && nextShift.startAt - newEnd < 11 * 60) {
+    return showPlanningMessage('Affectation refusée : moins de 11 heures de repos resteraient avant la prochaine vacation.');
+  }
+
+  const siteName = selectedSite.nom || selectedSite.name || selectedSite.nom_site || ('Site #' + site_id);
+  const confirmationText = 'Confirmer cette affectation ?\\n\\nAgent : ' + agentNameOf(selectedAgent) +
+    '\\nQualification requise : ' + requiredQualification +
+    '\\nSite : ' + siteName +
+    '\\nDate : ' + date_vacation +
+    '\\nHoraires : ' + heure_debut + ' – ' + heure_fin +
+    '\\n\\nLa vacation sera enregistrée dans le planning uniquement si tu confirmes.';
+  if (!window.confirm(confirmationText)) return showPlanningMessage('Affectation annulée : aucune vacation n’a été créée.');
 
   button.disabled = true;
   button.textContent = 'Enregistrement…';
