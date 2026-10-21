@@ -659,6 +659,14 @@ nav span{display:block;font-size:20px;margin-bottom:5px}
 @media(min-width:620px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
 @media(max-width:370px){.home-hero-compact{padding:14px!important}.home-hero-compact .hero-actions{grid-template-columns:1fr!important}.home-hero-compact .hero-actions button{width:100%!important}}
 
+
+/* iPhone: barre de navigation compacte, libellés entièrement visibles */
+@media(max-width:520px){
+ nav{gap:2px;padding-left:5px;padding-right:5px;justify-content:flex-start}
+ nav button{flex:0 0 61px!important;width:61px;min-width:0!important;max-width:61px;padding:7px 2px!important;gap:4px;font-size:9px!important;white-space:normal;overflow-wrap:anywhere;line-height:1.12}
+ nav button span{font-size:17px!important;line-height:1}
+}
+
 </style>
 </head>
 <body>
