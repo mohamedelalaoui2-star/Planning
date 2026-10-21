@@ -642,6 +642,23 @@ nav span{display:block;font-size:20px;margin-bottom:5px}
 @media(min-width:600px){main{padding-left:22px;padding-right:22px}.card{padding:20px}#invoiceList .invoice-item>div:last-child{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:390px){main{padding-left:11px;padding-right:11px}.card{padding:14px}.item{padding:12px}nav button{flex-basis:61px}}
 
+
+/* Dashboard layout refinement from user-approved VIGENTRA reference */
+.home-hero-compact{padding:18px!important;margin-bottom:20px!important;border-radius:20px!important;background:linear-gradient(145deg,#142944,#0c1729 78%)!important}
+.home-hero-compact .hero-title{font-size:clamp(24px,6vw,31px)!important;line-height:1.15!important;margin:18px 0 7px!important;letter-spacing:-.025em!important}
+.home-hero-compact .hero-subtitle{font-size:14px!important;line-height:1.5!important;margin:0 0 14px!important;color:#b3c2d8!important}
+.home-hero-compact .hero-date{display:block;padding:11px 12px;margin:0 0 14px;border-radius:12px;background:#0a1a2e;border:1px solid #213b5c;color:#d8e5f8;font-size:13px}
+.home-hero-compact .hero-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important}
+.home-hero-compact .hero-actions button{min-width:0!important;padding:12px 9px!important;font-size:13px!important;line-height:1.25!important}
+.home-hero-compact .hero-footer{display:none!important}
+.home-section-heading{margin:18px 0 10px!important}
+.stats{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+.stat-card{padding:13px!important;min-width:0!important}
+.stat-num{font-size:28px!important}
+.home-quick-actions{gap:9px!important}
+@media(min-width:620px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
+@media(max-width:370px){.home-hero-compact{padding:14px!important}.home-hero-compact .hero-actions{grid-template-columns:1fr!important}.home-hero-compact .hero-actions button{width:100%!important}}
+
 </style>
 </head>
 <body>
@@ -688,15 +705,15 @@ nav span{display:block;font-size:20px;margin-bottom:5px}
     </div>
 
     <section id="home">
-      <div class="home-hero">
-        <div class="hero-top"><span class="hero-eyebrow"><span class="status-dot"></span> ESPACE DE PILOTAGE</span><span class="hero-version">VIGENTRA PRO</span></div>
-        <div class="hero-title">La sécurité,<br><span>maîtrisée.</span></div>
-        <p class="hero-subtitle">Pilote tes équipes, tes sites et tes vacations depuis un seul espace.</p>
+      <div class="home-hero home-hero-compact">
+        <div class="hero-top"><span class="hero-eyebrow"><span class="status-dot"></span> TEA SÉCURITÉ PRIVÉE</span><span class="hero-version">VIGENTRA PRO</span></div>
+        <div class="hero-title">Bonjour Mohammed</div>
+        <p class="hero-subtitle">Voici la situation de votre entreprise aujourd’hui.</p>
+        <div class="hero-date" id="dashboardDate">Votre tableau de bord opérationnel</div>
         <div class="hero-actions">
-          <button class="primary" onclick="showTab('planning')"><span>▦</span> Ouvrir le planning</button>
+          <button class="primary" onclick="showTab('planning')"><span>▦</span> Voir le planning</button>
           <button class="hero-secondary" onclick="showTab('agents')"><span>＋</span> Gérer les agents</button>
         </div>
-        <div class="hero-footer"><span>GESTION OPÉRATIONNELLE</span><span>•</span><span>ÉQUIPES · SITES · MISSIONS</span></div>
       </div>
       <div class="home-section-heading"><div><span class="section-kicker">VUE D’ENSEMBLE</span><h2>Activité</h2></div><span class="live-pill"><span class="status-dot"></span> Données du compte</span></div>
       <div class="stats">
