@@ -779,11 +779,17 @@ nav span{display:block;font-size:20px;margin-bottom:5px}
       <div class="card">
         <label>Nom et prénom</label>
         <input id="agentName" autocomplete="name" placeholder="Ex. Karim Benali">
-        <label>Téléphone (facultatif)</label>
-        <input id="agentPhone" type="tel" autocomplete="tel" placeholder="06 12 34 56 78">
-        <label>E-mail (facultatif, pour le futur accès)</label>
-        <input id="agentEmail" type="email" autocomplete="email" placeholder="agent@exemple.fr">
-        <label>Qualification</label>
+        <label>Adresse (facultatif)</label>
+        <input id="agentAddress" autocomplete="street-address" placeholder="Adresse complète">
+        <div class="grid">
+          <div><label>Téléphone</label><input id="agentPhone" type="tel" autocomplete="tel" placeholder="06 12 34 56 78"></div>
+          <div><label>E-mail</label><input id="agentEmail" type="email" autocomplete="email" placeholder="agent@exemple.fr"></div>
+        </div>
+        <label>Numéro de carte professionnelle CNAPS (facultatif)</label>
+        <input id="agentProCard" placeholder="Numéro de carte professionnelle">
+        <label>Date d’expiration de la carte professionnelle</label>
+        <input id="agentProExpiry" type="date">
+        <label>Qualification principale</label>
         <select id="agentQual">
           <option>APS</option>
           <option>SSIAP 1</option>
@@ -793,6 +799,9 @@ nav span{display:block;font-size:20px;margin-bottom:5px}
           <option>APS + SST</option>
           <option>Autre</option>
         </select>
+        <label>Autres qualifications / certifications (ex. CQP, SST)</label>
+        <input id="agentOtherQual" placeholder="CQP, SST, H0B0…">
+        <p class="notice">La photo et les justificatifs PDF nécessitent un stockage privé sécurisé ; je ne les enregistre pas dans un champ public.</p>
         <button class="primary" id="addAgentBtn">Enregistrer l’agent</button>
         <button class="secondary hidden" id="cancelAgentEditBtn" type="button">Annuler la modification</button>
       </div>
@@ -1220,6 +1229,24 @@ function siteNameOf(s) {
   return s.Nom ?? s.nom ?? s.nom_site ?? 'Site';
 }
 
+function exportAgentPdf(id) {
+  const a = agents.find(x => String(x.id) === String(id));
+  if (!a) return msg('appMsg', 'Dossier agent introuvable.');
+  const rows = [
+    ['Nom et prénom', agentNameOf(a)], ['Adresse', a.adresse || 'Non renseignée'],
+    ['Téléphone', a['Téléphone'] || 'Non renseigné'], ['E-mail', a.Email || 'Non renseigné'],
+    ['Qualification principale', a.qualification || 'Non renseignée'],
+    ['Autres qualifications', a.autres_qualifications || 'Non renseignées'],
+    ['Carte professionnelle CNAPS', a.numero_carte_pro || 'Non renseignée'],
+    ['Expiration carte professionnelle', a.expiration_carte_pro || 'Non renseignée']
+  ];
+  const safe = value => String(value ?? '').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+  const w = window.open('', '_blank');
+  if (!w) return msg('appMsg', 'Autorise les fenêtres pop-up pour créer le PDF.');
+  w.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Dossier agent - VIGENTRA PRO</title><style>body{font:14px Arial,sans-serif;color:#172033;padding:32px}h1{color:#172b4d}.row{padding:12px;border-bottom:1px solid #dbe2ec;display:grid;grid-template-columns:220px 1fr;gap:12px}.label{font-weight:bold}@media print{button{display:none}}</style></head><body><h1>VIGENTRA PRO — Dossier agent</h1><p>Document administratif généré le '+new Date().toLocaleDateString('fr-FR')+'.</p>'+rows.map(r=>'<div class="row"><div class="label">'+safe(r[0])+'</div><div>'+safe(r[1])+'</div></div>').join('')+'<p>Pour créer le PDF : Imprimer puis « Enregistrer au format PDF ».</p><button onclick="window.print()">Imprimer / Enregistrer en PDF</button></body></html>');
+  w.document.close();
+}
+
 function render() {
   $('agentCount').textContent = agents.length;
   $('siteCount').textContent = sites.length;
@@ -1241,10 +1268,12 @@ function render() {
       <div class="item">
         <div>
           <strong>${esc(agentNameOf(a))}</strong>
-          <small>${esc(a.qualification ?? a.Qualification ?? 'Qualification non renseignée')}</small>
+          <small>${esc(a.qualification ?? a.Qualification ?? 'Qualification non renseignée')}${a.numero_carte_pro ? ' · Carte pro renseignée' : ' · Carte pro à renseigner'}</small>
+          <small>${esc(a.Email ?? 'E-mail non renseigné')}${a.expiration_carte_pro ? ' · Expire le ' + esc(a.expiration_carte_pro) : ''}</small>
         </div>
         <div class="item-actions">
           <button class="secondary" type="button" onclick="editAgent('${esc(a.id)}')">Modifier</button>
+          <button class="secondary" type="button" onclick="exportAgentPdf('${esc(a.id)}')">Fiche PDF</button>
           <button type="button" aria-label="Supprimer ${esc(agentNameOf(a))}" onclick="deleteRow('agents','${esc(a.id)}')">Supprimer</button>
         </div>
       </div>
@@ -1449,8 +1478,12 @@ let editingAgentId = null;
 function resetAgentForm() {
   editingAgentId = null;
   $('agentName').value = '';
+  if ($('agentAddress')) $('agentAddress').value = '';
   if ($('agentPhone')) $('agentPhone').value = '';
   if ($('agentEmail')) $('agentEmail').value = '';
+  if ($('agentProCard')) $('agentProCard').value = '';
+  if ($('agentProExpiry')) $('agentProExpiry').value = '';
+  if ($('agentOtherQual')) $('agentOtherQual').value = '';
   $('agentQual').value = 'APS';
   $('addAgentBtn').textContent = 'Enregistrer l’agent';
   $('cancelAgentEditBtn')?.classList.add('hidden');
@@ -1461,8 +1494,12 @@ function editAgent(id) {
   if (!agent) return msg('appMsg', 'Agent introuvable. Actualise la page et réessaie.');
   editingAgentId = agent.id;
   $('agentName').value = agent.nom ?? agent.Nom ?? '';
+  if ($('agentAddress')) $('agentAddress').value = agent.adresse ?? '';
   if ($('agentPhone')) $('agentPhone').value = agent['Téléphone'] ?? '';
   if ($('agentEmail')) $('agentEmail').value = agent.Email ?? '';
+  if ($('agentProCard')) $('agentProCard').value = agent.numero_carte_pro ?? '';
+  if ($('agentProExpiry')) $('agentProExpiry').value = agent.expiration_carte_pro ?? '';
+  if ($('agentOtherQual')) $('agentOtherQual').value = agent.autres_qualifications ?? '';
   $('agentQual').value = agent.qualification ?? agent.Qualification ?? 'Autre';
   $('addAgentBtn').textContent = 'Enregistrer les modifications';
   $('cancelAgentEditBtn')?.classList.remove('hidden');
@@ -1474,32 +1511,24 @@ $('cancelAgentEditBtn')?.addEventListener('click', resetAgentForm);
 
 $('addAgentBtn').onclick = async () => {
   const nom = $('agentName').value.trim();
+  const adresse = $('agentAddress')?.value.trim() || null;
   const telephone = $('agentPhone')?.value.trim() || null;
   const email = $('agentEmail')?.value.trim() || null;
+  const numero_carte_pro = $('agentProCard')?.value.trim() || null;
+  const expiration_carte_pro = $('agentProExpiry')?.value || null;
+  const autres_qualifications = $('agentOtherQual')?.value.trim() || null;
   if (!nom) return msg('appMsg', 'Saisis le nom et le prénom.');
-  if (email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
-    return msg('appMsg', 'Vérifie l’adresse e-mail de l’agent.');
-  }
-
+  if (email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return msg('appMsg', 'Vérifie l’adresse e-mail de l’agent.');
+  const profile = { nom, qualification: $('agentQual').value, adresse, 'Téléphone': telephone, Email: email, numero_carte_pro, expiration_carte_pro, autres_qualifications, actif: true };
   if (editingAgentId !== null) {
     clearMsg('appMsg');
-    const { error } = await db.from('agents')
-      .update({ nom, qualification: $('agentQual').value, 'Téléphone': telephone, Email: email })
-      .eq('id', editingAgentId)
-      .eq('user_id', currentUser.id);
+    const { error } = await db.from('agents').update(profile).eq('id', editingAgentId).eq('user_id', currentUser.id);
     if (error) return msg('appMsg', 'Modification impossible : ' + error.message);
     resetAgentForm();
     await refreshData();
-    return msg('appMsg', 'Fiche agent modifiée et enregistrée dans Supabase.');
+    return msg('appMsg', 'Dossier agent modifié et enregistré dans Supabase.');
   }
-
-  const success = await insertRow('agents', {
-    nom,
-    qualification: $('agentQual').value,
-    'Téléphone': telephone,
-    Email: email,
-    actif: true
-  });
+  const success = await insertRow('agents', profile);
   if (success) resetAgentForm();
 };
 
