@@ -596,6 +596,52 @@ nav span{font-size:21px}
 @media(min-width:620px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}main{padding-left:24px;padding-right:24px}}
 @media(max-width:390px){main{padding-left:12px;padding-right:12px}.card{padding:14px}nav button{flex-basis:65px}}
 
+
+/* VIGENTRA — design system inspired by the approved mobile reference */
+:root{--bg:#050b16;--panel:#0d192a;--panel2:#102139;--red:#f32649;--text:#f4f7ff;--muted:#9eafc9;--line:#233b5b;--blue:#1686f8;--green:#11b879;--amber:#f59e0b}
+html{background:#050b16;scroll-behavior:smooth}
+body{background:linear-gradient(180deg,#081426 0,#050b16 42%,#050b16 100%);color:var(--text);letter-spacing:.005em}
+header{padding:14px 16px 13px;background:rgba(5,12,24,.96);border-bottom:1px solid #1c3150;box-shadow:0 6px 24px #0003;backdrop-filter:blur(18px)}
+.brand{gap:11px}
+.logo{width:44px;height:44px;border-radius:14px;background:linear-gradient(145deg,#ff405c,#c81436);box-shadow:0 6px 20px #e91d4433}
+h1{font-size:21px;font-weight:850;letter-spacing:.035em}
+header p{font-size:12px;color:#9aacc6}
+main{width:100%;max-width:820px;margin:0 auto;padding:16px 14px calc(112px + env(safe-area-inset-bottom))}
+section{scroll-margin-top:90px}
+.card,.panel,.item,.stat,.stat-card,.metric-card{background:linear-gradient(145deg,#12233a,#0d192b);border:1px solid #263f61;border-radius:20px;box-shadow:0 8px 24px #00000018}
+.card{padding:17px}
+h2,h3{letter-spacing:.005em}
+h2{font-size:20px}
+h3{font-size:16px}
+label{font-size:12px;font-weight:750;letter-spacing:.065em;color:#a8bad4;text-transform:uppercase}
+input,select,textarea{width:100%;min-height:46px;background:#071426;color:#f4f7ff;border:1px solid #29466d;border-radius:14px;padding:12px 14px;font-size:16px;margin:6px 0 12px}
+input::placeholder,textarea::placeholder{color:#7185a3}
+input:focus,select:focus,textarea:focus{outline:2px solid #1686f8;outline-offset:1px;border-color:#1686f8}
+button{font-family:inherit;font-weight:700;cursor:pointer;transition:filter .15s,transform .15s}
+button:active{filter:brightness(1.13);transform:scale(.99)}
+.primary{background:linear-gradient(105deg,#fb3d59,#d5163a);color:#fff;border:1px solid #ff526c;border-radius:15px;min-height:49px;padding:13px 16px;box-shadow:0 8px 22px #dc1c4028}
+.secondary{background:linear-gradient(145deg,#203957,#172b46);color:#f2f6ff;border:1px solid #35557c;border-radius:14px;min-height:45px;padding:11px 14px}
+.item{padding:14px;margin:10px 0;gap:12px;align-items:center;overflow-wrap:anywhere}
+.item strong{font-size:15px;line-height:1.4}
+.item small{font-size:12px;line-height:1.55;color:#9eafc9}
+.notice{line-height:1.65;color:#9eafc9}
+.empty{padding:22px 14px;text-align:center;border:1px dashed #2c4566;border-radius:16px;color:#9eafc9}
+#home .card,#home .item{border-radius:18px}
+#agentList .item,#siteList .item,#invoiceList .item,#qualList .item{background:linear-gradient(145deg,#102139,#0b1728);border:1px solid #243d5f;border-radius:17px;padding:15px}
+#invoiceList .invoice-item{display:block!important;padding:16px!important}
+#invoiceList .invoice-item .item-main{display:block!important;width:100%!important;min-width:0!important}
+#invoiceList .invoice-item>div:last-child{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px!important;width:100%!important;margin-top:14px!important}
+#invoiceList .invoice-item button{display:flex!important;align-items:center;justify-content:center;visibility:visible!important;opacity:1!important;width:100%!important;min-width:0!important;min-height:45px!important;margin:0!important;padding:10px 8px!important;border:1px solid #e93653!important;border-radius:12px!important;background:linear-gradient(100deg,#f32649,#c91638)!important;color:white!important;font-size:13px!important;line-height:1.25!important;white-space:normal!important;overflow-wrap:anywhere!important}
+#invoiceList .invoice-item button:first-child{background:#10223a!important;border-color:#e93653!important;color:#fff!important}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;gap:4px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;padding:8px 7px calc(8px + env(safe-area-inset-bottom));background:rgba(5,11,22,.97);border-top:1px solid #1d3150;z-index:30;backdrop-filter:blur(18px)}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:0 0 68px;min-width:0;background:transparent;border:1px solid transparent;color:#91a5c2;font-size:10px;line-height:1.25;padding:9px 3px;border-radius:13px;white-space:normal}
+nav button.active{background:linear-gradient(145deg,#351a2c,#11213a);border-color:#87304a;color:#fff;box-shadow:inset 0 0 0 1px #59243d}
+nav span{display:block;font-size:20px;margin-bottom:5px}
+.hidden{display:none!important}
+@media(min-width:600px){main{padding-left:22px;padding-right:22px}.card{padding:20px}#invoiceList .invoice-item>div:last-child{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:390px){main{padding-left:11px;padding-right:11px}.card{padding:14px}.item{padding:12px}nav button{flex-basis:61px}}
+
 </style>
 </head>
 <body>
