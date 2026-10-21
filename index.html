@@ -2791,10 +2791,17 @@ $('backupExportBtn')?.addEventListener('click',async()=>{
  try{
   const backup={app:'VIGENTRA PRO',version:2,format:'vigentra-backup',exported_at:new Date().toISOString(),account:currentUser.id,tables:{},counts:{}};
   for(const table of VIGENTRA_BACKUP_TABLES){
-   const {data,error}=await db.from(table).select('*');
-   if(error)throw new Error('Export interrompu sur '+table+' : '+error.message);
-   backup.tables[table]=data||[];
-   backup.counts[table]=backup.tables[table].length;
+   const rows=[];let offset=0;const pageSize=500;
+   while(true){
+    const {data,error}=await db.from(table).select('*').range(offset,offset+pageSize-1);
+    if(error)throw new Error('Export interrompu sur '+table+' : '+error.message);
+    const page=data||[];rows.push(...page);
+    if(page.length<pageSize)break;
+    offset+=pageSize;
+    if(offset>1000000)throw new Error('Export interrompu : volume inattendu dans '+table+'.');
+   }
+   backup.tables[table]=rows;
+   backup.counts[table]=rows.length;
   }
   const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob),a=document.createElement('a');
