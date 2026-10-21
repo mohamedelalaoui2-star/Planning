@@ -1164,11 +1164,49 @@ function renderAgentPortal() {
   }
   const fullName = [currentAgent.Prenom, currentAgent.nom].filter(Boolean).join(' ') || currentAgent.nom || 'Agent';
   const fmtDate = value => value ? new Date(value + 'T00:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'long',year:'numeric'}) : 'Date non définie';
-  const ownShifts = [...shifts].sort((a,b)=>String(a.date_vacation).localeCompare(String(b.date_vacation)) || String(a.heure_debut).localeCompare(String(b.heure_debut)));
-  portal.innerHTML = '<div class="home-section-heading"><div><span class="section-kicker">ESPACE AGENT</span><h2>Bonjour '+esc(fullName)+'</h2></div><span class="live-pill">Compte agent</span></div><p class="notice">Tu as accès uniquement à tes vacations attribuées et à tes pointages.</p><div class="section-title">Mon planning</div>' +
-    (ownShifts.length ? ownShifts.map(s=>{const site=sites.find(x=>String(x.id)===String(s.site_id));const ps=pointages.filter(p=>String(p.planning_id)===String(s.id)).sort((a,b)=>String(a.pointage_at).localeCompare(String(b.pointage_at)));const started=ps.some(p=>p.type==='debut'),ended=ps.some(p=>p.type==='fin');const canStart=!started,canEnd=started&&!ended;return '<div class="item agent-shift"><div><strong>'+esc(fmtDate(s.date_vacation))+'</strong><small>'+esc(String(s.heure_debut||'').slice(0,5))+' – '+esc(String(s.heure_fin||'').slice(0,5))+' · '+esc(site?siteNameOf(site):'Site attribué')+'</small><small>Statut : '+esc(s.statut||'Prévu')+' · '+(ended?'Poste terminé':started?'Prise de poste enregistrée':'En attente de pointage')+'</small></div><div class="agent-shift-actions">'+(canStart?'<button class="primary" onclick="agentClock(\'debut\','+Number(s.id)+')">Prise de poste</button>':'')+(canEnd?'<button class="secondary" onclick="agentClock(\'fin\','+Number(s.id)+')">Fin de poste</button>':'')+'</div></div>';}).join('') : '<div class="empty">Aucune vacation ne t’est attribuée pour le moment.</div>')+
-    '<div class="section-title">Mes pointages récents</div>'+(pointages.length?pointages.slice(0,20).map(p=>{const shift=ownShifts.find(s=>String(s.id)===String(p.planning_id));const site=sites.find(s=>String(s.id)===String(p.site_id));return '<div class="item"><div><strong>'+(p.type==='debut'?'Prise de poste':'Fin de poste')+'</strong><small>'+esc(new Date(p.pointage_at).toLocaleString('fr-FR'))+' · '+esc(site?siteNameOf(site):'Site')+(shift?' · Vacation du '+esc(fmtDate(shift.date_vacation)):'')+'</small></div></div>';}).join(''):'<div class="empty">Aucun pointage enregistré.</div>')+
+  const ownShifts = [...shifts].filter(s=>String(s.agent_id)===String(currentAgent.id)).sort((a,b)=>String(a.date_vacation).localeCompare(String(b.date_vacation)) || String(a.heure_debut).localeCompare(String(b.heure_debut)));
+  const ownLogs = [...logs].filter(l=>String(l.agent_id)===String(currentAgent.id)).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
+  const addressOf = site => site ? (site.Adresse || site.adresse || 'Adresse non renseignée') : 'Site attribué';
+  portal.innerHTML = '<div class="home-section-heading"><div><span class="section-kicker">ESPACE AGENT</span><h2>Bonjour '+esc(fullName)+'</h2></div><span class="live-pill">Compte agent</span></div>' +
+    '<div class="section-title">Mon planning et mes sites</div>' +
+    (ownShifts.length ? ownShifts.map(s=>{const site=sites.find(x=>String(x.id)===String(s.site_id));const ps=pointages.filter(p=>String(p.planning_id)===String(s.id)).sort((a,b)=>String(a.pointage_at).localeCompare(String(b.pointage_at)));const started=ps.some(p=>p.type==='debut'),ended=ps.some(p=>p.type==='fin');const canStart=!started,canEnd=started&&!ended;return '<div class="item agent-shift"><div><strong>'+esc(fmtDate(s.date_vacation))+'</strong><small>'+esc(String(s.heure_debut||'').slice(0,5))+' – '+esc(String(s.heure_fin||'').slice(0,5))+'</small><small><strong>Site : '+esc(site?siteNameOf(site):'Site attribué')+'</strong></small><small>Adresse : '+esc(addressOf(site))+'</small><small>Pointage : '+(ended?'Poste terminé':started?'Prise de poste enregistrée':'En attente')+'</small></div><div class="agent-shift-actions">'+(canStart?'<button class="primary" onclick="agentClock(\'debut\','+Number(s.id)+')">Prise de poste</button>':'')+(canEnd?'<button class="secondary" onclick="agentClock(\'fin\','+Number(s.id)+')">Fin de poste</button>':'')+'</div></div>';}).join('') : '<div class="empty">Aucune vacation ne t’est attribuée pour le moment.</div>')+
+    '<div class="section-title">Mes pointages</div>'+(pointages.filter(p=>String(p.agent_id)===String(currentAgent.id)).length?pointages.filter(p=>String(p.agent_id)===String(currentAgent.id)).slice(0,20).map(p=>{const shift=ownShifts.find(s=>String(s.id)===String(p.planning_id));const site=sites.find(s=>String(s.id)===String(p.site_id));return '<div class="item"><div><strong>'+(p.type==='debut'?'Prise de poste':'Fin de poste')+'</strong><small>'+esc(new Date(p.pointage_at).toLocaleString('fr-FR'))+'</small><small>'+esc(site?siteNameOf(site):'Site')+' · '+esc(addressOf(site))+(shift?' · Vacation du '+esc(fmtDate(shift.date_vacation)):'')+'</small></div></div>';}).join(''):'<div class="empty">Aucun pointage enregistré.</div>')+
+    '<div class="section-title">Ma main courante</div><div class="card"><label for="agentLogShift">Vacation / site</label><select id="agentLogShift">'+ownShifts.map(s=>{const site=sites.find(x=>String(x.id)===String(s.site_id));return '<option value="'+esc(s.id)+'">'+esc(fmtDate(s.date_vacation)+' · '+(site?siteNameOf(site):'Site')+' · '+String(s.heure_debut||'').slice(0,5))+'</option>';}).join('')+'</select><label for="agentLogType">Type d’entrée</label><select id="agentLogType"><option value="information">Information</option><option value="consigne">Consigne</option><option value="incident">Incident</option><option value="anomalie">Anomalie</option></select><label for="agentLogTitle">Titre</label><input id="agentLogTitle" maxlength="120" placeholder="Résumé court de l’événement"><label for="agentLogDescription">Compte rendu</label><textarea id="agentLogDescription" rows="4" maxlength="4000" placeholder="Décris les faits de façon précise et objective"></textarea><label for="agentLogPriority">Priorité</label><select id="agentLogPriority"><option value="normale">Normale</option><option value="basse">Basse</option><option value="haute">Haute</option><option value="urgente">Urgente</option></select><button class="primary" id="agentLogSaveBtn" onclick="agentAddMainCourante()">Enregistrer dans la main courante</button><div id="agentLogMsg" class="msg hidden" aria-live="polite"></div></div>'+
+    (ownLogs.length?ownLogs.map(l=>{const site=sites.find(x=>String(x.id)===String(l.site_id));return '<div class="item"><div><strong>'+esc(l.titre||'Entrée main courante')+'</strong><small>'+esc(new Date(l.created_at).toLocaleString('fr-FR'))+' · '+esc(l.type||'information')+' · '+esc(l.priorite||'normale')+'</small><small>'+esc(site?siteNameOf(site):'Site')+' · '+esc(addressOf(site))+'</small><p>'+esc(l.description||'')+'</p></div></div>';}).join(''):'<div class="empty">Aucune entrée de main courante pour le moment.</div>')+
     '<div class="card"><label>Définir ou changer mon mot de passe</label><input id="agentNewPassword" type="password" minlength="8" autocomplete="new-password" placeholder="8 caractères minimum"><button class="secondary" onclick="agentSetPassword()">Enregistrer le mot de passe</button><div id="agentPasswordMsg" class="msg hidden"></div></div>';
+}
+
+async function agentAddMainCourante() {
+  if (!agentMode || !currentAgent || !currentUser) return;
+  const shiftId = $('agentLogShift')?.value;
+  const shift = shifts.find(s => String(s.id) === String(shiftId) && String(s.agent_id) === String(currentAgent.id));
+  const titre = ($('agentLogTitle')?.value || '').trim();
+  const description = ($('agentLogDescription')?.value || '').trim();
+  const type = $('agentLogType')?.value || 'information';
+  const priorite = $('agentLogPriority')?.value || 'normale';
+  if (!shift) return msg('agentLogMsg','Choisis une vacation attribuée avant de rédiger une entrée.');
+  if (!titre || !description) return msg('agentLogMsg','Renseigne le titre et le compte rendu.');
+  const btn = $('agentLogSaveBtn');
+  btn.disabled = true;
+  try {
+    const {error} = await db.from('main_courante').insert({
+      user_id: currentAgent.user_id,
+      agent_id: currentAgent.id,
+      site_id: shift.site_id,
+      planning_id: shift.id,
+      type, titre, description, priorite, statut: 'ouvert'
+    });
+    if (error) throw error;
+    $('agentLogTitle').value = '';
+    $('agentLogDescription').value = '';
+    msg('agentLogMsg','Entrée enregistrée.');
+    await loadExtraData();
+    renderAgentPortal();
+  } catch (e) {
+    msg('agentLogMsg','Enregistrement impossible : '+(e?.message||'erreur inconnue'));
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 async function agentSetPassword() {
