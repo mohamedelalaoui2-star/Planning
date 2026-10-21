@@ -813,6 +813,7 @@ nav span{display:block;font-size:20px;margin-bottom:5px}
         <label>Date d’expiration (facultatif)</label><input id="documentExpiry" type="date">
         <button class="primary" id="documentUploadBtn">Ajouter au dossier</button>
         <div id="documentMsg" class="msg hidden" aria-live="polite"></div>
+        <div id="documentAlerts"></div>
         <div id="documentList"></div>
       </div>
       <div id="agentList"></div>
@@ -1736,7 +1737,7 @@ $('logAddBtn').onclick=async()=>{const titre=$('logTitle').value.trim(),descript
 $('roundAddBtn').onclick=async()=>{const site_id=$('roundSite').value,nom=$('roundName').value.trim(),code=$('roundCode').value.trim()||null;if(!site_id||!nom)return msg('appMsg','Choisis un site et un nom de point.');const {error}=await db.from('ronde_points').insert({user_id:currentUser.id,site_id,nom,code});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Point créé.');};
 $('passageAddBtn').onclick=async()=>{const point_id=$('passagePoint').value,agent_id=$('passageAgent').value||null,note=$('passageNote').value.trim()||null;if(!point_id)return msg('appMsg','Crée un point de contrôle.');const {error}=await db.from('ronde_passages').insert({user_id:currentUser.id,point_id,agent_id,note});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Passage enregistré.');};
 $('noticeAddBtn').onclick=async()=>{const titre=$('noticeTitle').value.trim(),message=$('noticeMessage').value.trim(),niveau=$('noticeLevel').value;if(!titre||!message)return msg('appMsg','Renseigne le titre et le message.');const {error}=await db.from('notifications').insert({user_id:currentUser.id,titre,message,niveau});if(error)return msg('appMsg',error.message);await loadExtraData();msg('appMsg','Alerte créée.');};
-$('noticeRefreshBtn').onclick=async()=>{await loadExtraData();const now=new Date();now.setHours(0,0,0,0);const limit=new Date(now);limit.setDate(limit.getDate()+60);const due=qualifications.filter(q=>q.date_expiration&&new Date(q.date_expiration+'T00:00:00')<=limit);let count=0,skipped=0;for(const q of due){const title='Échéance qualification',message=q.type+' expire le '+q.date_expiration;const exists=notifications.some(n=>n.titre===title&&n.message===message);if(exists){skipped++;continue;}const {error}=await db.from('notifications').insert({user_id:currentUser.id,titre:title,message,niveau:new Date(q.date_expiration+'T00:00:00')<now?'urgent':'attention'});if(!error)count++;}await loadExtraData();msg('appMsg',count+' nouvelle(s) alerte(s) créée(s)'+(skipped?' ; '+skipped+' doublon(s) évité(s)':'')+'.');};
+$('noticeRefreshBtn').onclick=async()=>{await loadExtraData();const now=new Date();now.setHours(0,0,0,0);const limit=new Date(now);limit.setDate(limit.getDate()+60);let count=0,skipped=0,failed=0;const dueQual=qualifications.filter(q=>q.date_expiration&&new Date(q.date_expiration+'T00:00:00')<=limit);const {data:docs,error:docsError}=await db.from('agent_documents').select('id,agent_id,document_type,file_name,expires_on').order('expires_on',{ascending:true}).limit(500);if(docsError){msg('appMsg','Qualifications vérifiées, mais documents non vérifiés : '+docsError.message);return;}const dueDocs=(docs||[]).filter(d=>d.expires_on&&new Date(d.expires_on+'T00:00:00')<=limit);const pending=[...dueQual.map(q=>({title:'Échéance qualification',message:q.type+' expire le '+q.date_expiration,niveau:new Date(q.date_expiration+'T00:00:00')<now?'urgent':'attention'})),...dueDocs.map(d=>{const a=agents.find(x=>String(x.id)===String(d.agent_id));return {title:'Échéance document',message:(a?agentNameOf(a):'Agent')+' · '+d.document_type+' · '+d.file_name+' expire le '+d.expires_on,niveau:new Date(d.expires_on+'T00:00:00')<now?'urgent':'attention'};})];for(const item of pending){const exists=notifications.some(n=>n.titre===item.title&&n.message===item.message);if(exists){skipped++;continue;}const {error}=await db.from('notifications').insert({user_id:currentUser.id,...item});if(error)failed++;else count++;}await loadExtraData();await loadAgentDocuments();msg('appMsg',count+' nouvelle(s) alerte(s) créée(s)'+(skipped?' ; '+skipped+' doublon(s) évité(s)':'')+(failed?' ; '+failed+' échec(s) d’enregistrement':'')+'.');};
 function answerAssistant(question){
  const q=question.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');let answer;
  if(!q.trim())answer='Écris une question.';
@@ -2055,9 +2056,17 @@ async function loadAgentDocuments() {
   if (!list) return;
   const { data, error } = await db.from('agent_documents').select('*').order('created_at',{ascending:false}).limit(100);
   if (error) { list.innerHTML = '<p class="notice">Documents indisponibles : '+esc(error.message)+'</p>'; return; }
+  const today = new Date(); today.setHours(0,0,0,0);
+  const limit = new Date(today); limit.setDate(limit.getDate()+60);
+  const dueDocs = (data||[]).filter(d => d.expires_on && new Date(d.expires_on+'T00:00:00') <= limit);
+  const alertHtml = dueDocs.length ? '<div class="card"><div class="section-title">⚠️ Alertes documents (60 jours)</div>'+dueDocs.map(d=>{const a=agents.find(x=>String(x.id)===String(d.agent_id));const date=new Date(d.expires_on+'T00:00:00');const days=Math.ceil((date-today)/86400000);return '<div class="msg">'+esc(a?agentNameOf(a):'Agent')+' · '+esc(d.document_type)+' · '+esc(d.file_name)+' · '+(days<0?'EXPIRÉ depuis '+Math.abs(days)+' jour(s)':days===0?'Expire aujourd’hui':'expire dans '+days+' jour(s'))+'</div>';}).join('')+'</div>' : '<p class="notice">Aucun document avec une échéance renseignée dans les 60 prochains jours.</p>';
+  const alertHost = $('documentAlerts'); if(alertHost) alertHost.innerHTML = alertHtml;
   list.innerHTML = (data||[]).map(d => {
     const agent = agents.find(a => String(a.id) === String(d.agent_id));
-    return '<div class="item"><div><strong>'+esc(d.file_name)+'</strong><small>'+esc(agent ? agentNameOf(agent) : 'Agent')+' · '+esc(d.document_type)+' · '+esc(d.expires_on || 'Sans échéance')+'</small></div><div class="item-actions"><button class="secondary" type="button" onclick="openAgentDocument('+Number(d.id)+')">Consulter</button></div></div>';
+    const expiry = d.expires_on ? new Date(d.expires_on+'T00:00:00') : null;
+    const days = expiry ? Math.ceil((expiry-today)/86400000) : null;
+    const expiryLabel = !expiry ? 'Échéance non renseignée' : days<0 ? 'EXPIRÉ' : days<=60 ? (days===0?'Expire aujourd’hui':'Expire dans '+days+' jour(s)') : 'Échéance '+d.expires_on;
+    return '<div class="item"><div><strong>'+esc(d.file_name)+'</strong><small>'+esc(agent ? agentNameOf(agent) : 'Agent')+' · '+esc(d.document_type)+' · '+esc(expiryLabel)+'</small></div><div class="item-actions"><button class="secondary" type="button" onclick="openAgentDocument('+Number(d.id)+')">Consulter</button></div></div>';
   }).join('') || '<div class="empty">Aucun document ajouté.</div>';
 }
 async function openAgentDocument(id) {
