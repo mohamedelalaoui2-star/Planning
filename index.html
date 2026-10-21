@@ -802,6 +802,50 @@ button:active{transform:scale(.98);filter:brightness(1.12)}
  #agents #agentList .item .item-actions button,#sites #siteList .item .item-actions button{min-width:34px;min-height:36px;padding:6px;font-size:10px}
 }
 </style>
+<style id="vigentra-dashboard-v2">
+/* Finition premium du tableau de bord mobile */
+#home{gap:16px}
+#home .home-hero{border-radius:24px!important;padding:19px!important;background:radial-gradient(ellipse at 100% 0%,rgba(255,49,93,.16),transparent 42%),linear-gradient(145deg,#142540,#0a1425 75%)!important;box-shadow:0 16px 38px #0004!important}
+#home .hero-top{margin-bottom:24px}
+#home .hero-eyebrow{font-size:10px;letter-spacing:.1em;color:#d8e3f5}
+#home .hero-version{padding:6px 8px;border-radius:8px;background:#301a2a;border:1px solid #673047;color:#ff7a98}
+#home .hero-title{font-size:clamp(27px,7vw,34px)!important;line-height:1.06;letter-spacing:-.055em!important;max-width:12ch}
+#home .hero-subtitle{font-size:13px;max-width:29ch;color:#a9bad3!important}
+#home .hero-date{border-radius:13px!important;background:#0b1729!important;border-color:#2b4262!important;color:#d7e3f6!important;min-height:43px}
+#home .hero-actions{gap:9px}
+#home .hero-actions button{min-height:47px;border-radius:13px!important;font-size:12px;font-weight:800}
+#home .home-section-heading{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:2px 2px 0}
+#home .home-section-heading h2{font-size:22px;letter-spacing:-.04em;margin:3px 0 0}
+#home .section-kicker{font-size:9px;letter-spacing:.14em;font-weight:850;color:#8199bd}
+#home .live-pill{display:inline-flex;align-items:center;gap:6px;font-size:9px;color:#a9bbd5;padding:7px 9px;background:#0d1a2c;border:1px solid #263c59;border-radius:999px;white-space:nowrap}
+#home .stats{gap:10px!important}
+#home .stat-card{position:relative;overflow:hidden;min-height:119px!important;padding:14px!important;border-radius:18px!important;background:linear-gradient(150deg,#14243b,#0b1729)!important;border-color:#243b5b!important}
+#home .stat-card:after{content:"";position:absolute;right:-25px;top:-32px;width:85px;height:85px;border-radius:50%;background:rgba(65,126,211,.055)}
+#home .stat-label{font-size:11px;gap:8px;color:#b8c8df}
+#home .stat-icon{width:31px;height:31px;border-radius:10px;background:#1b3151!important;color:#80b5ff!important;font-size:16px}
+#home .stat-num{font-size:32px!important;letter-spacing:-.055em!important;font-weight:850!important}
+#home .stat-foot{font-size:10px;color:#8ea3c2}
+#home .home-quick-actions{gap:9px}
+#home .quick-action{border-radius:16px!important;min-height:72px!important;padding:12px!important;background:linear-gradient(105deg,#12223a,#0b1729)!important;border-color:#263d5d!important}
+#home .quick-action:active{border-color:#ff315d!important}
+#home .quick-icon{width:42px;height:42px;flex-basis:42px;border-radius:13px;font-size:18px}
+#home .quick-icon.red-icon{background:#351b2b!important;color:#ff6687!important}
+#home .quick-icon.blue-icon{background:#172d4c!important;color:#70aaff!important}
+#home .quick-icon.gold-icon{background:#332a1b!important;color:#ffc56b!important}
+#home .quick-action strong{font-size:12px;line-height:1.35}
+#home .quick-action small{font-size:10px;line-height:1.4;color:#91a5c4!important}
+#home .quick-arrow{font-size:25px;color:#738db2}
+#home #dashMore{border-radius:18px!important;padding:15px!important}
+#home .dashboard-kpis{gap:8px}
+#home .dashboard-kpi{background:#0c182a;border:1px solid #223754;border-radius:13px;padding:11px}
+#home .dashboard-kpi span{font-size:10px;color:#91a5c4}
+#home .dashboard-kpi strong{font-size:15px}
+#profitCalc{border-radius:20px!important;padding:16px!important}
+#profitCalc .section-title{font-size:17px!important}
+#profitCalc input{min-height:45px}
+@media(min-width:430px){#home .home-quick-actions{grid-template-columns:1fr}#home .quick-action{min-height:72px!important}}
+@media(prefers-reduced-motion:no-preference){#home .stat-card,#home .quick-action{transition:border-color .16s ease,transform .16s ease}#home .quick-action:hover{transform:translateY(-1px)}}
+</style>
 </head>
 <body>
 
