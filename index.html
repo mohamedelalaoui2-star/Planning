@@ -2832,7 +2832,7 @@ $('backupRestoreBtn')?.addEventListener('click',async()=>{
   const {data,error}=await db.rpc('vigentra_restore_backup',{p_backup:backup});
   if(error)throw new Error(error.message||'Supabase a refusé la restauration.');
   const inserted=Number(data?.inserted||0);
-  msg('backupMsg','Restauration terminée. '+inserted+' nouveaux enregistrements ajoutés. Les doublons ont été ignorés. Rechargement des données…');
+  msg('backupMsg','Restauration terminée. '+inserted+' nouveaux enregistrements ajoutés. Les doublons ont été ignorés. Les documents privés et leurs références ne sont pas restaurés. Rechargement des données…');
   $('backupPreview').textContent='Restauration terminée. Les données seront rechargées.';
   setTimeout(()=>location.reload(),1200);
  }catch(error){
