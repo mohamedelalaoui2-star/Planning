@@ -778,7 +778,11 @@ nav span{display:block;font-size:20px;margin-bottom:5px}
       </div>
       <div class="card">
         <label>Nom et prénom</label>
-        <input id="agentName" placeholder="Ex. Karim Benali">
+        <input id="agentName" autocomplete="name" placeholder="Ex. Karim Benali">
+        <label>Téléphone (facultatif)</label>
+        <input id="agentPhone" type="tel" autocomplete="tel" placeholder="06 12 34 56 78">
+        <label>E-mail (facultatif, pour le futur accès)</label>
+        <input id="agentEmail" type="email" autocomplete="email" placeholder="agent@exemple.fr">
         <label>Qualification</label>
         <select id="agentQual">
           <option>APS</option>
@@ -1445,6 +1449,8 @@ let editingAgentId = null;
 function resetAgentForm() {
   editingAgentId = null;
   $('agentName').value = '';
+  if ($('agentPhone')) $('agentPhone').value = '';
+  if ($('agentEmail')) $('agentEmail').value = '';
   $('agentQual').value = 'APS';
   $('addAgentBtn').textContent = 'Enregistrer l’agent';
   $('cancelAgentEditBtn')?.classList.add('hidden');
@@ -1455,6 +1461,8 @@ function editAgent(id) {
   if (!agent) return msg('appMsg', 'Agent introuvable. Actualise la page et réessaie.');
   editingAgentId = agent.id;
   $('agentName').value = agent.nom ?? agent.Nom ?? '';
+  if ($('agentPhone')) $('agentPhone').value = agent['Téléphone'] ?? '';
+  if ($('agentEmail')) $('agentEmail').value = agent.Email ?? '';
   $('agentQual').value = agent.qualification ?? agent.Qualification ?? 'Autre';
   $('addAgentBtn').textContent = 'Enregistrer les modifications';
   $('cancelAgentEditBtn')?.classList.remove('hidden');
@@ -1466,26 +1474,33 @@ $('cancelAgentEditBtn')?.addEventListener('click', resetAgentForm);
 
 $('addAgentBtn').onclick = async () => {
   const nom = $('agentName').value.trim();
+  const telephone = $('agentPhone')?.value.trim() || null;
+  const email = $('agentEmail')?.value.trim() || null;
   if (!nom) return msg('appMsg', 'Saisis le nom et le prénom.');
+  if (email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+    return msg('appMsg', 'Vérifie l’adresse e-mail de l’agent.');
+  }
 
   if (editingAgentId !== null) {
     clearMsg('appMsg');
     const { error } = await db.from('agents')
-      .update({ nom, qualification: $('agentQual').value })
+      .update({ nom, qualification: $('agentQual').value, 'Téléphone': telephone, Email: email })
       .eq('id', editingAgentId)
       .eq('user_id', currentUser.id);
     if (error) return msg('appMsg', 'Modification impossible : ' + error.message);
     resetAgentForm();
     await refreshData();
-    return msg('appMsg', 'Agent modifié et enregistré dans Supabase.');
+    return msg('appMsg', 'Fiche agent modifiée et enregistrée dans Supabase.');
   }
 
   const success = await insertRow('agents', {
     nom,
     qualification: $('agentQual').value,
+    'Téléphone': telephone,
+    Email: email,
     actif: true
   });
-  if (success) $('agentName').value = '';
+  if (success) resetAgentForm();
 };
 
 $('addSiteBtn').onclick = async () => {
