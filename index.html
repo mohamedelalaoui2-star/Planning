@@ -1283,7 +1283,7 @@ nav button.active{color:#f1dba5;background:linear-gradient(145deg,rgba(216,181,1
     <section id="home">
       <div class="home-hero home-hero-compact">
         <div class="hero-top"><span class="hero-eyebrow"><span class="status-dot"></span> TEA SÉCURITÉ PRIVÉE</span><span class="hero-version">VIGENTRA PRO</span></div>
-        <div class="hero-title">Bonjour Mohammed</div>
+        <div class="hero-title" id="dashboardGreeting">Bonjour Mohammed</div>
         <p class="hero-subtitle">Voici la situation de votre entreprise aujourd’hui.</p>
         <div class="hero-date" id="dashboardDate">Votre tableau de bord opérationnel</div>
         <div class="hero-actions">
@@ -1717,6 +1717,9 @@ async function openWorkspace(user) {
   $('auth').classList.add('hidden');
   $('workspace').classList.remove('hidden');
   $('accountLabel').textContent = (user.email || 'Espace connecté') + (workspaceOwnerId !== user.id ? ' · Espace direction partagé' : '');
+  const greetingName = (user.email || '').toLowerCase() === 'teasecurite@gmail.com' ? 'Mustapha' : 'Mohammed';
+  const greeting = $('dashboardGreeting');
+  if (greeting) greeting.textContent = 'Bonjour ' + greetingName;
   $('shiftDate').value = new Date().toISOString().slice(0,10);
   $('nav').classList.toggle('hidden', agentMode);
   $('agentAccountCard')?.classList.toggle('hidden', agentMode);
