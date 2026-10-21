@@ -538,6 +538,19 @@ hr{border:0;border-top:1px solid var(--line);margin:18px 0}
   }
 }
 
+
+/* Actions cohérentes et lisibles pour les sites et vacations sur mobile */
+.item-main{flex:1;min-width:0;overflow-wrap:anywhere}
+.planning-shift .item-actions{flex:0 0 104px}
+@media(max-width:520px){
+  #siteList .item-actions{flex-basis:104px}
+  .planning-shift{flex-wrap:wrap}
+  .planning-shift-time{min-width:84px}
+  .planning-shift-details{flex:1;min-width:90px}
+  .planning-shift .item-actions{flex:0 0 100%;width:100%}
+  .planning-shift .item-actions button{width:100%}
+}
+
 </style>
 </head>
 <body>
@@ -1088,11 +1101,13 @@ function render() {
   $('siteList').innerHTML = sites.length
     ? sites.map(s => `
       <div class="item">
-        <div>
+        <div class="item-main">
           <strong>${esc(siteNameOf(s))}</strong>
           <small>${esc(s.Adresse ?? s.adresse ?? 'Adresse non renseignée')}</small>
         </div>
-        <button onclick="deleteRow('Site','${esc(s.id)}')">✕</button>
+        <div class="item-actions">
+          <button type="button" aria-label="Supprimer le site ${esc(siteNameOf(s))}" onclick="deleteRow('Site','${esc(s.id)}')">Supprimer</button>
+        </div>
       </div>
     `).join('')
     : '<div class="empty">Aucun site enregistré.</div>';
@@ -1201,7 +1216,9 @@ function render() {
           <div class="item planning-shift">
             <div class="planning-shift-time"><span class="planning-shift-date">${esc(x.date_vacation)}</span><strong>${esc(String(x.heure_debut || '').slice(0,5))}–${esc(String(x.heure_fin || '').slice(0,5))}</strong><small>${durationHours(x.heure_debut, x.heure_fin)} h</small></div>
             <div class="planning-shift-details"><strong>${esc(a ? agentNameOf(a) : 'Agent')}</strong><small>${esc(s ? siteNameOf(s) : 'Site')}</small></div>
-            <button aria-label="Supprimer cette vacation" onclick="deleteRow('planning','${esc(x.id)}')">✕</button>
+            <div class="item-actions">
+              <button type="button" aria-label="Supprimer la vacation du ${esc(x.date_vacation)}" onclick="deleteRow('planning','${esc(x.id)}')">Supprimer</button>
+            </div>
           </div>
         `;
       }).join('')
