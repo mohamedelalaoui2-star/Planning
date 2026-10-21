@@ -926,7 +926,17 @@ nav span{display:block;font-size:20px;margin-bottom:5px}
   <button data-tab="rondes" onclick="showTab('rondes')"><span>🚶</span>Rondes</button>
   <button data-tab="notifications" onclick="showTab('notifications')"><span>🔔</span>Alertes</button>
   <button data-tab="assistant" onclick="showTab('assistant')"><span>✦</span>Aide</button>
+  <button type="button" id="moreNavBtn" onclick="toggleMoreMenu()"><span>☰</span>Plus</button>
 </nav>
+<div id="moreMenu" class="more-menu hidden" aria-label="Autres fonctions">
+  <button onclick="openMoreTab('pointage')">◷ Pointage</button>
+  <button onclick="openMoreTab('factures')">€ Factures</button>
+  <button onclick="openMoreTab('qualifications')">🎓 Qualifications</button>
+  <button onclick="openMoreTab('maincourante')">📝 Main courante</button>
+  <button onclick="openMoreTab('rondes')">🚶 Rondes</button>
+  <button onclick="openMoreTab('notifications')">🔔 Alertes</button>
+  <button onclick="openMoreTab('assistant')">✦ Aide</button>
+</div>
 
 <script>
 /* Utiliser uniquement la clé publique Supabase dans le navigateur.
