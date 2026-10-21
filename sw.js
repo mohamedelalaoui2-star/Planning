@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vigentra-shell-v15';
+const CACHE_NAME = 'vigentra-shell-v16';
 const SHELL = ['./manifest.json', './icon.svg'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
