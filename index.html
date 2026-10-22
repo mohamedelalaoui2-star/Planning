@@ -1446,6 +1446,8 @@ nav button.active{color:#f1dba5;background:linear-gradient(145deg,rgba(216,181,1
         </div>
         <button class="secondary" id="planningFilterReset" type="button">Réinitialiser les filtres</button>
         <button class="primary" id="planningPrintBtn" type="button">Exporter la vue en PDF / Imprimer</button>
+        <button class="secondary" id="planningWhatsAppBtn" type="button">📄 PDF individuel · Partager sur WhatsApp</button>
+        <p class="notice">Choisis un agent dans le filtre ci-dessus, puis utilise ce bouton pour générer son planning PDF et l’envoyer via la feuille de partage de l’iPhone.</p>
         <div id="planningSummary" class="planning-summary" aria-live="polite"></div>
         <div id="planningAudit" class="planning-audit" aria-live="polite"></div>
       </div>
@@ -1911,7 +1913,118 @@ function exportAgentPdf(id) {
   const safe = value => String(value ?? '').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
   const w = window.open('', '_blank');
   if (!w) return msg('appMsg', 'Autorise les fenêtres pop-up pour créer le PDF.');
-  w.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Dossier agent - VIGENTRA PRO</title><style>body{font:14px Arial,sans-serif;color:#172033;padding:32px}h1{color:#172b4d}.row{padding:12px;border-bottom:1px solid #dbe2ec;display:grid;grid-template-columns:220px 1fr;gap:12px}.label{font-weight:bold}@media print{button{display:none}}</style></head><body><h1>VIGENTRA PRO — Dossier agent</h1><p>Document administratif généré le '+new Date().toLocaleDateString('fr-FR')+'.</p>'+rows.map(r=>'<div class="row"><div class="label">'+safe(r[0])+'</div><div>'+safe(r[1])+'</div></div>').join('')+'<p>Pour créer le PDF : Imprimer puis « Enregistrer au format PDF ».</p><button onclick="window.print()">Imprimer / Enregistrer en PDF</button></body></html>');
+  w.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Dossier agent - VIGENTRA PRO</title><style>body{font:14px Arial,sans-serif;color:#172033;padding:32px}h1{color:#172b4d}.row{padding:12px;border-bottom:1px solid #dbe2ec;display:grid;grid-template-columns:220px 1fr;gap:12px}.label{font-weight:bold}@media print{button{display:none}}</style></head><body><h1>VIGENTRA PRO — Dossier agent</h1><p>Document administratif généré le '+new Date().toLocaleDateString('fr-FR')+'.</p>'+rows.map(r=>'<div class="row"><div class="label">'+safe(r[0])+'</div><div>'+safe(r[1])+'</div></div>').join('')+'<p>Pour créer le PDF : Imprimer puis « Enregistrer au format PDF ».</p><button onclick="window.print()">Imprimer / Enregistrer en PDF</button>
+<script>
+/* VIGENTRA PRO — PDF individuel d'agent et partage natif iPhone/WhatsApp */
+(function(){
+  async function loadJsPDF(){
+    if(window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+    const sources=[
+      'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+      'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'
+    ];
+    for(const src of sources){
+      try{
+        await new Promise((resolve,reject)=>{
+          const script=document.createElement('script');
+          script.src=src;script.onload=resolve;script.onerror=reject;
+          document.head.appendChild(script);
+        });
+        if(window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+      }catch(e){}
+    }
+    throw new Error('La bibliothèque PDF ne se charge pas. Vérifie la connexion Internet.');
+  }
+  const pdfDate = value => value ? new Date(value+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}) : 'Date non définie';
+  function addWrapped(doc,text,x,y,maxWidth,lineHeight){
+    const lines=doc.splitTextToSize(String(text||'—'),maxWidth);
+    doc.text(lines,x,y);
+    return y+lines.length*lineHeight;
+  }
+  async function shareAgentSchedule(){
+    const agentId=$('planningFilterAgent')?.value || '';
+    if(!agentId){ alert('Sélectionne d’abord un agent dans le filtre « Agent ».'); return; }
+    const agent=agents.find(a=>String(a.id)===String(agentId));
+    if(!agent){ alert('Agent introuvable. Actualise le planning puis réessaie.'); return; }
+    const from=$('planningFilterFrom')?.value||'';
+    const to=$('planningFilterTo')?.value||'';
+    const siteFilter=$('planningFilterSite')?.value||'';
+    const rows=shifts.filter(x=>
+      String(x.agent_id)===String(agentId) &&
+      (!from || String(x.date_vacation||'')>=from) &&
+      (!to || String(x.date_vacation||'')<=to) &&
+      (!siteFilter || String(x.site_id)===siteFilter)
+    ).sort((a,b)=>String(a.date_vacation||'').localeCompare(String(b.date_vacation||''))||String(a.heure_debut||'').localeCompare(String(b.heure_debut||'')));
+    if(!rows.length){ alert('Aucune vacation trouvée pour cet agent avec les filtres actuels.'); return; }
+    const btn=$('planningWhatsAppBtn');
+    const old=btn.textContent;btn.disabled=true;btn.textContent='Préparation du PDF…';
+    try{
+      const JsPDF=await loadJsPDF();
+      const doc=new JsPDF({unit:'mm',format:'a4'});
+      const fullName=agentNameOf(agent);
+      const pageWidth=doc.internal.pageSize.getWidth();
+      const margin=16; const maxWidth=pageWidth-margin*2;
+      doc.setFillColor(10,22,42);doc.rect(0,0,pageWidth,38,'F');
+      doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(18);
+      doc.text('VIGENTRA PRO',margin,16);
+      doc.setFontSize(11);doc.setFont('helvetica','normal');
+      doc.text('PLANNING INDIVIDUEL',margin,25);
+      doc.setFontSize(9);doc.text('Document généré le '+new Date().toLocaleDateString('fr-FR'),margin,32);
+      doc.setTextColor(25,39,61);doc.setFont('helvetica','bold');doc.setFontSize(15);
+      let y=50;doc.text(fullName,margin,y);y+=8;
+      doc.setFont('helvetica','normal');doc.setFontSize(10);
+      const period=(from?pdfDate(from):'Début de période')+' au '+(to?pdfDate(to):'fin de période');
+      y=addWrapped(doc,'Période : '+period,margin,y,maxWidth,5)+4;
+      doc.setDrawColor(210,219,231);doc.line(margin,y,pageWidth-margin,y);y+=8;
+      let totalHours=0;
+      rows.forEach((shift,index)=>{
+        const site=sites.find(x=>String(x.id)===String(shift.site_id));
+        const hours=durationHours(shift.heure_debut,shift.heure_fin);
+        totalHours+=hours;
+        if(y>260){doc.addPage();y=20;}
+        doc.setFillColor(index%2?246:239,index%2?249:244,index%2?253:250);
+        doc.roundedRect(margin,y-5,maxWidth,30,2,2,'F');
+        doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(25,39,61);
+        doc.text(pdfDate(shift.date_vacation),margin+4,y+1);
+        doc.text(String(shift.heure_debut||'').slice(0,5)+' – '+String(shift.heure_fin||'').slice(0,5),pageWidth-margin-4,y+1,{align:'right'});
+        doc.setFont('helvetica','normal');doc.setFontSize(9);
+        y=addWrapped(doc,'Site : '+(site?siteNameOf(site):'Site non renseigné'),margin+4,y+8,maxWidth-8,4.5);
+        y=addWrapped(doc,'Adresse : '+(site?(site.Adresse||site.adresse||'Non renseignée'):'Non renseignée'),margin+4,y+1,maxWidth-8,4.5);
+        y=Math.max(y+5,(y-8)+22);
+      });
+      if(y>265){doc.addPage();y=20;}
+      y+=5;doc.setDrawColor(210,219,231);doc.line(margin,y,pageWidth-margin,y);y+=8;
+      doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(25,39,61);
+      doc.text('Total : '+rows.length+' vacation(s) · '+(Math.round(totalHours*100)/100).toLocaleString('fr-FR')+' heures',margin,y);
+      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(95,108,127);
+      doc.text('En cas de modification, seule la dernière version transmise fait foi.',margin,286);
+      const safeName=fullName.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'')||'agent';
+      const filename='VIGENTRA_Planning_'+safeName+(from?'_'+from:'')+(to?'_'+to:'')+'.pdf';
+      const blob=doc.output('blob');
+      const file=new File([blob],filename,{type:'application/pdf'});
+      const message='Bonjour '+fullName+', voici ton planning VIGENTRA PRO'+(from||to?' pour la période '+(from||'début')+' au '+(to||'fin'):'')+'. Merci de confirmer la bonne réception.';
+      if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({title:'Planning VIGENTRA PRO - '+fullName,text:message,files:[file]});
+      }else{
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),60000);
+        window.open('https://wa.me/?text='+encodeURIComponent(message),'_blank','noopener');
+        alert('Le PDF a été téléchargé. WhatsApp est ouvert : joins le fichier PDF téléchargé à la conversation de l’agent avant d’envoyer.');
+      }
+    }catch(error){
+      console.error('VIGENTRA PDF share error:',error);
+      alert('Impossible de préparer le PDF : '+(error?.message||'erreur inconnue'));
+    }finally{btn.disabled=false;btn.textContent=old;}
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    $('planningWhatsAppBtn')?.addEventListener('click',shareAgentSchedule);
+  });
+  if(document.readyState!=='loading') $('planningWhatsAppBtn')?.addEventListener('click',shareAgentSchedule);
+})();
+</script>
+
+</body></html>');
   w.document.close();
 }
 
