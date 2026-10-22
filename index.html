@@ -1446,6 +1446,32 @@ nav button.active{color:#f1dba5;background:linear-gradient(145deg,rgba(216,181,1
         </div>
         <button class="secondary" id="planningFilterReset" type="button">Réinitialiser les filtres</button>
         <button class="primary" id="planningPrintBtn" type="button">Exporter la vue en PDF / Imprimer</button>
+
+function exportFilteredPlanningView(){
+  const from=$('planningFilterFrom')?.value||'';
+  const to=$('planningFilterTo')?.value||'';
+  const agentId=$('planningFilterAgent')?.value||'';
+  const siteId=$('planningFilterSite')?.value||'';
+  if(from&&to&&from>to){msg('appMsg','La date de début doit précéder la date de fin.');return;}
+  const list=shifts.filter(s=>
+    (!from||String(s.date_vacation||'')>=from)&&(!to||String(s.date_vacation||'')<=to)&&
+    (!agentId||String(s.agent_id)===String(agentId))&&(!siteId||String(s.site_id)===String(siteId))
+  ).sort((a,b)=>String(a.date_vacation||'').localeCompare(String(b.date_vacation||''))||String(a.heure_debut||'').localeCompare(String(b.heure_debut||'')));
+  if(!list.length){msg('appMsg','Aucune vacation à exporter avec les filtres sélectionnés.');return;}
+  const escPdf=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const popup=window.open('','_blank');
+  if(!popup){msg('appMsg','Safari a bloqué la fenêtre PDF. Autorise les fenêtres surgissantes puis réessaie.');return;}
+  const total=list.reduce((n,s)=>n+durationHours(s.heure_debut,s.heure_fin),0);
+  const rows=list.map(s=>{
+    const a=agents.find(x=>String(x.id)===String(s.agent_id));
+    const site=sites.find(x=>String(x.id)===String(s.site_id));
+    return '<tr><td>'+escPdf(s.date_vacation)+'</td><td>'+escPdf(a?agentNameOf(a):'Agent non renseigné')+'</td><td>'+escPdf(String(s.heure_debut||'').slice(0,5)+' – '+String(s.heure_fin||'').slice(0,5))+'</td><td>'+escPdf(site?siteNameOf(site):'Site non renseigné')+'</td><td>'+durationHours(s.heure_debut,s.heure_fin)+' h</td></tr>';
+  }).join('');
+  popup.document.open();
+  popup.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Planning — TEA Sécurité Privée</title><style>@page{size:A4;margin:16mm}body{font:12px Arial,sans-serif;color:#172033;padding:18px}header{border-bottom:3px solid #bd1722;padding-bottom:12px;margin-bottom:20px}h1{margin:0;color:#b5121b;font-size:22px}p{color:#4b5563}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #cbd5e1;padding:8px;text-align:left}th{background:#172033;color:white}.total{font-size:16px;font-weight:bold;margin-top:20px}.foot{margin-top:35px;color:#b5121b;font-weight:bold}@media print{body{padding:0}}</style></head><body><header><h1>TEA SÉCURITÉ PRIVÉE</h1><p>GARDIENNAGE ET SÉCURITÉ · VOTRE SÉCURITÉ EST LA NÔTRE</p></header><h2>Planning des vacations</h2><p>Période : '+escPdf(from||'Toutes dates')+' au '+escPdf(to||'Toutes dates')+'</p><table><thead><tr><th>Date</th><th>Agent</th><th>Horaires</th><th>Site</th><th>Durée</th></tr></thead><tbody>'+rows+'</tbody></table><p class="total">Total : '+list.length+' vacation(s) · '+total.toLocaleString('fr-FR')+' heures</p><p class="foot">TEA SÉCURITÉ PRIVÉE — Votre sécurité est la nôtre</p><script>window.onload=()=>setTimeout(()=>window.print(),350);<\/script></body></html>');
+  popup.document.close();
+}
+
         <button class="secondary" id="planningWhatsAppBtn" type="button">📄 PDF individuel · Partager sur WhatsApp</button>
         <p class="notice">Choisis un agent dans le filtre ci-dessus, puis utilise ce bouton pour générer son planning PDF et l’envoyer via la feuille de partage de l’iPhone.</p>
         <div id="planningSummary" class="planning-summary" aria-live="polite"></div>
@@ -2017,6 +2043,8 @@ function exportAgentPdf(id) {
       alert('Impossible de préparer le PDF : '+(error?.message||'erreur inconnue'));
     }finally{btn.disabled=false;btn.textContent=old;}
   }
+
+if($('planningPrintBtn')) $('planningPrintBtn').addEventListener('click',exportFilteredPlanningView);
   document.addEventListener('DOMContentLoaded',()=>{
     $('planningWhatsAppBtn')?.addEventListener('click',shareAgentSchedule);
   });
