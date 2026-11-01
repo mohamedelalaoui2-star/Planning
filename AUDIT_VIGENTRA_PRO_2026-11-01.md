@@ -66,3 +66,32 @@ Le dépôt existant contient déjà les modules Pointage et Main courante numér
 
 ## Précautions
 Le pointage web et l'horodatage ne prouvent pas à eux seuls la présence physique. Aucun GPS permanent, aucune photo et aucune biométrie n'ont été ajoutés. Les agents doivent être informés des finalités, des données collectées, des accès et des durées de conservation conformément aux recommandations CNIL.
+
+
+# VIGENTRA PRO — gestion commerciale initiale
+Date : 2026-11-01
+Branche : feat/gestion-commerciale
+
+## Examen avant modification
+- L'application existante utilise un seul fichier index.html et le client Supabase JS v2.
+- Le module Factures existait déjà : création de brouillon, calcul HT/TVA/TTC, impression/PDF et suivi de statut.
+- Le schéma Supabase contient déjà les tables clients, devis et contrats. Les tables ont RLS activé et des politiques d'accès propriétaire.
+- Aucune nouvelle table ni colonne n'a été ajoutée à la base ; aucune donnée existante n'a été modifiée ou supprimée.
+
+## Changements de code sur cette branche
+- Ajout d'un module « Clients, devis et contrats » accessible par le menu « Plus ».
+- Création et liste des clients avec raison sociale, SIRET contrôlé à 14 chiffres, adresse, contact, e-mail, téléphone et notes.
+- Création des devis liés à un client enregistré, calcul des totaux HT/TVA/TTC, validité, rendu PDF imprimable et suivi brouillon/envoyé/accepté/refusé.
+- Conversion d'un devis accepté en brouillon de facture ; le devis est ensuite marqué « converti ». Si la mise à jour du devis échoue après la création de la facture, l'application affiche un avertissement et demande une vérification avant toute nouvelle conversion.
+- Création et suivi de contrats avec référence, client, dates, taux horaire HT, volume mensuel, notes et statuts brouillon/actif/terminé/résilié.
+- Factures : ajout d'une action confirmée pour marquer une facture brouillon comme envoyée, puis possibilité de la marquer payée.
+- Le bouton « Préparer une facture » d'une fiche client préremplit le nom du client dans le formulaire de facturation existant.
+- Les tables clients, devis et contrats sont incluses dans la sauvegarde/restauration JSON de l'application.
+
+## Vérifications et limites
+- Chaque modification ciblée du code a été appliquée sur une branche dédiée et vérifiée par nombre d'occurrences avant remplacement.
+- La vérification syntaxique JavaScript et le test fonctionnel navigateur/Supabase restent à confirmer avant fusion.
+- Le module utilise les tables et colonnes déjà existantes ; aucune migration de schéma n'a été appliquée.
+- Les politiques RLS actuelles de clients, devis et contrats autorisent le propriétaire (user_id = auth.uid()). Les comptes membres d'un espace partagé peuvent nécessiter des politiques dédiées alignées sur vigentra_workspace_owner_id() ; ne pas élargir les accès sans revue et test.
+- Les PDF sont des documents de travail : l'identité légale complète de TEA, les mentions obligatoires, les modalités de paiement et les conditions doivent être complétées et validées avant émission officielle.
+- Aucun e-mail, aucune facture réelle et aucun contrat réel n'ont été envoyés ou émis durant cette modification.
