@@ -1993,7 +1993,10 @@ function exportAgentPdf(id) {
   const safe = value => String(value ?? '').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
   const w = window.open('', '_blank');
   if (!w) return msg('appMsg', 'Autorise les fenêtres pop-up pour créer le PDF.');
-  w.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Dossier agent - VIGENTRA PRO</title><style>body{font:14px Arial,sans-serif;color:#172033;padding:32px}h1{color:#172b4d}.row{padding:12px;border-bottom:1px solid #dbe2ec;display:grid;grid-template-columns:220px 1fr;gap:12px}.label{font-weight:bold}@media print{button{display:none}}</style></head><body><h1>VIGENTRA PRO — Dossier agent</h1><p>Document administratif généré le '+new Date().toLocaleDateString('fr-FR')+'.</p>'+rows.map(r=>'<div class="row"><div class="label">'+safe(r[0])+'</div><div>'+safe(r[1])+'</div></div>').join('')+'<p>Pour créer le PDF : Imprimer puis « Enregistrer au format PDF ».</p><button onclick="window.print()">Imprimer / Enregistrer en PDF</button>
+  w.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Dossier agent - VIGENTRA PRO</title><style>body{font:14px Arial,sans-serif;color:#172033;padding:32px}h1{color:#172b4d}.row{padding:12px;border-bottom:1px solid #dbe2ec;display:grid;grid-template-columns:220px 1fr;gap:12px}.label{font-weight:bold}@media print{button{display:none}}</style></head><body><h1>VIGENTRA PRO — Dossier agent</h1><p>Document administratif généré le '+new Date().toLocaleDateString('fr-FR')+'.</p>'+rows.map(r=>'<div class="row"><div class="label">'+safe(r[0])+'</div><div>'+safe(r[1])+'</div></div>').join('')+'<p>Pour créer le PDF : Imprimer puis « Enregistrer au format PDF ».</p><button onclick="window.print()">Imprimer / Enregistrer en PDF</button></body></html>');
+  w.document.close();
+}
+</script>
 <script>
 /* VIGENTRA PRO — PDF individuel d'agent et partage natif iPhone/WhatsApp */
 (function(){
