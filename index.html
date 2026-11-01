@@ -2523,7 +2523,8 @@ function filteredMainCourante(){
  return logs.filter(x=>{
   const a=agents.find(y=>String(y.id)===String(x.agent_id)),site=sites.find(y=>String(y.id)===String(x.site_id));
   const hay=[x.titre,x.description,x.type,x.priorite,a?agentNameOf(a):'',site?siteNameOf(site):''].join(' ').toLocaleLowerCase('fr-FR');
-  const day=String(x.created_at||'').slice(0,10);
+  const createdAt=new Date(x.created_at||'');
+  const day=Number.isNaN(createdAt.getTime())?'':createdAt.getFullYear()+'-'+String(createdAt.getMonth()+1).padStart(2,'0')+'-'+String(createdAt.getDate()).padStart(2,'0');
   return (!q||hay.includes(q))&&(!type||x.type===type)&&(!priority||x.priorite===priority)&&
     (!status||(status==='clos'?isLogClosed(x):!isLogClosed(x)))&&
     (!dateFrom||day>=dateFrom)&&(!dateTo||day<=dateTo);
