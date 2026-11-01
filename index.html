@@ -1332,6 +1332,9 @@ nav button.active{color:#f1dba5;background:linear-gradient(145deg,rgba(216,181,1
         <label>Agent à inviter</label><select id="inviteAgentSelect"><option value="">Choisir un agent</option></select>
         <label>Adresse e-mail de l’agent</label><input id="inviteAgentEmail" type="email" autocomplete="email" placeholder="agent@exemple.fr">
         <button class="primary" id="inviteAgentBtn">Envoyer l’invitation</button>
+        <button class="secondary" id="sendAgentCodeBtn" type="button">Envoyer un code de connexion</button>
+        <p class="notice">Si le compte n’existe pas encore, cette action enverra une invitation initiale. Aucun code n’est affiché ici.</p>
+        <div id="sendAgentCodeMsg" class="msg hidden" aria-live="polite"></div>
         <div id="inviteAgentMsg" class="msg hidden" aria-live="polite"></div>
       </div>
       <div class="card">
@@ -1885,6 +1888,41 @@ $('inviteAgentBtn').onclick = async () => {
     out.textContent = 'Invitation impossible : ' + detail + '.';
   } finally {
     $('inviteAgentBtn').disabled = false;
+  }
+};
+
+$('sendAgentCodeBtn').onclick = async () => {
+  if (agentMode || !currentUser) return;
+  const agent_id = Number($('inviteAgentSelect').value);
+  const email = $('inviteAgentEmail').value.trim();
+  const selectedAgent = agents.find(a => Number(a.id) === agent_id);
+  const out = $('sendAgentCodeMsg');
+  out.classList.remove('hidden');
+  if (!selectedAgent) { out.textContent = 'Choisis un agent dans la liste.'; return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { out.textContent = 'Saisis une adresse e-mail valide.'; return; }
+  if (!window.confirm('Envoyer un code de connexion ou une invitation initiale à ' + agentNameOf(selectedAgent) + ' (' + email + ') ?')) {
+    out.textContent = 'Action annulée. Aucun e-mail demandé.';
+    return;
+  }
+  const button = $('sendAgentCodeBtn');
+  button.disabled = true;
+  out.textContent = 'Demande d’envoi en cours…';
+  try {
+    const {data,error} = await db.functions.invoke('send-agent-access-code', {body:{agent_id,email}});
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    out.textContent = data?.message || 'Demande traitée. Vérifie la boîte de réception et les indésirables.';
+  } catch (e) {
+    let detail = e?.message || 'erreur inconnue';
+    try {
+      if (e?.context && typeof e.context.json === 'function') {
+        const payload = await e.context.json();
+        detail = payload?.error || payload?.message || payload?.msg || detail;
+      }
+    } catch (_) {}
+    out.textContent = 'Envoi impossible : ' + detail;
+  } finally {
+    button.disabled = false;
   }
 };
 
