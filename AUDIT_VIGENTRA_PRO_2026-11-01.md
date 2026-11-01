@@ -8,6 +8,7 @@ Production database: Supabase project pqpoxbsudbydsppqoxon
 - Fixed the invitation confirmation text so line breaks render as actual new lines rather than literal `\n`.
 - Frontend validation/confirmation commit: `9513d7dffc57e87bce7ad55a72e36d46f238d587`.
 - Access-code UI wiring commit: `ec5f379fb113804c268d1d166d24d52cf027b756`.
+- Separate agent selector (including agents with an already-linked account) for code requests: `21c437cfc1a463aea9a36ada88c29a6420d99d7b`.
 - A local smoke test accepted `agent@example.fr` and rejected `agent@@example`.
 - The app changes are committed to `main`; GitHub Pages deployment status must be checked after the latest commit. A queued build does not prove the live site has finished deploying.
 
@@ -19,7 +20,7 @@ Production database: Supabase project pqpoxbsudbydsppqoxon
 - Recent GitHub Pages build before this correction succeeded. A new build for this commit was queued at the time of audit.
 
 ## High-priority findings still open
-1. **Access-code UI wired during this audit; end-to-end delivery still unverified.** Added a confirmation-protected “Envoyer un code de connexion” action to the agent-access card and connected it to the existing `send-agent-access-code` Edge Function. It reuses the selected agent and email fields and displays errors. No real email was sent during testing, so provider delivery and inbox arrival remain to be verified.
+1. **Access-code UI wired during this audit; end-to-end delivery still unverified.** Added a confirmation-protected “Envoyer un code de connexion” action connected to `send-agent-access-code`, with its own selector that includes already-linked agents and a separate email field. It displays errors. No real email was sent during testing, so provider delivery and inbox arrival remain to be verified.
 2. **Supabase security advisor warnings:** five `SECURITY DEFINER` functions are executable by signed-in users. The inspected functions include caller/ownership checks and appear to be used by RLS/workspace logic, so blindly revoking execution could break access. Review exact grants and function dependencies before changing them.
 3. **Leaked-password protection is disabled** in Supabase Auth. Enable it in the Auth password-security settings.
 4. **Performance advisor:** 41 RLS policy findings indicate repeated evaluation of auth functions. This is a performance optimization, not evidence by itself of data exposure; optimize in a reviewed migration.
