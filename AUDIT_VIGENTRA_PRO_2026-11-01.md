@@ -6,9 +6,10 @@ Production database: Supabase project pqpoxbsudbydsppqoxon
 ## Correction applied
 - Fixed the client-side agent invitation email validator in `index.html` so it uses JavaScript regex escapes correctly.
 - Fixed the invitation confirmation text so line breaks render as actual new lines rather than literal `\n`.
-- Commit: `9513d7dffc57e87bce7ad55a72e36d46f238d587`.
+- Frontend validation/confirmation commit: `9513d7dffc57e87bce7ad55a72e36d46f238d587`.
+- Access-code UI wiring commit: `ec5f379fb113804c268d1d166d24d52cf027b756`.
 - A local smoke test accepted `agent@example.fr` and rejected `agent@@example`.
-- The app change is committed to `main`; GitHub Pages deployment was queued when checked. This does not prove the live site has finished deploying.
+- The app changes are committed to `main`; GitHub Pages deployment status must be checked after the latest commit. A queued build does not prove the live site has finished deploying.
 
 ## Verified inventory
 - The `public` schema contains the core tables for agents, sites, planning, pointages, documents, invoicing, notifications, rondes, clients, contracts, quotes and compliance.
@@ -18,7 +19,7 @@ Production database: Supabase project pqpoxbsudbydsppqoxon
 - Recent GitHub Pages build before this correction succeeded. A new build for this commit was queued at the time of audit.
 
 ## High-priority findings still open
-1. **The access-code Edge Function is not called by the current frontend.** The current UI invokes `invite-vigentra-agent` only. The separate `send-agent-access-code` function exists, but there is no `functions.invoke('send-agent-access-code', ...)` in `index.html`. Therefore, an agent code flow cannot be initiated from the current UI.
+1. **Access-code UI wired during this audit; end-to-end delivery still unverified.** Added a confirmation-protected “Envoyer un code de connexion” action to the agent-access card and connected it to the existing `send-agent-access-code` Edge Function. It reuses the selected agent and email fields and displays errors. No real email was sent during testing, so provider delivery and inbox arrival remain to be verified.
 2. **Supabase security advisor warnings:** five `SECURITY DEFINER` functions are executable by signed-in users. The inspected functions include caller/ownership checks and appear to be used by RLS/workspace logic, so blindly revoking execution could break access. Review exact grants and function dependencies before changing them.
 3. **Leaked-password protection is disabled** in Supabase Auth. Enable it in the Auth password-security settings.
 4. **Performance advisor:** 41 RLS policy findings indicate repeated evaluation of auth functions. This is a performance optimization, not evidence by itself of data exposure; optimize in a reviewed migration.
