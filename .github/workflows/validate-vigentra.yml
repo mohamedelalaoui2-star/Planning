@@ -1,0 +1,75 @@
+name: Validate VIGENTRA PRO
+
+on:
+  push:
+    branches:
+      - feat/pointage-main-courante
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  javascript-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check inline JavaScript syntax
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import subprocess
+          import tempfile
+
+          class InlineScripts(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.scripts = []
+                  self.current = None
+                  self.current_type = None
+
+              def handle_starttag(self, tag, attrs):
+                  if tag.lower() != "script":
+                      return
+                  attrs = dict(attrs)
+                  if "src" in attrs:
+                      self.current = None
+                      return
+                  script_type = (attrs.get("type") or "text/javascript").lower().split(";")[0].strip()
+                  if script_type not in ("text/javascript", "application/javascript", "module"):
+                      self.current = None
+                      return
+                  self.current = []
+                  self.scripts.append(self.current)
+
+              def handle_data(self, data):
+                  if self.current is not None:
+                      self.current.append(data)
+
+              def handle_endtag(self, tag):
+                  if tag.lower() == "script":
+                      self.current = None
+
+          source = Path("index.html").read_text(encoding="utf-8")
+          parser = InlineScripts()
+          parser.feed(source)
+          scripts = ["".join(parts) for parts in parser.scripts]
+          if not scripts:
+              raise SystemExit("ÉCHEC : aucun script JavaScript intégré détecté.")
+
+          with tempfile.TemporaryDirectory() as tmp:
+              for index, script in enumerate(scripts, 1):
+                  path = Path(tmp) / f"script-{index}.js"
+                  path.write_text(script, encoding="utf-8")
+                  result = subprocess.run(["node", "--check", str(path)], text=True, capture_output=True)
+                  if result.returncode:
+                      print(f"ÉCHEC syntaxe JavaScript — script intégré #{index}")
+                      print(result.stdout)
+                      print(result.stderr)
+                      raise SystemExit(result.returncode)
+
+          print(f"OK : syntaxe vérifiée pour {len(scripts)} scripts JavaScript intégrés.")
+          PY
