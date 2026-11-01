@@ -2588,16 +2588,16 @@ function renderCommercial(){
  $('quoteList').innerHTML=devis.map(q=>{
   const status=q.statut==='brouillon'?'Brouillon':q.statut==='envoye'?'Envoyé':q.statut==='accepte'?'Accepté':q.statut==='refuse'?'Refusé':q.statut==='converti'?'Converti en facture':esc(q.statut||'À vérifier');
   let actions='<button class="secondary" type="button" onclick="printQuote('+Number(q.id)+')">PDF du devis</button>';
-  if(q.statut==='brouillon')actions+='<button class="secondary" type="button" onclick="updateQuoteStatus('+Number(q.id)+',\\'envoye\\')">Marquer envoyé</button>';
-  if(q.statut==='envoye')actions+='<button class="secondary" type="button" onclick="updateQuoteStatus('+Number(q.id)+',\\'accepte\\')">Accepter</button><button class="secondary" type="button" onclick="updateQuoteStatus('+Number(q.id)+',\\'refuse\\')">Refuser</button>';
+  if(q.statut==='brouillon')actions+='<button class="secondary" type="button" onclick="updateQuoteStatus('+Number(q.id)+',&#39;envoye&#39;)">Marquer envoyé</button>';
+  if(q.statut==='envoye')actions+='<button class="secondary" type="button" onclick="updateQuoteStatus('+Number(q.id)+',&#39;accepte&#39;)">Accepter</button><button class="secondary" type="button" onclick="updateQuoteStatus('+Number(q.id)+',&#39;refuse&#39;)">Refuser</button>';
   if(q.statut==='accepte')actions+='<button class="primary" type="button" onclick="convertQuoteToInvoice('+Number(q.id)+')">Créer la facture</button>';
   return '<div class="item"><div><strong>'+esc(q.numero)+' · '+esc(q.client_nom)+'</strong><small>'+esc(q.description)+' · '+commercialMoney(q.total_ttc)+' TTC · '+status+' · Validité : '+commercialDate(q.date_validite)+'</small></div><div class="invoice-actions">'+actions+'</div></div>';
  }).join('')||'<div class="empty">Aucun devis. Crée un devis à partir d’un client enregistré.</div>';
  $('contractList').innerHTML=contrats.map(c=>{
   const status=c.statut==='brouillon'?'Brouillon':c.statut==='actif'?'Actif':c.statut==='termine'?'Terminé':c.statut==='resilie'?'Résilié':esc(c.statut||'À vérifier');
   let action='';
-  if(c.statut==='brouillon')action='<button class="secondary" type="button" onclick="updateContractStatus('+Number(c.id)+',\\'actif\\')">Activer</button>';
-  if(c.statut==='actif')action='<button class="secondary" type="button" onclick="updateContractStatus('+Number(c.id)+',\\'termine\\')">Terminer</button><button class="secondary" type="button" onclick="updateContractStatus('+Number(c.id)+',\\'resilie\\')">Résilier</button>';
+  if(c.statut==='brouillon')action='<button class="secondary" type="button" onclick="updateContractStatus('+Number(c.id)+',&#39;actif&#39;)">Activer</button>';
+  if(c.statut==='actif')action='<button class="secondary" type="button" onclick="updateContractStatus('+Number(c.id)+',&#39;termine&#39;)">Terminer</button><button class="secondary" type="button" onclick="updateContractStatus('+Number(c.id)+',&#39;resilie&#39;)">Résilier</button>';
   return '<div class="item"><div><strong>'+esc(c.reference)+' · '+esc(c.titre)+'</strong><small>'+esc(clients.find(x=>String(x.id)===String(c.client_id))?.raison_sociale||'Client non trouvé')+' · '+status+' · '+commercialDate(c.date_debut)+' → '+commercialDate(c.date_fin)+' · '+commercialMoney(c.taux_horaire_ht)+'/h HT · '+esc(c.heures_mensuelles)+' h/mois</small>'+(c.notes?'<p>'+esc(c.notes)+'</p>':'')+'</div><div class="invoice-actions">'+action+'</div></div>';
  }).join('')||'<div class="empty">Aucun contrat enregistré.</div>';
 }
