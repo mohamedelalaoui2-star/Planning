@@ -2997,7 +2997,7 @@ async function loadBusinessTools(){
    $('chargeList').innerHTML=rows.map(x=>'<div class="item"><div><strong>'+esc(x.description)+'</strong><small>'+esc(x.date_charge)+' · '+esc(x.categorie)+'</small></div><strong>'+new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(Number(x.montant_ht))+'</strong></div>').join('')||'<div class="empty">Aucune charge enregistrée.</div>';
  }
  if(!ar.error){
-   $('auditList').innerHTML=(ar.data||[]).map(x=>'<div class="item"><div><strong>'+esc(x.action)+' · '+esc(x.table_name)+' #'+esc(x.record_id)+'</strong><small>'+esc(new Date(x.changed_at).toLocaleString('fr-FR'))+'</small></div></div>').join('')||'<div class="empty">Aucun événement journalisé pour le moment.</div>';
+   $('auditList').innerHTML=(ar.data||[]).map(x=>'<div class="item"><div><strong>'+esc(x.action)+' · '+esc(x.table_name)+' #'+esc(x.record_id)+'</strong><small>'+esc(new Date(x.changed_at).toLocaleString("fr-FR"))+'</small></div></div>').join('')||'<div class="empty">Aucun événement journalisé pour le moment.</div>';
  }
 }
 $('auditRefreshBtn')?.addEventListener('click',loadBusinessTools);
