@@ -2711,17 +2711,17 @@ $('pdfAgentBtn').onclick = () => {
 };
 
 function normalizeQualification(value) {
-  return String(value || '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')
+  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
 }
 function qualificationTextMatches(value, required) {
   const wanted = normalizeQualification(required);
   if (!wanted) return false;
-  const compactWanted = wanted.replace(/\\s+/g, '');
-  return String(value || '').split(/[,+/;|\\n]+/).some(part => {
+  const compactWanted = wanted.replace(/\s+/g, '');
+  return String(value || '').split(/[,+/;|\n]+/).some(part => {
     const token = normalizeQualification(part);
     if (!token) return false;
-    if (token === wanted || token.replace(/\\s+/g, '') === compactWanted) return true;
+    if (token === wanted || token.replace(/\s+/g, '') === compactWanted) return true;
     return (' ' + token + ' ').includes(' ' + wanted + ' ');
   });
 }
