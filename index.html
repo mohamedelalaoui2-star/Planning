@@ -2710,6 +2710,40 @@ $('pdfAgentBtn').onclick = () => {
   popup.print();
 };
 
+function normalizeQualification(value) {
+  return String(value || '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')
+    .toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
+}
+function qualificationTextMatches(value, required) {
+  const wanted = normalizeQualification(required);
+  if (!wanted) return false;
+  const compactWanted = wanted.replace(/\\s+/g, '');
+  return String(value || '').split(/[,+/;|\\n]+/).some(part => {
+    const token = normalizeQualification(part);
+    if (!token) return false;
+    if (token === wanted || token.replace(/\\s+/g, '') === compactWanted) return true;
+    return (' ' + token + ' ').includes(' ' + wanted + ' ');
+  });
+}
+function getAgentAssignmentEligibility(agent, required, shiftDate) {
+  const cardExpiry = String(agent.expiration_carte_pro || agent.expirationCartePro || '').slice(0, 10);
+  if (cardExpiry && shiftDate && cardExpiry < shiftDate) {
+    return { ok: false, reason: 'carte_expiree' };
+  }
+  const records = qualifications.filter(q =>
+    String(q.agent_id) === String(agent.id) &&
+    normalizeQualification(q.type || q.nom) === normalizeQualification(required)
+  );
+  if (records.length) {
+    const validRecord = records.some(q => !q.date_expiration || String(q.date_expiration).slice(0, 10) >= shiftDate);
+    return validRecord ? { ok: true, source: 'dossier qualifications' } : { ok: false, reason: 'qualification_expiree' };
+  }
+  const textMatch = [
+    agent.qualification, agent.Qualification, agent.autres_qualifications, agent.autresQualifications
+  ].some(value => qualificationTextMatches(value, required));
+  return textMatch ? { ok: true, source: 'fiche agent' } : { ok: false, reason: 'qualification_absente' };
+}
+
 function recommendBestAgent() {
   const result = $('agentRecommendationResult');
   const showResult = text => {
@@ -2740,10 +2774,9 @@ function recommendBestAgent() {
   const weekEndAt = weekStartAt + 7 * 1440;
 
   const candidates = agents.filter(agent => agent.actif !== false && agent.actif !== 'false').map(agent => {
-    const qualification = String(agent.qualification ?? agent.Qualification ?? '').toUpperCase();
-    const qualificationParts = qualification.split(/[+,/;|]/).map(x => x.trim()).filter(Boolean);
-    const qualified = qualification === required || qualificationParts.includes(required) || qualification.includes(required);
-    if (!qualified) return null;
+    const eligibility = getAgentAssignmentEligibility(agent, required, date);
+    if (!eligibility.ok) return null;
+    const qualification = String(agent.qualification ?? agent.Qualification ?? required).trim() || required;
     const ownShifts = shifts.filter(shift => String(shift.agent_id) === String(agent.id));
     const conflict = ownShifts.some(shift => {
       if (!shift.date_vacation) return false;
@@ -2799,13 +2832,18 @@ function recommendBestAgent() {
   );
 
   if (!candidates.length) {
-    const hasQualified = agents.some(agent => {
-      const q = String(agent.qualification ?? agent.Qualification ?? '').toUpperCase();
-      return agent.actif !== false && (q === required || q.split(/[+,/;|]/).map(x=>x.trim()).includes(required) || q.includes(required));
-    });
-    showResult(hasQualified
-      ? 'Aucun agent qualifié n’est libre sur ce créneau. Modifie les horaires ou la date, puis relance la recherche.'
-      : 'Aucun agent actif ne possède la qualification « ' + required + ' ». Vérifie les qualifications enregistrées dans Mes agents.');
+    const activeAgents = agents.filter(agent => agent.actif !== false && agent.actif !== 'false');
+    const statuses = activeAgents.map(agent => getAgentAssignmentEligibility(agent, required, date));
+    const hasPotential = statuses.some(status => status.reason !== 'qualification_absente');
+    const hasExpiredCard = statuses.some(status => status.reason === 'carte_expiree');
+    const hasExpiredQualification = statuses.some(status => status.reason === 'qualification_expiree');
+    showResult(!hasPotential
+      ? 'Aucun agent actif ne possède la qualification « ' + required + ' ». Vérifie la fiche agent et le dossier Qualifications.'
+      : hasExpiredCard
+        ? 'Affectation impossible à confirmer : une ou plusieurs cartes professionnelles seraient expirées à la date choisie. Vérifie les dates dans les fiches agents.'
+        : hasExpiredQualification
+          ? 'Affectation impossible à confirmer : une ou plusieurs qualifications requises sont expirées à la date choisie. Vérifie le dossier Qualifications.'
+          : 'Aucun agent qualifié n’est libre sur ce créneau. Vérifie les indisponibilités, les chevauchements et le repos entre vacations.');
     return;
   }
 
@@ -2859,10 +2897,15 @@ $('addShiftBtn').onclick = async () => {
   if (!selectedSite) return showPlanningMessage('Le site sélectionné est introuvable. Actualise la page.');
 
   const requiredQualification = String($('shiftQualification')?.value || $('recommendQualification')?.value || '').trim().toUpperCase();
-  const actualQualification = String(selectedAgent.qualification ?? selectedAgent.Qualification ?? '').toUpperCase();
-  const qualificationParts = actualQualification.split(/[+,/;|]/).map(x => x.trim()).filter(Boolean);
-  const hasRequiredQualification = actualQualification === requiredQualification || qualificationParts.includes(requiredQualification) || actualQualification.includes(requiredQualification);
-  if (!hasRequiredQualification) return showPlanningMessage('Affectation refusée : cet agent ne possède pas la qualification requise (« ' + requiredQualification + ' »). Choisis un agent qualifié ou relance la recommandation.');
+  const eligibility = getAgentAssignmentEligibility(selectedAgent, requiredQualification, date_vacation);
+  if (!eligibility.ok) {
+    const reason = eligibility.reason === 'carte_expiree'
+      ? 'la carte professionnelle sera expirée à la date de la vacation'
+      : eligibility.reason === 'qualification_expiree'
+        ? 'la qualification requise sera expirée à la date de la vacation'
+        : 'la qualification requise n’est pas enregistrée dans la fiche agent ni dans le dossier Qualifications';
+    return showPlanningMessage('Affectation refusée : ' + reason + '. Corrige les informations puis réessaie.');
+  }
 
   const newStart = Date.parse(date_vacation + 'T00:00:00Z') / 60000 + timeToMinutes(heure_debut);
   const newEnd = newStart + durationHours(heure_debut, heure_fin) * 60;
