@@ -1584,6 +1584,17 @@ function exportFilteredPlanningView(){
 </div>
 
 <script>
+/* Diagnostic temporaire : affiche l'erreur réelle du script principal */
+window.addEventListener('error', function(event) {
+  if (!event || !event.message) return;
+  var box = document.getElementById('authMsg');
+  if (box && /script|syntax|token|unexpected|identifier|expected/i.test(event.message)) {
+    box.textContent = 'Erreur JavaScript détectée : ' + event.message + (event.lineno ? ' (ligne ' + event.lineno + ')' : '') + '. Envoie cette capture au support.';
+    box.classList.remove('hidden');
+  }
+});
+</script>
+<script>
 /* Utiliser uniquement la clé publique Supabase dans le navigateur.
    Ne jamais mettre la clé SECRET ou service_role dans ce fichier. */
 
