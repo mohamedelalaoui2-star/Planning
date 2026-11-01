@@ -40,3 +40,59 @@ Production database: Supabase project pqpoxbsudbydsppqoxon
 4. Review grants and dependencies for the five security-definer functions, then make the smallest safe security migration.
 5. Optimize RLS policy expressions and enable leaked-password protection.
 6. Verify the new GitHub Pages deployment and test the live URL on iPhone.
+
+
+# VIGENTRA PRO — pointage et main courante
+Date : 2026-11-01
+Branche : feat/pointage-main-courante
+Base : main
+
+## Examen préalable
+Le dépôt existant contient déjà les modules Pointage et Main courante numérique dans \`index.html\`, avec Supabase, l'espace agent, le calcul des sessions, la clôture d'incidents et l'export CSV. Les changements sont ciblés et n'ajoutent aucune table.
+
+## Modifications sur cette branche
+- Pointage directeur : refuse une nouvelle prise si l'agent a une session ouverte, y compris sur un autre site.
+- Pointage directeur : vérifie que la vacation sélectionnée correspond bien à l'agent et au site.
+- Pointage directeur : la fin de poste reprend l'identifiant de vacation de la prise de poste ouverte, même si la liste facultative est laissée vide, pour éviter de casser le calcul de durée.
+- Pointage directeur : évite les doubles clics simultanés et réactive le bouton après la réponse.
+- Espace agent : empêche de démarrer une deuxième session ouverte et de clôturer une vacation qui ne correspond pas à la prise de poste ouverte.
+- Main courante : ajout de filtres de dates « Du » et « Au », inclus dans l'export CSV et l'effacement des filtres.
+- Aucune nouvelle donnée n'a été écrite dans Supabase ; aucun enregistrement existant n'a été supprimé.
+
+## Vérifications statiques
+- Les anciennes fonctions ciblées ont été remplacées une seule fois.
+- Les fonctions principales existantes de planning, PDF, rondes, facturation, sauvegarde et main courante sont toujours présentes.
+- Les tests en production et le comportement avec la politique RLS réelle restent à vérifier avec un compte de test avant fusion.
+
+## Précautions
+Le pointage web et l'horodatage ne prouvent pas à eux seuls la présence physique. Aucun GPS permanent, aucune photo et aucune biométrie n'ont été ajoutés. Les agents doivent être informés des finalités, des données collectées, des accès et des durées de conservation conformément aux recommandations CNIL.
+
+
+# VIGENTRA PRO — gestion commerciale initiale
+Date : 2026-11-01
+Branche : feat/gestion-commerciale
+
+## Examen avant modification
+- L'application existante utilise un seul fichier index.html et le client Supabase JS v2.
+- Le module Factures existait déjà : création de brouillon, calcul HT/TVA/TTC, impression/PDF et suivi de statut.
+- Le schéma Supabase contient déjà les tables clients, devis et contrats. Les tables ont RLS activé et des politiques d'accès propriétaire.
+- Aucune nouvelle table ni colonne n'a été ajoutée à la base ; aucune donnée existante n'a été modifiée ou supprimée.
+
+## Changements de code sur cette branche
+- Ajout d'un module « Clients, devis et contrats » accessible par le menu « Plus ».
+- Création et liste des clients avec raison sociale, SIRET contrôlé à 14 chiffres, adresse, contact, e-mail, téléphone et notes.
+- Création des devis liés à un client enregistré, calcul des totaux HT/TVA/TTC, validité, rendu PDF imprimable et suivi brouillon/envoyé/accepté/refusé.
+- Conversion d'un devis accepté en brouillon de facture ; le devis est ensuite marqué « converti ». Si la mise à jour du devis échoue après la création de la facture, l'application affiche un avertissement et demande une vérification avant toute nouvelle conversion.
+- Création et suivi de contrats avec référence, client, dates, taux horaire HT, volume mensuel, notes et statuts brouillon/actif/terminé/résilié.
+- Factures : ajout d'une action confirmée pour marquer une facture brouillon comme envoyée, puis possibilité de la marquer payée.
+- Le bouton « Préparer une facture » d'une fiche client préremplit le nom du client dans le formulaire de facturation existant.
+- Les tables clients, devis et contrats sont incluses dans la sauvegarde/restauration JSON de l'application.
+- Le format de sauvegarde est passé à la version 3 ; les anciennes sauvegardes v1/v2 qui ne contiennent pas encore les tables commerciales restent acceptées, avec ces nouvelles tables initialisées comme vides.
+
+## Vérifications et limites
+- Chaque modification ciblée du code a été appliquée sur une branche dédiée et vérifiée par nombre d'occurrences avant remplacement.
+- La vérification syntaxique JavaScript et le test fonctionnel navigateur/Supabase restent à confirmer avant fusion.
+- Le module utilise les tables et colonnes déjà existantes ; aucune migration de schéma n'a été appliquée.
+- Les politiques RLS actuelles de clients, devis et contrats autorisent le propriétaire (user_id = auth.uid()). Les comptes membres d'un espace partagé peuvent nécessiter des politiques dédiées alignées sur vigentra_workspace_owner_id() ; ne pas élargir les accès sans revue et test.
+- Les PDF sont des documents de travail : l'identité légale complète de TEA, les mentions obligatoires, les modalités de paiement et les conditions doivent être complétées et validées avant émission officielle.
+- Aucun e-mail, aucune facture réelle et aucun contrat réel n'ont été envoyés ou émis durant cette modification.
