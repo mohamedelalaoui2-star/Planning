@@ -1858,9 +1858,9 @@ $('inviteAgentBtn').onclick = async () => {
   out.classList.remove('hidden');
   if (!selectedAgent) { out.textContent = 'Choisis un agent qui ne possède pas encore d’accès.'; return; }
   if (selectedAgent.auth_user_id) { out.textContent = 'Cet agent possède déjà un accès individuel.'; return; }
-  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) { out.textContent = 'Saisis une adresse e-mail valide.'; return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { out.textContent = 'Saisis une adresse e-mail valide.'; return; }
   const emailDiffers = selectedAgent.Email && String(selectedAgent.Email).trim().toLowerCase() !== email.toLowerCase();
-  const confirmText = 'Créer l’accès individuel de ' + agentNameOf(selectedAgent) + ' ?\\n\\nE-mail : ' + email + (emailDiffers ? '\\n\\nAttention : cette adresse remplacera l’e-mail enregistré sur la fiche agent.' : '') + '\\n\\nUne invitation sera envoyée par e-mail.';
+  const confirmText = 'Créer l’accès individuel de ' + agentNameOf(selectedAgent) + ' ?\n\nE-mail : ' + email + (emailDiffers ? '\n\nAttention : cette adresse remplacera l’e-mail enregistré sur la fiche agent.' : '') + '\n\nUne invitation sera envoyée par e-mail.';
   if (!window.confirm(confirmText)) { out.textContent = 'Invitation annulée. Aucun accès n’a été créé.'; return; }
   out.textContent = 'Envoi de l’invitation…';
   $('inviteAgentBtn').disabled = true;
