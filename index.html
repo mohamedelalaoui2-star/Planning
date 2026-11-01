@@ -1335,8 +1335,8 @@ nav button.active{color:#f1dba5;background:linear-gradient(145deg,rgba(216,181,1
         <div class="section-title">✉️ Code de connexion agent</div>
         <label>Agent concerné</label><select id="sendAgentCodeSelect"><option value="">Choisir un agent</option></select>
         <label>E-mail associé au compte agent</label><input id="sendAgentCodeEmail" type="email" autocomplete="email" placeholder="agent@exemple.fr">
-        <button class="secondary" id="sendAgentCodeBtn" type="button">Envoyer un code de connexion</button>
-        <p class="notice">Pour un compte existant, demande un code par e-mail. Si le compte n’existe pas encore, une invitation initiale sera envoyée. Aucun code n’est affiché ici.</p>
+        <button class="secondary" id="sendAgentCodeBtn" type="button">Envoyer / renvoyer le code de connexion</button>
+        <p class="notice">Si l’agent n’a pas reçu son e-mail, vérifie l’adresse de sa fiche, les courriers indésirables et les spams, puis clique de nouveau sur ce bouton. Pour un compte existant, un nouveau code sera demandé ; si le compte n’existe pas encore, une invitation initiale sera envoyée. Aucun code n’est affiché ici. Des limites d’envoi du service e-mail peuvent imposer d’attendre avant de réessayer.</p>
         <div id="sendAgentCodeMsg" class="msg hidden" aria-live="polite"></div>
         <div id="inviteAgentMsg" class="msg hidden" aria-live="polite"></div>
       </div>
