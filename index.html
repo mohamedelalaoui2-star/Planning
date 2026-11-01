@@ -1453,6 +1453,7 @@ nav button.active{color:#f1dba5;background:linear-gradient(145deg,rgba(216,181,1
         <button class="secondary" id="planningFilterReset" type="button">Réinitialiser les filtres</button>
         <button class="primary" id="planningPrintBtn" type="button">Exporter la vue en PDF / Imprimer</button>
 
+<script>
 function exportFilteredPlanningView(){
   const from=$('planningFilterFrom')?.value||'';
   const to=$('planningFilterTo')?.value||'';
@@ -1477,6 +1478,7 @@ function exportFilteredPlanningView(){
   popup.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Planning — TEA Sécurité Privée</title><style>@page{size:A4;margin:16mm}body{font:12px Arial,sans-serif;color:#172033;padding:18px}header{border-bottom:3px solid #bd1722;padding-bottom:12px;margin-bottom:20px}h1{margin:0;color:#b5121b;font-size:22px}p{color:#4b5563}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #cbd5e1;padding:8px;text-align:left}th{background:#172033;color:white}.total{font-size:16px;font-weight:bold;margin-top:20px}.foot{margin-top:35px;color:#b5121b;font-weight:bold}@media print{body{padding:0}}</style></head><body><header><h1>TEA SÉCURITÉ PRIVÉE</h1><p>GARDIENNAGE ET SÉCURITÉ · VOTRE SÉCURITÉ EST LA NÔTRE</p></header><h2>Planning des vacations</h2><p>Période : '+escPdf(from||'Toutes dates')+' au '+escPdf(to||'Toutes dates')+'</p><table><thead><tr><th>Date</th><th>Agent</th><th>Horaires</th><th>Site</th><th>Durée</th></tr></thead><tbody>'+rows+'</tbody></table><p class="total">Total : '+list.length+' vacation(s) · '+total.toLocaleString('fr-FR')+' heures</p><p class="foot">TEA SÉCURITÉ PRIVÉE — Votre sécurité est la nôtre</p><script>window.onload=()=>setTimeout(()=>window.print(),350);<\/script></body></html>');
   popup.document.close();
 }
+</script>
 
         <button class="secondary" id="planningWhatsAppBtn" type="button">📄 PDF individuel · Partager sur WhatsApp</button>
         <p class="notice">Choisis un agent dans le filtre ci-dessus, puis utilise ce bouton pour générer son planning PDF et l’envoyer via la feuille de partage de l’iPhone.</p>
