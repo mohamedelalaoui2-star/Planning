@@ -1332,8 +1332,11 @@ nav button.active{color:#f1dba5;background:linear-gradient(145deg,rgba(216,181,1
         <label>Agent à inviter</label><select id="inviteAgentSelect"><option value="">Choisir un agent</option></select>
         <label>Adresse e-mail de l’agent</label><input id="inviteAgentEmail" type="email" autocomplete="email" placeholder="agent@exemple.fr">
         <button class="primary" id="inviteAgentBtn">Envoyer l’invitation</button>
+        <div class="section-title">✉️ Code de connexion agent</div>
+        <label>Agent concerné</label><select id="sendAgentCodeSelect"><option value="">Choisir un agent</option></select>
+        <label>E-mail associé au compte agent</label><input id="sendAgentCodeEmail" type="email" autocomplete="email" placeholder="agent@exemple.fr">
         <button class="secondary" id="sendAgentCodeBtn" type="button">Envoyer un code de connexion</button>
-        <p class="notice">Si le compte n’existe pas encore, cette action enverra une invitation initiale. Aucun code n’est affiché ici.</p>
+        <p class="notice">Pour un compte existant, demande un code par e-mail. Si le compte n’existe pas encore, une invitation initiale sera envoyée. Aucun code n’est affiché ici.</p>
         <div id="sendAgentCodeMsg" class="msg hidden" aria-live="polite"></div>
         <div id="inviteAgentMsg" class="msg hidden" aria-live="polite"></div>
       </div>
@@ -1893,8 +1896,8 @@ $('inviteAgentBtn').onclick = async () => {
 
 $('sendAgentCodeBtn').onclick = async () => {
   if (agentMode || !currentUser) return;
-  const agent_id = Number($('inviteAgentSelect').value);
-  const email = $('inviteAgentEmail').value.trim();
+  const agent_id = Number($('sendAgentCodeSelect').value);
+  const email = $('sendAgentCodeEmail').value.trim();
   const selectedAgent = agents.find(a => Number(a.id) === agent_id);
   const out = $('sendAgentCodeMsg');
   out.classList.remove('hidden');
@@ -2120,6 +2123,13 @@ function render() {
     inviteSelect.innerHTML = '<option value="">Choisir un agent sans accès</option>' + agents
       .map(a => `<option value="${esc(a.id)}" ${a.auth_user_id ? 'disabled' : ''}>${esc(agentNameOf(a))}${a.auth_user_id ? ' — accès déjà créé' : ''}</option>`).join('');
     if (agents.some(a => String(a.id) === String(previous) && !a.auth_user_id)) inviteSelect.value = previous;
+  }
+  const codeSelect = $('sendAgentCodeSelect');
+  if (codeSelect) {
+    const previous = codeSelect.value;
+    codeSelect.innerHTML = '<option value="">Choisir un agent</option>' + agents
+      .map(a => `<option value="${esc(a.id)}">${esc(agentNameOf(a))}${a.auth_user_id ? ' — compte lié' : ''}</option>`).join('');
+    if (agents.some(a => String(a.id) === String(previous))) codeSelect.value = previous;
   }
 
   $('agentList').innerHTML = agents.length
