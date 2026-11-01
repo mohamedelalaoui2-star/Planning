@@ -87,6 +87,7 @@ Branche : feat/gestion-commerciale
 - Factures : ajout d'une action confirmée pour marquer une facture brouillon comme envoyée, puis possibilité de la marquer payée.
 - Le bouton « Préparer une facture » d'une fiche client préremplit le nom du client dans le formulaire de facturation existant.
 - Les tables clients, devis et contrats sont incluses dans la sauvegarde/restauration JSON de l'application.
+- Le format de sauvegarde est passé à la version 3 ; les anciennes sauvegardes v1/v2 qui ne contiennent pas encore les tables commerciales restent acceptées, avec ces nouvelles tables initialisées comme vides.
 
 ## Vérifications et limites
 - Chaque modification ciblée du code a été appliquée sur une branche dédiée et vérifiée par nombre d'occurrences avant remplacement.
