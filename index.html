@@ -3264,9 +3264,10 @@ $('auditRefreshBtn')?.addEventListener('click',loadBusinessTools);
 const VIGENTRA_BACKUP_TABLES=['agents','Site','clients','planning','pointages','factures','devis','contrats','qualifications','main_courante','ronde_points','ronde_passages','notifications','indisponibilites','agent_documents','charges_entreprise'];
 function validateVigentraBackup(backup){
  if(!currentUser||agentMode)throw new Error('La sauvegarde et la restauration sont réservées au compte gestionnaire.');
- if(!backup||backup.app!=='VIGENTRA PRO'||![1,2].includes(Number(backup.version))||backup.account!==workspaceOwnerId||!backup.tables||typeof backup.tables!=='object'||Array.isArray(backup.tables))throw new Error('Fichier invalide ou créé pour un autre compte.');
+ if(!backup||backup.app!=='VIGENTRA PRO'||![1,2,3].includes(Number(backup.version))||backup.account!==workspaceOwnerId||!backup.tables||typeof backup.tables!=='object'||Array.isArray(backup.tables))throw new Error('Fichier invalide ou créé pour un autre compte.');
  for(const table of VIGENTRA_BACKUP_TABLES){
-  const rows=backup.tables[table];
+  let rows=backup.tables[table];
+  if(!Array.isArray(rows)&&Number(backup.version)<3&&['clients','devis','contrats'].includes(table)){backup.tables[table]=[];rows=[];}
   if(!Array.isArray(rows))throw new Error('Sauvegarde incomplète : la table '+table+' est absente ou invalide.');
   for(const row of rows){
    if(!row||typeof row!=='object'||Array.isArray(row)||row.id===undefined||row.id===null||String(row.user_id)!==workspaceOwnerId)throw new Error('Une ligne de '+table+' ne correspond pas au compte connecté. Aucun enregistrement n’a été restauré.');
@@ -3287,7 +3288,7 @@ $('backupExportBtn')?.addEventListener('click',async()=>{
  if(!currentUser||agentMode){msg('backupMsg','Cette action est réservée au compte gestionnaire.');return;}
  const button=$('backupExportBtn');button.disabled=true;
  try{
-  const backup={app:'VIGENTRA PRO',version:2,format:'vigentra-backup',exported_at:new Date().toISOString(),account:workspaceOwnerId,tables:{},counts:{}};
+  const backup={app:'VIGENTRA PRO',version:3,format:'vigentra-backup',exported_at:new Date().toISOString(),account:workspaceOwnerId,tables:{},counts:{}};
   for(const table of VIGENTRA_BACKUP_TABLES){
    const rows=[];let offset=0;const pageSize=500;
    while(true){
