@@ -40,3 +40,29 @@ Production database: Supabase project pqpoxbsudbydsppqoxon
 4. Review grants and dependencies for the five security-definer functions, then make the smallest safe security migration.
 5. Optimize RLS policy expressions and enable leaked-password protection.
 6. Verify the new GitHub Pages deployment and test the live URL on iPhone.
+
+
+# VIGENTRA PRO — pointage et main courante
+Date : 2026-11-01
+Branche : feat/pointage-main-courante
+Base : main
+
+## Examen préalable
+Le dépôt existant contient déjà les modules Pointage et Main courante numérique dans \`index.html\`, avec Supabase, l'espace agent, le calcul des sessions, la clôture d'incidents et l'export CSV. Les changements sont ciblés et n'ajoutent aucune table.
+
+## Modifications sur cette branche
+- Pointage directeur : refuse une nouvelle prise si l'agent a une session ouverte, y compris sur un autre site.
+- Pointage directeur : vérifie que la vacation sélectionnée correspond bien à l'agent et au site.
+- Pointage directeur : la fin de poste reprend l'identifiant de vacation de la prise de poste ouverte, même si la liste facultative est laissée vide, pour éviter de casser le calcul de durée.
+- Pointage directeur : évite les doubles clics simultanés et réactive le bouton après la réponse.
+- Espace agent : empêche de démarrer une deuxième session ouverte et de clôturer une vacation qui ne correspond pas à la prise de poste ouverte.
+- Main courante : ajout de filtres de dates « Du » et « Au », inclus dans l'export CSV et l'effacement des filtres.
+- Aucune nouvelle donnée n'a été écrite dans Supabase ; aucun enregistrement existant n'a été supprimé.
+
+## Vérifications statiques
+- Les anciennes fonctions ciblées ont été remplacées une seule fois.
+- Les fonctions principales existantes de planning, PDF, rondes, facturation, sauvegarde et main courante sont toujours présentes.
+- Les tests en production et le comportement avec la politique RLS réelle restent à vérifier avec un compte de test avant fusion.
+
+## Précautions
+Le pointage web et l'horodatage ne prouvent pas à eux seuls la présence physique. Aucun GPS permanent, aucune photo et aucune biométrie n'ont été ajoutés. Les agents doivent être informés des finalités, des données collectées, des accès et des durées de conservation conformément aux recommandations CNIL.
