@@ -2608,32 +2608,85 @@ $('noticeRefreshBtn').onclick=async()=>{
  finally{btn.disabled=false;}
 };
 function answerAssistant(question){
- const q=question.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');let answer;
- if(!q.trim())answer='Écris une question.';
- else if(/factur|client|tva|prix/.test(q))answer='Tu as '+factures.length+' facture(s). Vérifie le client, le montant HT, la TVA et les mentions légales avant émission.';
- else if(/pointage|presence|debut|fin|heure/.test(q))answer='Tu as '+pointages.length+' pointage(s). Compare les prises et fins de poste avant de valider les heures.';
- else answer='VIGENTRA : '+agents.length+' agent(s), '+sites.length+' site(s), '+shifts.length+' vacation(s). Vérifie affectations, horaires, repos et qualifications. Cette aide automatisée fonctionne sans API externe.';
+ const q=String(question||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').trim();
+ if(!q){msg('assistantAnswer','Écris une question ou utilise « Analyser les données ».');return;}
+ const today=new Date();today.setHours(0,0,0,0);
+ const dateLabel=d=>{if(!d)return 'date non renseignée';const x=new Date(d+'T00:00:00');return Number.isNaN(x.getTime())?String(d):x.toLocaleDateString('fr-FR');};
+ const nameAgent=id=>{const a=agents.find(x=>String(x.id)===String(id));return a?agentNameOf(a):'Agent non identifié';};
+ const relevant=shifts.filter(s=>!s.date_vacation||new Date(s.date_vacation+'T23:59:59')>=today);
+ let answer='';
+ if(/aide|que peux tu faire|fonction/.test(q)){
+  answer='ASSISTANT VIGENTRA — aide gratuite sans API ni abonnement.\\n\\n• « Planning » : vacations à venir, vacations sans agent ou sans site.\\n• « Agent [nom] » : retrouver ses vacations chargées.\\n• « Site » : compter les sites enregistrés.\\n• « Qualification », « carte » ou « expiration » : vérifier les qualifications enregistrées.\\n• « Pointage » : compter les pointages.\\n• « Facture » : compter les factures.\\n• « Analyser » : lancer le contrôle automatique complet.\\n\\nLes réponses sont produites par des règles locales et les données chargées dans l’application, pas par une IA générative.';
+ }else if(/planning|vacation|affect|agent disponible|non couvert|sans agent/.test(q)){
+  const uncovered=relevant.filter(s=>!s.agent_id);
+  const noSite=relevant.filter(s=>!s.site_id);
+  const upcoming=relevant.slice().sort((a,b)=>String(a.date_vacation||'').localeCompare(String(b.date_vacation||''))).slice(0,8);
+  answer='ÉTAT DU PLANNING\\n• Vacations enregistrées : '+shifts.length+'\\n• Vacations à venir ou sans date : '+relevant.length+'\\n• Sans agent affecté : '+uncovered.length+'\\n• Sans site affecté : '+noSite.length;
+  if(uncovered.length)answer+='\\n\\nÀ affecter :\\n'+uncovered.slice(0,8).map(s=>'• '+dateLabel(s.date_vacation)+' — '+String(s.heure_debut||'?').slice(0,5)+'–'+String(s.heure_fin||'?').slice(0,5)).join('\\n');
+  if(noSite.length)answer+='\\n\\nÀ compléter : '+noSite.slice(0,5).map(s=>dateLabel(s.date_vacation)).join(', ');
+  if(!uncovered.length&&!noSite.length&&upcoming.length)answer+='\\n\\nProchaines vacations :\\n'+upcoming.slice(0,5).map(s=>'• '+dateLabel(s.date_vacation)+' · '+String(s.heure_debut||'?').slice(0,5)+'–'+String(s.heure_fin||'?').slice(0,5)+' · '+nameAgent(s.agent_id)).join('\\n');
+ }else if(/agent/.test(q)){
+  const terms=q.replace(/agent|montre|liste|combien|vacation|planning|pour|de|du|la|le|les|est|mes|mon|a t il|a elle/gi,' ').trim().split(/\\s+/).filter(Boolean);
+  const matches=agents.filter(a=>terms.length===0||terms.some(t=>String(agentNameOf(a)).toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').includes(t)));
+  if(matches.length===1){
+   const a=matches[0],list=shifts.filter(s=>String(s.agent_id)===String(a.id)).sort((x,y)=>String(x.date_vacation||'').localeCompare(String(y.date_vacation||'')));
+   answer='AGENT : '+agentNameOf(a)+'\\nVacations enregistrées : '+list.length+'\\n';
+   answer+=list.length?list.slice(0,10).map(s=>'• '+dateLabel(s.date_vacation)+' · '+String(s.heure_debut||'?').slice(0,5)+'–'+String(s.heure_fin||'?').slice(0,5)).join('\\n'):'Aucune vacation trouvée pour cet agent.';
+  }else answer='Agents enregistrés : '+agents.length+'\\n'+agents.slice(0,20).map(a=>'• '+agentNameOf(a)).join('\\n')+'\\n\\nPour consulter un agent, saisis son nom dans la question.';
+ }else if(/site|client/.test(q)){
+  answer='SITES ENREGISTRÉS : '+sites.length+'\\n'+(sites.length?sites.slice(0,25).map(s=>'• '+siteNameOf(s)).join('\\n'):'Aucun site enregistré. Ajoute d’abord les sites clients dans l’onglet Sites.');
+ }else if(/qualification|carte professionnelle|expiration|expire|ssi ap|ssiap|cqp|sst/.test(q)){
+  const expired=qualifications.filter(x=>x.date_expiration&&new Date(x.date_expiration+'T00:00:00')<today);
+  const limit=new Date(today);limit.setDate(limit.getDate()+60);
+  const soon=qualifications.filter(x=>x.date_expiration&&new Date(x.date_expiration+'T00:00:00')>=today&&new Date(x.date_expiration+'T00:00:00')<=limit);
+  answer='QUALIFICATIONS ENREGISTRÉES : '+qualifications.length+'\\nExpirées : '+expired.length+'\\nExpirant dans les 60 jours : '+soon.length;
+  if(expired.length)answer+='\\n\\nÀ traiter en priorité :\\n'+expired.slice(0,10).map(x=>'• '+nameAgent(x.agent_id)+' — '+(x.type||x.nom||'Qualification')+' (expirée le '+dateLabel(x.date_expiration)+')').join('\\n');
+  if(soon.length)answer+='\\n\\nÀ renouveler prochainement :\\n'+soon.slice(0,10).map(x=>'• '+nameAgent(x.agent_id)+' — '+(x.type||x.nom||'Qualification')+' (échéance '+dateLabel(x.date_expiration)+')').join('\\n');
+  if(!expired.length&&!soon.length)answer+='\\nAucune échéance proche détectée dans les qualifications chargées. Vérifie que toutes les cartes et dates sont bien saisies.';
+ }else if(/pointage|presence|heure|prise de poste|fin de poste/.test(q)){
+  answer='POINTAGES : '+pointages.length+' enregistrement(s) chargé(s).\\nCompare les heures de début et de fin, puis vérifie les écarts avec le planning avant de valider les heures travaillées.';
+ }else if(/facture|tva|prix|montant/.test(q)){
+  answer='FACTURATION : '+factures.length+' facture(s) chargée(s).\\nVérifie le client, les dates, les montants HT/TVA/TTC et les mentions obligatoires avant envoi.';
+ }else if(/bonjour|salut|hello/.test(q)){
+  answer='Bonjour ! Je suis l’assistant opérationnel gratuit de VIGENTRA PRO. Tu peux me demander de vérifier le planning, consulter un agent ou un site, contrôler les qualifications, les pointages ou les factures.';
+ }else{
+  answer='Je fonctionne sans API payante et réponds à partir de contrôles déterministes des données VIGENTRA.\\n\\nEssaie une question comme :\\n• « Vérifie mon planning »\\n• « Liste les agents » ou « Agent [nom] »\\n• « Quels sites sont enregistrés ? »\\n• « Quelles qualifications expirent ? »\\n• « Combien de pointages ? »\\n• « Combien de factures ? »\\n\\nPour un contrôle plus complet, appuie sur « Analyser les données ».';
+ }
  msg('assistantAnswer',answer);
 }
 $('assistantAskBtn').onclick=()=>answerAssistant($('assistantQuestion').value);
+$('assistantQuestion').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();answerAssistant($('assistantQuestion').value);}});
 $('assistantAuditBtn').onclick=()=>{
- const issues=[];
+ const issues=[],warnings=[];
  if(!agents.length)issues.push('Aucun agent enregistré');
- if(!sites.length)issues.push('Aucun site client');
+ if(!sites.length)issues.push('Aucun site client enregistré');
  if(!shifts.length)issues.push('Aucune vacation planifiée');
- const dt=(d,t)=>new Date(d+'T'+String(t).slice(0,5)+':00');
+ const today=new Date();today.setHours(0,0,0,0);
+ const limit=new Date(today);limit.setDate(limit.getDate()+60);
+ const dt=(d,t)=>new Date(d+'T'+String(t||'00:00').slice(0,5)+':00');
+ const relevant=shifts.filter(s=>s.date_vacation&&new Date(s.date_vacation+'T23:59:59')>=today);
+ const uncovered=relevant.filter(s=>!s.agent_id);
+ const noSite=relevant.filter(s=>!s.site_id);
+ if(uncovered.length)issues.push(uncovered.length+' vacation(s) à venir sans agent affecté');
+ if(noSite.length)warnings.push(noSite.length+' vacation(s) à venir sans site affecté');
+ const groups={};
+ shifts.filter(s=>s.agent_id&&s.date_vacation&&s.heure_debut&&s.heure_fin).forEach(s=>(groups[String(s.agent_id)] ||= []).push(s));
  let overlaps=0;
- const groups={};shifts.forEach(s=>(groups[String(s.agent_id)] ||= []).push(s));
- Object.values(groups).forEach(list=>{const spans=list.map(s=>{const start=dt(s.date_vacation,s.heure_debut),end=dt(s.date_vacation,s.heure_fin);if(end<=start)end.setDate(end.getDate()+1);return {start,end};});for(let i=0;i<spans.length;i++)for(let j=i+1;j<spans.length;j++)if(spans[i].start<spans[j].end&&spans[j].start<spans[i].end)overlaps++;});
- if(overlaps)issues.push(overlaps+' chevauchement(s) de vacations à vérifier');
- const today=new Date();today.setHours(0,0,0,0);const limit=new Date(today);limit.setDate(limit.getDate()+60);
- const expired=qualifications.filter(q=>q.date_expiration&&new Date(q.date_expiration+'T00:00:00')<today);
- const expiring=qualifications.filter(q=>q.date_expiration&&new Date(q.date_expiration+'T00:00:00')>=today&&new Date(q.date_expiration+'T00:00:00')<=limit);
+ Object.values(groups).forEach(list=>{
+  const spans=list.map(s=>{const start=dt(s.date_vacation,s.heure_debut),end=dt(s.date_vacation,s.heure_fin);if(end<=start)end.setDate(end.getDate()+1);return {start,end};});
+  for(let i=0;i<spans.length;i++)for(let j=i+1;j<spans.length;j++)if(spans[i].start<spans[j].end&&spans[j].start<spans[i].end)overlaps++;
+ });
+ if(overlaps)issues.push(overlaps+' chevauchement(s) de vacations pour un même agent');
+ const expired=qualifications.filter(x=>x.date_expiration&&new Date(x.date_expiration+'T00:00:00')<today);
+ const expiring=qualifications.filter(x=>x.date_expiration&&new Date(x.date_expiration+'T00:00:00')>=today&&new Date(x.date_expiration+'T00:00:00')<=limit);
  if(expired.length)issues.push(expired.length+' qualification(s) expirée(s)');
- if(expiring.length)issues.push(expiring.length+' qualification(s) expirant dans les 60 jours');
- const wrong=factures.filter(f=>{const ht=Math.round(Number(f.quantite)*Number(f.prix_unitaire_ht)*100)/100,tva=Math.round(ht*Number(f.taux_tva))/100,ttc=Math.round((ht+tva)*100)/100;return Math.abs(ht-Number(f.total_ht))>.02||Math.abs(tva-Number(f.total_tva))>.02||Math.abs(ttc-Number(f.total_ttc))>.02;});
- if(wrong.length)issues.push(wrong.length+' facture(s) dont les totaux sont à contrôler');
- const report=issues.length?'RAPPORT DE CONTRÔLE VIGENTRA\n\n'+issues.map((s,i)=>(i+1)+'. '+s).join('\n')+'\n\nCe contrôle est automatique : vérifie les résultats avant toute décision.':'Contrôle terminé : aucun écart simple détecté dans les données chargées. Vérifie également les obligations légales, les repos et les justificatifs.';
+ if(expiring.length)warnings.push(expiring.length+' qualification(s) expirant dans les 60 jours');
+ const wrong=factures.filter(f=>{const ht=Math.round(Number(f.quantite)*Number(f.prix_unitaire_ht)*100)/100,tva=Math.round(ht*Number(f.taux_tva))/100,ttc=Math.round((ht+tva)*100)/100;return Number.isFinite(ht)&&Number.isFinite(tva)&&Number.isFinite(ttc)&&(Math.abs(ht-Number(f.total_ht))>.02||Math.abs(tva-Number(f.total_tva))>.02||Math.abs(ttc-Number(f.total_ttc))>.02);});
+ if(wrong.length)warnings.push(wrong.length+' facture(s) dont les totaux calculés semblent incohérents');
+ let report='RAPPORT DE CONTRÔLE VIGENTRA PRO\\nDonnées chargées : '+agents.length+' agent(s), '+sites.length+' site(s), '+shifts.length+' vacation(s), '+qualifications.length+' qualification(s), '+pointages.length+' pointage(s), '+factures.length+' facture(s).\\n\\n';
+ report+=issues.length?'PRIORITÉS À TRAITER\\n'+issues.map((x,i)=>(i+1)+'. '+x).join('\\n'):'Aucune anomalie prioritaire détectée par les règles simples.';
+ if(warnings.length)report+='\\n\\nÀ VÉRIFIER\\n'+warnings.map((x,i)=>(i+1)+'. '+x).join('\\n');
+ report+='\\n\\nLimites : contrôle automatique indicatif, limité aux données chargées. Il ne confirme pas la validité juridique des cartes, le respect complet du repos légal, ni la livraison des notifications. Vérifie les fiches source avant toute décision.';
  msg('assistantAnswer',report);
 };
 $('pdfAgentBtn').onclick = () => {
