@@ -1595,35 +1595,38 @@ window.addEventListener('error', function(event) {
 });
 </script>
 <script>
-/* Utiliser uniquement la clé publique Supabase dans le navigateur.
-   Ne jamais mettre la clé SECRET ou service_role dans ce fichier. */
-
-const SUPABASE_URL = 'https://pqpoxbsudbydsppqoxon.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_H-zHZU7v1uIwLec4CkDWow_5ZtK9gPf';
+/* CONFIGURATION DE TEST — accès Supabase désactivé volontairement.
+   Ne pas reconnecter cette branche à la production.
+   Pour des tests fonctionnels, configurer un projet Supabase de TEST distinct,
+   avec des données fictives et des règles RLS activées. */
+const SUPABASE_URL = '';
+const SUPABASE_PUBLISHABLE_KEY = '';
 
 let db = null;
-try {
-  if (window.supabase && typeof window.supabase.createClient === 'function') {
-    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-  } else {
-    window.addEventListener('load', () => {
-      const el = document.getElementById('authMsg');
-      if (el) {
-        el.textContent = 'VIGENTRA ne parvient pas à charger le module de connexion. Vérifie Internet, puis recharge la page.';
-        el.classList.remove('hidden');
-      }
-    });
+window.addEventListener('load', () => {
+  const el = document.getElementById('authMsg');
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    if (el) {
+      el.textContent = 'BRANCHE DE TEST ISOLÉE : connexion aux données désactivée pour protéger la production. Configure un projet Supabase de test distinct avant tout test fonctionnel.';
+      el.classList.remove('hidden');
+    }
+    return;
   }
-} catch (initError) {
-  console.error('VIGENTRA Supabase init error:', initError);
-  window.addEventListener('load', () => {
-    const el = document.getElementById('authMsg');
+  try {
+    if (window.supabase && typeof window.supabase.createClient === 'function') {
+      db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    } else if (el) {
+      el.textContent = 'Module Supabase indisponible. Vérifie Internet puis recharge la page.';
+      el.classList.remove('hidden');
+    }
+  } catch (initError) {
+    console.error('VIGENTRA Supabase init error:', initError);
     if (el) {
       el.textContent = 'Erreur de démarrage de la connexion : ' + (initError.message || 'module indisponible');
       el.classList.remove('hidden');
     }
-  });
-}
+  }
+});
 
 const $ = id => document.getElementById(id);
 
@@ -3201,10 +3204,11 @@ db.auth.onAuthStateChange((event, session) => {
     if(!email.trim()||!password){show('Saisis ton adresse e-mail et ton mot de passe.');return;}
     if(button){button.disabled=true;button.textContent='Connexion en cours…';}
     try{
-      var client=window.supabase && window.supabase.createClient
-        ? window.supabase.createClient('https://pqpoxbsudbydsppqoxon.supabase.co','sb_publishable_H-zHZU7v1uIwLec4CkDWow_5ZtK9gPf')
-        : null;
-      if(!client){show('Le module Supabase ne se charge pas. Vérifie la connexion Internet et ouvre le site dans Safari.');return;}
+      /* Bloqué volontairement sur la branche d'audit : aucun accès à la production. */
+      show('Connexion désactivée sur la branche de test pour protéger les données de production. Configure un projet Supabase de test distinct avant de tester la connexion.');
+      return;
+      var client=null;
+      if(!client){show('Connexion de test non configurée.');return;}
       var result=await client.auth.signInWithPassword({email:email.trim(),password:password});
       if(result.error){show('Connexion refusée par Supabase : '+result.error.message);return;}
       show('Connexion réussie. Recharge VIGENTRA pour ouvrir ton espace.');
