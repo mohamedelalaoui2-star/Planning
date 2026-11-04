@@ -3204,10 +3204,11 @@ db.auth.onAuthStateChange((event, session) => {
     if(!email.trim()||!password){show('Saisis ton adresse e-mail et ton mot de passe.');return;}
     if(button){button.disabled=true;button.textContent='Connexion en cours…';}
     try{
-      var client=window.supabase && window.supabase.createClient
-        ? window.supabase.createClient('https://pqpoxbsudbydsppqoxon.supabase.co','sb_publishable_H-zHZU7v1uIwLec4CkDWow_5ZtK9gPf')
-        : null;
-      if(!client){show('Le module Supabase ne se charge pas. Vérifie la connexion Internet et ouvre le site dans Safari.');return;}
+      /* Bloqué volontairement sur la branche d'audit : aucun accès à la production. */
+      show('Connexion désactivée sur la branche de test pour protéger les données de production. Configure un projet Supabase de test distinct avant de tester la connexion.');
+      return;
+      var client=null;
+      if(!client){show('Connexion de test non configurée.');return;}
       var result=await client.auth.signInWithPassword({email:email.trim(),password:password});
       if(result.error){show('Connexion refusée par Supabase : '+result.error.message);return;}
       show('Connexion réussie. Recharge VIGENTRA pour ouvrir ton espace.');
