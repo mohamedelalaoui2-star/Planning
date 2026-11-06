@@ -1,0 +1,7 @@
+name = "vigentra-ai-prototype"
+main = "src/index.js"
+compatibility_date = "2026-11-06"
+
+# Configure GEMINI_API_KEY as a Worker secret using:
+# npx wrangler secret put GEMINI_API_KEY
+# Never add API keys to this file or commit them to Git.
